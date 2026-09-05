@@ -44,7 +44,7 @@ export default function Login({ initialMode = "login" }: { initialMode?: "login"
       <aside className="hidden flex-col justify-between border-r border-white/[0.07] bg-ink-900/40 p-12 lg:flex">
         <Link to="/" className="flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-black text-white">C</span>
-          <span className="text-[13px] font-bold tracking-tight text-white">CCAR-F Prep</span>
+          <span className="text-[13px] font-bold tracking-tight text-white">CertAtlas</span>
         </Link>
         <div className="max-w-md">
           <h2 className="text-3xl font-bold leading-tight tracking-tight text-white">

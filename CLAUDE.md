@@ -1,6 +1,6 @@
-# CCAR-F Exam Prep
+# CertAtlas
 
-Exam-prep web app for Claude Certified Architect – Foundations. FastAPI backend
+Exam-prep web app, currently covering Claude Certified Architect – Foundations. FastAPI backend
 (SQLite/SQLAlchemy, JWT auth) + React/TS/Tailwind frontend. Full setup and
 Docker instructions are in @README.md — this file is for working *on* the
 codebase, not running it.

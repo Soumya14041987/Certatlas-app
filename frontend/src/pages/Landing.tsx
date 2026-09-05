@@ -36,7 +36,7 @@ export default function Landing() {
       <header className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-sm font-black text-white">C</span>
-          <span className="text-[13px] font-bold tracking-tight text-white">CCAR-F Prep</span>
+          <span className="text-[13px] font-bold tracking-tight text-white">CertAtlas</span>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/login" className="btn btn-quiet btn-sm">Sign in</Link>

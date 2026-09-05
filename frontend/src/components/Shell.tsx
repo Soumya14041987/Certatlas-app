@@ -19,7 +19,7 @@ function Brand() {
         C
       </span>
       <div className="leading-tight">
-        <div className="text-[13px] font-bold tracking-tight text-white">CCAR-F Prep</div>
+        <div className="text-[13px] font-bold tracking-tight text-white">CertAtlas</div>
         <div className="text-[10px] uppercase tracking-[0.16em] text-ink-500">
           Architect Foundations
         </div>

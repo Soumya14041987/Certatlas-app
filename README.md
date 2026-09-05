@@ -1,6 +1,6 @@
-# CCAR-F Exam Prep
+# CertAtlas
 
-An exam-preparation web application for **Claude Certified Architect – Foundations (CCAF)**, built as a Python (FastAPI) backend with a React/TypeScript frontend.
+An exam-preparation web application, currently covering **Claude Certified Architect – Foundations (CCAF)**, built as a Python (FastAPI) backend with a React/TypeScript frontend.
 
 > **Not affiliated with, endorsed by, or sourced from Anthropic.** Domain names, weightings and the scoring format are taken from Anthropic's own public certification listing so the practice material rehearses the real structure of the exam. Every question, explanation, analogy, code snippet and cheat sheet in this repository is **original, community-authored practice content** — none of it is a real exam item.
 

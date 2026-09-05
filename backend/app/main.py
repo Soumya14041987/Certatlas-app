@@ -15,7 +15,8 @@ from app.services.content import ContentError, content_stats
 logger = logging.getLogger("ccarf")
 
 DESCRIPTION = """
-Exam preparation platform for **CCAR-F — Claude Code Architect Foundations**.
+**CertAtlas** — an exam preparation platform, currently covering
+**CCAR-F — Claude Code Architect Foundations**.
 
 * **Practice mode** — 300 blueprint-weighted sets of 60 questions, pausable,
   with a published scorecard for every attempt.

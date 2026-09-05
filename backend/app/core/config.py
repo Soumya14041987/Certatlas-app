@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     )
 
     # --- Identity -------------------------------------------------------
-    app_name: str = "CCAR-F Exam Prep"
+    app_name: str = "CertAtlas"
     environment: str = "development"
     debug: bool = True
     api_prefix: str = "/api/v1"
