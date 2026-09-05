@@ -1,0 +1,131 @@
+"""Grading and scorecard construction, shared by both modes."""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+
+from app.core.config import settings
+from app.models import Attempt, AttemptAnswer, AttemptMode
+from app.services.content import Question, domain_names, get_question, resolve_cheatsheet
+
+
+def is_correct(question: Question, selected: list[str]) -> bool:
+    """All-or-nothing: every correct option, and no incorrect one."""
+    return sorted(set(selected)) == question.correct
+
+
+def grade(attempt: Attempt) -> dict:
+    """Score a submitted attempt and populate its scorecard fields."""
+    answers = {a.question_id: a for a in attempt.answers}
+    names = domain_names()
+    per_domain: dict[str, dict[str, int]] = {}
+    correct_total = 0
+
+    for qid in attempt.question_ids:
+        question = get_question(qid)
+        if question is None:  # content removed since the attempt began
+            continue
+        bucket = per_domain.setdefault(
+            question.domain, {"correct": 0, "total": 0, "unanswered": 0}
+        )
+        bucket["total"] += 1
+
+        answer = answers.get(qid)
+        if answer is None or not answer.selected:
+            bucket["unanswered"] += 1
+            if answer is not None:
+                answer.is_correct = False
+            continue
+
+        ok = is_correct(question, answer.selected)
+        answer.is_correct = ok
+        if ok:
+            bucket["correct"] += 1
+            correct_total += 1
+
+    total = len(attempt.question_ids)
+    percent = round(100.0 * correct_total / total, 2) if total else 0.0
+
+    attempt.correct_count = correct_total
+    attempt.total_count = total
+    attempt.score_percent = percent
+    attempt.passed = percent >= settings.exam_pass_percent
+    attempt.domain_breakdown = {
+        code: {
+            **stats,
+            "name": names.get(code, code),
+            "percent": round(100.0 * stats["correct"] / stats["total"], 1)
+            if stats["total"]
+            else 0.0,
+        }
+        for code, stats in sorted(per_domain.items())
+    }
+    attempt.submitted_at = datetime.now(timezone.utc)
+    return attempt.domain_breakdown
+
+
+def scorecard(attempt: Attempt) -> dict:
+    """The published result: headline figures plus where to study next."""
+    breakdown = attempt.domain_breakdown or {}
+    weak = sorted(
+        (d for d in breakdown.items() if d[1]["total"]),
+        key=lambda kv: kv[1]["percent"],
+    )[:3]
+    elapsed = attempt.elapsed_seconds or 0
+    total = attempt.total_count or 0
+    return {
+        "attempt_id": attempt.id,
+        "mode": attempt.mode,
+        "set_number": attempt.set_number,
+        "label": attempt.label,
+        "score_percent": attempt.score_percent,
+        "correct": attempt.correct_count,
+        "total": total,
+        "passed": attempt.passed,
+        "pass_mark": settings.exam_pass_percent,
+        "elapsed_seconds": elapsed,
+        "seconds_per_question": round(elapsed / total, 1) if total else 0.0,
+        "submitted_at": attempt.submitted_at.isoformat() if attempt.submitted_at else None,
+        "domain_breakdown": breakdown,
+        "focus_areas": [
+            {"code": code, "name": stats["name"], "percent": stats["percent"]}
+            for code, stats in weak
+        ],
+    }
+
+
+def review_items(attempt: Attempt, only_incorrect: bool = False) -> list[dict]:
+    """Per-question review with the full teaching payload attached."""
+    answers = {a.question_id: a for a in attempt.answers}
+    items: list[dict] = []
+
+    for position, qid in enumerate(attempt.question_ids):
+        question = get_question(qid)
+        if question is None:
+            continue
+        answer: AttemptAnswer | None = answers.get(qid)
+        selected = answer.selected if answer else []
+        correct = bool(answer and answer.is_correct)
+        if only_incorrect and correct:
+            continue
+
+        payload = {
+            "position": position + 1,
+            "selected": selected,
+            "is_correct": correct,
+            "answered": bool(selected),
+            "flagged": bool(answer and answer.flagged),
+            "seconds_spent": answer.seconds_spent if answer else 0,
+            **question.reveal(),
+        }
+        # Wrong and skipped answers get the cheat-sheet section inlined, so the
+        # learner never has to go looking for it.
+        if not correct:
+            payload["cheatsheet_content"] = resolve_cheatsheet(question.cheatsheet)
+        items.append(payload)
+
+    return items
+
+
+def time_limit_for(mode: str) -> int | None:
+    """Exam mode is timed; practice mode is not (it supports pause instead)."""
+    return settings.exam_duration_minutes * 60 if mode == AttemptMode.EXAM else None

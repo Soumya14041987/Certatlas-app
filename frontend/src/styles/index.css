@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens. One accent family (violet), one success (emerald), one
+   warning (amber), one danger (rose) — everything else is a neutral step.
+   --------------------------------------------------------------------------- */
+@theme {
+  --color-ink-950: #07070c;
+  --color-ink-900: #0b0b13;
+  --color-ink-850: #10101c;
+  --color-ink-800: #16162a;
+  --color-ink-700: #1e1e35;
+  --color-ink-600: #2a2a48;
+  --color-ink-500: #3d3d63;
+  --color-ink-400: #6a6a94;
+  --color-ink-300: #9494b8;
+  --color-ink-200: #c3c3da;
+  --color-ink-100: #e7e7f2;
+
+  --color-brand-600: #5b46e5;
+  --color-brand-500: #6d5bf5;
+  --color-brand-400: #8b7bff;
+  --color-brand-300: #a99dff;
+
+  --color-mint-500: #10b981;
+  --color-mint-400: #34d399;
+  --color-amber-500: #f59e0b;
+  --color-rose-500: #f43f5e;
+  --color-sky-400: #38bdf8;
+
+  --font-sans: "Inter var", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, "Cascadia Code",
+    Menlo, monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-ink-950 text-ink-100 font-sans antialiased;
+    background-image:
+      radial-gradient(1100px 620px at 12% -12%, rgba(109, 91, 245, 0.16), transparent 62%),
+      radial-gradient(900px 520px at 92% 4%, rgba(56, 189, 248, 0.08), transparent 58%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  ::selection {
+    @apply bg-brand-500/35 text-white;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-400/70 ring-offset-2 ring-offset-ink-950;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-600 rounded-full;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-ink-500; }
+}
+
+/* Tailwind v4 only lets `@apply` reference real utilities, so the four classes
+   that other classes compose from are registered with `@utility`. Everything
+   that is only used from JSX stays in `@layer components`. */
+@utility surface {
+  @apply rounded-2xl border border-white/[0.07] bg-ink-900/70 backdrop-blur-xl;
+  box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 18px 40px -24px rgba(0, 0, 0, 0.9);
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5
+         text-sm font-semibold transition-all duration-150 select-none
+         whitespace-nowrap;
+}
+.btn:disabled { @apply opacity-40 pointer-events-none; }
+
+@utility chip {
+  @apply inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1
+         text-[11px] font-semibold uppercase tracking-wider;
+}
+
+@utility link {
+  @apply text-brand-300 underline-offset-4;
+}
+.link:hover { @apply text-brand-400 underline; }
+
+@layer components {
+  .surface-raised {
+    @apply surface bg-ink-850/85;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand-500 text-white hover:bg-brand-400 active:scale-[.985];
+    box-shadow: 0 8px 24px -10px rgba(109, 91, 245, 0.9);
+  }
+  .btn-ghost {
+    @apply btn border border-white/10 bg-white/[0.03] text-ink-200
+           hover:bg-white/[0.07] hover:text-white active:scale-[.985];
+  }
+  .btn-quiet {
+    @apply btn text-ink-300 hover:text-white hover:bg-white/[0.05];
+  }
+  .btn-danger {
+    @apply btn border border-rose-500/30 bg-rose-500/10 text-rose-500
+           hover:bg-rose-500/20;
+  }
+  .btn-sm { @apply px-3 py-1.5 text-xs rounded-lg; }
+
+  .field {
+    @apply w-full rounded-xl border border-white/10 bg-ink-950/60 px-4 py-3
+           text-sm text-ink-100 placeholder:text-ink-400
+           focus:border-brand-400/60 focus:bg-ink-950/90 transition-colors;
+  }
+  .label { @apply block text-xs font-semibold uppercase tracking-[0.14em] text-ink-400 mb-2; }
+
+  .chip-neutral { @apply chip border-white/10 bg-white/[0.04] text-ink-300; }
+  .chip-brand   { @apply chip border-brand-400/30 bg-brand-500/15 text-brand-300; }
+  .chip-mint    { @apply chip border-mint-400/30 bg-mint-500/15 text-mint-400; }
+  .chip-amber   { @apply chip border-amber-500/30 bg-amber-500/15 text-amber-500; }
+  .chip-rose    { @apply chip border-rose-500/30 bg-rose-500/15 text-rose-500; }
+
+  .page-title { @apply text-2xl font-bold tracking-tight text-white sm:text-3xl; }
+  .page-sub   { @apply mt-1.5 text-sm text-ink-400; }
+  .stat-value { @apply text-3xl font-bold tracking-tight text-white tabular-nums; }
+  .stat-label { @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-400; }
+}
+
+/* --- Code blocks (highlighted by src/lib/highlight.ts) --------------------- */
+.code-block {
+  @apply overflow-x-auto rounded-xl border border-white/[0.07] bg-ink-950/80 p-4
+         font-mono text-[12.5px] leading-relaxed;
+}
+.tok-key { color: #a99dff; }
+.tok-str { color: #34d399; }
+.tok-num { color: #f59e0b; }
+.tok-com { color: #6a6a94; font-style: italic; }
+.tok-kw  { color: #38bdf8; }
+.tok-fn  { color: #f0abfc; }
+
+/* --- Rendered markdown (cheat sheets) ------------------------------------- */
+.prose-sheet { @apply text-[14.5px] leading-relaxed text-ink-200; }
+.prose-sheet h2 {
+  @apply mt-9 mb-3 border-b border-white/[0.07] pb-2 text-lg font-bold text-white
+         first:mt-0 scroll-mt-24;
+}
+.prose-sheet h3 { @apply mt-6 mb-2 text-base font-semibold text-ink-100; }
+.prose-sheet p { @apply my-3; }
+.prose-sheet ul { @apply my-3 list-disc space-y-1.5 pl-5 marker:text-brand-400; }
+.prose-sheet ol { @apply my-3 list-decimal space-y-1.5 pl-5 marker:text-brand-400; }
+.prose-sheet a { @apply link; }
+.prose-sheet strong { @apply font-semibold text-white; }
+.prose-sheet code {
+  @apply rounded-md border border-white/[0.07] bg-white/[0.05] px-1.5 py-0.5
+         font-mono text-[12.5px] text-brand-300;
+}
+.prose-sheet pre {
+  @apply my-4 overflow-x-auto rounded-xl border border-white/[0.07] bg-ink-950/80 p-4;
+}
+.prose-sheet pre code { @apply border-0 bg-transparent p-0 text-ink-200; }
+.prose-sheet blockquote {
+  @apply my-4 rounded-r-lg border-l-2 border-amber-500/60 bg-amber-500/[0.07] py-2 pl-4 pr-3 text-ink-200;
+}
+.prose-sheet table { @apply my-4 w-full border-collapse text-[13px]; }
+.prose-sheet th {
+  @apply border-b border-white/10 px-3 py-2 text-left text-[11px] font-semibold
+         uppercase tracking-wider text-ink-400;
+}
+.prose-sheet td { @apply border-b border-white/[0.05] px-3 py-2 align-top; }
+.prose-sheet tr:last-child td { @apply border-0; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.animate-rise { animation: rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

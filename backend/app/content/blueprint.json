@@ -1,0 +1,94 @@
+{
+  "exam_code": "CCAR-F",
+  "exam_name": "Claude Certified Architect - Foundations",
+  "version": "2026.1",
+  "provenance": "Domain names, weightings and scoring format are taken from Anthropic's own public certification listing (Anthropic Academy / Skilljar). Every question, explanation, analogy and cheat sheet in this app is original, community-authored practice content written against those published domains and the linked course material — it is not sourced from, and does not reproduce, any real exam item. This project is not affiliated with or endorsed by Anthropic.",
+  "question_count": 60,
+  "duration_minutes": 90,
+  "pass_percent": 72,
+  "scaled_score": { "passing": 720, "min": 100, "max": 1000, "note": "Anthropic reports results on a 100-1000 scale; 720 is ~72%, which is what this app tracks internally." },
+  "delivery": ["Online proctored", "Pearson VUE test center"],
+  "scoring": "Multiple choice and multiple response. Multi-response items require every correct option and no incorrect one — there is no partial credit.",
+  "domains": [
+    {
+      "code": "AAO",
+      "name": "Agentic Architecture & Orchestration",
+      "weight_percent": 27,
+      "exam_questions": 16,
+      "cheatsheet": "d3-agentic",
+      "objectives": [
+        "Design subagents with correctly scoped tools, models and isolation boundaries",
+        "Choose between a skill, a subagent, a hook and plain memory for a given requirement",
+        "Build agent applications on the Claude Agent SDK: query() vs a persistent client, custom in-process tools, permission callbacks",
+        "Orchestrate multi-agent fan-out/reduce and reason about its cost and context trade-offs",
+        "Externalise state for long-running agent loops and bound runaway iteration",
+        "Place human-approval gates where reversibility is low and cost of a wrong action is high"
+      ]
+    },
+    {
+      "code": "TDM",
+      "name": "Tool Design & MCP Integration",
+      "weight_percent": 18,
+      "exam_questions": 11,
+      "cheatsheet": "d4-mcp",
+      "objectives": [
+        "Explain MCP architecture: host, client, server, and the tools/resources/prompts primitive split",
+        "Choose a transport (stdio vs Streamable HTTP) and a server scope (local, project, user)",
+        "Author well-specified tools: narrow verbs, clear descriptions and schemas, server-side validation",
+        "Secure MCP servers: authentication, per-caller authorisation, least-privileged credentials, confused-deputy avoidance",
+        "Decide when a capability belongs in an MCP server versus a skill, a hook or a plain permission rule",
+        "Debug MCP connection failures and tool-name or tool-selection collisions"
+      ]
+    },
+    {
+      "code": "CCW",
+      "name": "Claude Code Configuration & Workflows",
+      "weight_percent": 20,
+      "exam_questions": 12,
+      "cheatsheet": "d1-fundamentals",
+      "objectives": [
+        "Reason about settings precedence: enterprise managed policy, CLI flags, project and user settings",
+        "Configure the permission system: allow/ask/deny rules, permission modes, least-privileged tool grants",
+        "Run Claude Code headlessly for CI/CD with deterministic, parseable output and bounded turns",
+        "Design safe automation: idempotent jobs, scoped credentials, fork-PR safety, fail-closed pipelines",
+        "Operate sessions: continue/resume, compaction, rewind, slash commands and their frontmatter",
+        "Deploy at enterprise scale via Bedrock/Vertex/a gateway, with telemetry and audit in place"
+      ]
+    },
+    {
+      "code": "PES",
+      "name": "Prompt Engineering & Structured Output",
+      "weight_percent": 20,
+      "exam_questions": 12,
+      "cheatsheet": "d7-prompting",
+      "objectives": [
+        "Apply core prompting technique: role framing, XML/structured delimiting, few-shot examples, chain of thought",
+        "Produce reliable structured output: schema-first prompting, prefilling, grounding against fabrication",
+        "Select a model tier against latency, cost and capability requirements for a given workload",
+        "Use extended thinking budgets where deliberation changes the outcome, and not where it doesn't",
+        "Apply prompt caching and batch processing correctly, including cache-ordering and break-even reasoning",
+        "Forecast and control token spend across a team or workload"
+      ]
+    },
+    {
+      "code": "CMR",
+      "name": "Context Management & Reliability",
+      "weight_percent": 15,
+      "exam_questions": 9,
+      "cheatsheet": "d2-context",
+      "objectives": [
+        "Design CLAUDE.md hierarchies and apply progressive disclosure to control context cost",
+        "Diagnose context exhaustion and choose between compaction, clearing and externalised state",
+        "Mitigate prompt injection: treat tool output as data, remove valuable targets, gate outbound actions",
+        "Apply defence-in-depth for autonomous or unattended agents: containment, egress control, audit trails",
+        "Verify agent output mechanically (tests, diffs) rather than trusting a self-report",
+        "Maintain memory and configuration as living artefacts that are reviewed like code"
+      ]
+    }
+  ],
+  "difficulty_mix": { "foundational": 0.3, "applied": 0.5, "architect": 0.2 },
+  "question_types": {
+    "single": "One correct answer of four or five options.",
+    "multi": "Two or three correct answers; the stem states how many to select."
+  }
+}

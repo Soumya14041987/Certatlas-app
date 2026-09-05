@@ -1,0 +1,572 @@
+{
+  "questions": [
+    {
+      "id": "D1-015",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "bootstrapping a repo",
+      "stem": "A developer joins a repository that has no `.claude/` directory. Which command produces a first-pass `CLAUDE.md` by analysing the codebase?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`/init`"
+        },
+        {
+          "key": "B",
+          "text": "`/memory`"
+        },
+        {
+          "key": "C",
+          "text": "`/config`"
+        },
+        {
+          "key": "D",
+          "text": "`/bootstrap`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`/init` inspects the project — build tooling, test commands, layout, conventions — and writes a starter `CLAUDE.md`. `/memory` opens existing memory files for editing; `/config` opens settings; `/bootstrap` does not exist.",
+      "distractor_notes": {
+        "B": "Edits memory files that already exist; it does not generate one from the codebase.",
+        "C": "Settings UI, not memory generation.",
+        "D": "Not a command."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "`/init` is `npm init` or `terraform init` — it produces the scaffold you then curate by hand."
+      },
+      "cheatsheet": "d1-fundamentals#init",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "init",
+        "claude-md"
+      ]
+    },
+    {
+      "id": "D1-016",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "settings.local.json",
+      "stem": "What is the intended purpose of `.claude/settings.local.json`, and how should it be handled in version control?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Machine-specific overrides for one developer; it should be git-ignored."
+        },
+        {
+          "key": "B",
+          "text": "The canonical team configuration; it should be committed and reviewed."
+        },
+        {
+          "key": "C",
+          "text": "A cache Claude Code regenerates; it can be deleted safely at any time and never edited."
+        },
+        {
+          "key": "D",
+          "text": "Enterprise policy applied to the local machine; only administrators may edit it."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`settings.local.json` sits above `settings.json` in precedence and exists for personal overrides — an extra allowed tool, a different model while experimenting. Because it is personal, it belongs in `.gitignore`; the shared truth stays in `settings.json`.",
+      "distractor_notes": {
+        "B": "That is `settings.json`.",
+        "C": "It is authored, not generated.",
+        "D": "Enterprise policy lives in the managed-settings path outside the repository."
+      },
+      "cheatsheet": "d1-fundamentals#settings-precedence",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "settings",
+        "git"
+      ]
+    },
+    {
+      "id": "D1-017",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "Select the TWO statements that correctly describe plan mode.",
+      "options": [
+        {
+          "key": "A",
+          "text": "It restricts the session to read-only analysis until the user approves a plan."
+        },
+        {
+          "key": "B",
+          "text": "It automatically applies the plan once the model finishes writing it."
+        },
+        {
+          "key": "C",
+          "text": "It can be entered by cycling permission modes with Shift+Tab."
+        },
+        {
+          "key": "D",
+          "text": "It disables the Read and Grep tools to save context."
+        },
+        {
+          "key": "E",
+          "text": "It requires a `plan` block in `CLAUDE.md` to be available."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Plan mode is a read-only permission mode: the agent investigates and proposes, and nothing is mutated until the human accepts. Shift+Tab cycles through the permission modes in the interactive UI.",
+      "distractor_notes": {
+        "B": "Approval is the entire point — auto-apply would defeat it.",
+        "D": "Reading is exactly what plan mode is for.",
+        "E": "No configuration is required."
+      },
+      "analogy": {
+        "frame": "Terraform",
+        "text": "`terraform plan` versus `terraform apply`. Plan mode is the dry run you read before you let anything change."
+      },
+      "cheatsheet": "d1-fundamentals#permission-modes",
+      "sources": [
+        "c-claude-code",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "plan-mode",
+        "permissions"
+      ]
+    },
+    {
+      "id": "D1-018",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "cost visibility",
+      "stem": "A team lead wants to know how much the current session has cost so far, without leaving the session. Which command reports it?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`/context`"
+        },
+        {
+          "key": "B",
+          "text": "`/cost`"
+        },
+        {
+          "key": "C",
+          "text": "`/status`"
+        },
+        {
+          "key": "D",
+          "text": "`/usage`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`/cost` reports token usage and spend for the session. `/context` shows how the context window is being consumed, which is a related but different question — one is money, the other is room.",
+      "distractor_notes": {
+        "A": "Context-window occupancy, not spend.",
+        "C": "Account and connection state.",
+        "D": "Not the cost command in Claude Code."
+      },
+      "cheatsheet": "d1-fundamentals#diagnostics",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "cost",
+        "slash-commands"
+      ]
+    },
+    {
+      "id": "D1-019",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "session hygiene",
+      "stem": "An engineer keeps one Claude Code session open all week across unrelated tickets. Quality drops and cost per turn climbs. What is the root cause and the correct remedy?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The model degrades over time; restart the CLI daily."
+        },
+        {
+          "key": "B",
+          "text": "Accumulated irrelevant context dilutes attention and inflates every request; start a fresh session per task and use `/clear` at task boundaries."
+        },
+        {
+          "key": "C",
+          "text": "Token pricing rises with session age; open a new billing session each morning."
+        },
+        {
+          "key": "D",
+          "text": "The context window shrinks as it fills; enlarge it in settings."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Every prior turn is re-sent as input on each request, so a long, topic-mixed transcript costs more per turn *and* competes for the model's attention with the task actually at hand. Task-scoped sessions are the single highest-leverage habit for both quality and spend.",
+      "distractor_notes": {
+        "A": "Nothing about the model changes; the input does.",
+        "C": "Pricing is per token, not per session age.",
+        "D": "The window is fixed; it is being consumed, not shrinking."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is the same discipline as short-lived feature branches. A branch you keep rebasing for three weeks accumulates conflict surface; so does a session."
+      },
+      "cheatsheet": "d1-fundamentals#context",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "context",
+        "cost",
+        "hygiene"
+      ]
+    },
+    {
+      "id": "D1-020",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "environment variables",
+      "stem": "Which environment variable routes Claude Code inference through Google Vertex AI?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`ANTHROPIC_VERTEX=true`"
+        },
+        {
+          "key": "B",
+          "text": "`CLAUDE_CODE_USE_VERTEX=1`"
+        },
+        {
+          "key": "C",
+          "text": "`GOOGLE_CLOUD_CLAUDE=enabled`"
+        },
+        {
+          "key": "D",
+          "text": "`ANTHROPIC_BASE_URL=vertex`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`CLAUDE_CODE_USE_VERTEX=1` selects Vertex AI, mirroring `CLAUDE_CODE_USE_BEDROCK=1` for Amazon Bedrock. Region and project are then supplied through the usual Google Cloud variables.",
+      "distractor_notes": {
+        "A": "Not a real variable.",
+        "C": "Not a real variable.",
+        "D": "`ANTHROPIC_BASE_URL` points at a gateway URL, not a provider keyword."
+      },
+      "cheatsheet": "d1-fundamentals#enterprise",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "vertex",
+        "env",
+        "deployment"
+      ]
+    },
+    {
+      "id": "D1-021",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "file referencing",
+      "stem": "Inside an interactive session, what does typing `@src/auth/session.ts` in a prompt do?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Nothing special; it is treated as literal text."
+        },
+        {
+          "key": "B",
+          "text": "It references that file so its contents are pulled into context for the turn."
+        },
+        {
+          "key": "C",
+          "text": "It opens the file in the user's editor."
+        },
+        {
+          "key": "D",
+          "text": "It permanently pins the file into every future turn of the session."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`@` is the file-reference affordance: it brings the named file (or directory listing) into context for the request, which is far cheaper and more precise than asking the agent to search for it.",
+      "distractor_notes": {
+        "A": "It is a first-class affordance.",
+        "C": "It does not drive the editor.",
+        "D": "It affects the turn, not a permanent pin."
+      },
+      "analogy": {
+        "frame": "Code review",
+        "text": "It is the difference between saying 'look at the auth code somewhere' and pasting the exact file link into the review comment."
+      },
+      "cheatsheet": "d1-fundamentals#context",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "context",
+        "file-reference"
+      ]
+    },
+    {
+      "id": "D1-022",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "permission rule syntax",
+      "stem": "Which permission rule allows the test suite to be run but does NOT allow arbitrary npm scripts?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`Bash(npm:*)`"
+        },
+        {
+          "key": "B",
+          "text": "`Bash(npm run test:*)`"
+        },
+        {
+          "key": "C",
+          "text": "`Bash`"
+        },
+        {
+          "key": "D",
+          "text": "`Bash(*test*)`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Rules are `Tool(specifier)` and the specifier is prefix-matched with `:*` acting as the wildcard tail. `Bash(npm run test:*)` matches `npm run test`, `npm run test:unit`, `npm run test -- --watch`, and nothing else. `Bash(npm:*)` would also permit `npm publish`.",
+      "distractor_notes": {
+        "A": "Far too broad — includes publish, install, arbitrary scripts.",
+        "C": "Allows every shell command.",
+        "D": "Not the rule syntax; leading wildcards are not how specifiers match."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": "Least-privilege test permissions",
+        "code": "{\n  \"permissions\": {\n    \"allow\": [\n      \"Bash(npm run test:*)\",\n      \"Bash(npm run lint:*)\",\n      \"Read(./src/**)\"\n    ],\n    \"deny\": [\"Bash(npm publish:*)\"]\n  }\n}"
+      },
+      "cheatsheet": "d1-fundamentals#permission-rules",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "permissions",
+        "syntax",
+        "least-privilege"
+      ]
+    },
+    {
+      "id": "D1-023",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "deny vs ask",
+      "stem": "A security team wants database migrations to always require a human decision, and wants production credential files to be unreachable entirely. How should the rules be expressed?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Both in `deny`, since deny is the strongest control."
+        },
+        {
+          "key": "B",
+          "text": "Migrations in `ask`, credential files in `deny`."
+        },
+        {
+          "key": "C",
+          "text": "Both in `ask`, so an engineer can always override in an emergency."
+        },
+        {
+          "key": "D",
+          "text": "Migrations in `allow` with a PostToolUse hook, credential files in `ask`."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`ask` forces an explicit human confirmation each time — right for an operation that is legitimate but consequential. `deny` refuses outright with no prompt — right for something that should never happen, where even offering the prompt is a social-engineering surface.",
+      "distractor_notes": {
+        "A": "Denying migrations blocks legitimate work and pushes engineers outside the tool.",
+        "C": "A prompt on credential reads is exactly the moment a prompt-injection payload wants a tired human to click Allow.",
+        "D": "A PostToolUse hook fires after the migration has already run."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "`ask` is a manual approval action before the deploy stage. `deny` is an SCP that makes the API call impossible — no prompt, no human in the loop to fool."
+      },
+      "cheatsheet": "d1-fundamentals#permission-rules",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "permissions",
+        "governance"
+      ]
+    },
+    {
+      "id": "D1-024",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "resuming by id",
+      "stem": "A CI workflow needs a second headless step to continue the exact conversation started by an earlier step. What must the first step capture, and how is it used?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The PID of the first process, passed to `--attach`."
+        },
+        {
+          "key": "B",
+          "text": "The `session_id` from the JSON output, passed to `--resume <id> -p`."
+        },
+        {
+          "key": "C",
+          "text": "Nothing; `--continue` always finds the right session in CI."
+        },
+        {
+          "key": "D",
+          "text": "The full transcript, re-supplied as the next prompt."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "JSON output carries a `session_id`. Passing it to `--resume <id>` together with `-p` continues that specific conversation non-interactively — the standard pattern for multi-stage pipelines.",
+      "distractor_notes": {
+        "A": "Sessions are not attached by PID.",
+        "C": "`--continue` depends on 'most recent for this directory', which is fragile when runners are ephemeral or parallel.",
+        "D": "Wasteful and lossy; the session already holds it."
+      },
+      "snippet": {
+        "lang": "bash",
+        "title": "Two-stage headless pipeline",
+        "code": "# Stage 1 — analyse\nout=$(claude -p \"Analyse the failing tests\" --output-format json)\nsid=$(echo \"$out\" | jq -r '.session_id')\n\n# Stage 2 — act, in the same conversation\nclaude --resume \"$sid\" -p \"Now propose the minimal fix\" --output-format json"
+      },
+      "cheatsheet": "d1-fundamentals#sessions",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "sessions",
+        "ci",
+        "resume"
+      ]
+    },
+    {
+      "id": "D1-025",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "hooks discovery",
+      "stem": "Where are hooks configured?",
+      "options": [
+        {
+          "key": "A",
+          "text": "In `CLAUDE.md`, as a fenced `hooks` block."
+        },
+        {
+          "key": "B",
+          "text": "In `settings.json` under a `hooks` key, editable through `/hooks`."
+        },
+        {
+          "key": "C",
+          "text": "In `.claude/hooks/*.sh`, discovered by filename convention only."
+        },
+        {
+          "key": "D",
+          "text": "In `.mcp.json`, alongside server definitions."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Hooks are configuration, not instructions: they live in the `hooks` key of the settings files and follow the same precedence chain. The `/hooks` command gives an interactive editor over that configuration. Scripts may live anywhere; the matcher and command are what get registered.",
+      "distractor_notes": {
+        "A": "`CLAUDE.md` is prompt context, not executable configuration.",
+        "C": "There is no filename-only auto-discovery.",
+        "D": "That file is for MCP servers."
+      },
+      "cheatsheet": "d1-fundamentals",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "settings"
+      ]
+    },
+    {
+      "id": "D1-026",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A `--dangerously-skip-permissions` run is being proposed for an autonomous refactoring job. Select the TWO conditions that make this defensible.",
+      "options": [
+        {
+          "key": "A",
+          "text": "The job runs in a disposable container with no network egress and no production credentials."
+        },
+        {
+          "key": "B",
+          "text": "The engineer promises to watch the terminal."
+        },
+        {
+          "key": "C",
+          "text": "The working tree is a throwaway clone whose only output is a pull request a human reviews."
+        },
+        {
+          "key": "D",
+          "text": "The repository has a comprehensive `CLAUDE.md`."
+        },
+        {
+          "key": "E",
+          "text": "The model is set to the most capable tier available."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Skipping permissions removes the interactive guardrail, so the guardrail has to be reconstructed from the environment: blast radius bounded by isolation, and a human review gate on the way out. Neither vigilance, documentation quality, nor model capability constrains what a tool call can reach.",
+      "distractor_notes": {
+        "B": "Attention is not a control; the prompts you removed were the control.",
+        "D": "Good context improves behaviour but grants no containment.",
+        "E": "A more capable model still executes whatever it decides to execute."
+      },
+      "analogy": {
+        "frame": "Kubernetes",
+        "text": "It is running a pod as privileged. Sometimes justified — but only on a node pool you are willing to lose, never on the cluster holding production secrets."
+      },
+      "cheatsheet": "d1-fundamentals",
+      "sources": [
+        "c-security",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "permissions",
+        "autonomy",
+        "sandbox"
+      ]
+    }
+  ]
+}

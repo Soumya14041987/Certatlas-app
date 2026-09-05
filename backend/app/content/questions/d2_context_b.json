@@ -1,0 +1,718 @@
+{
+  "questions": [
+    {
+      "id": "D2-016",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "subagent context isolation",
+      "stem": "Why does delegating a large codebase search to a subagent help the main session's context, even though the subagent reads more files than the main agent would have?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Subagents use a cheaper model, so their tokens are not counted."
+        },
+        {
+          "key": "B",
+          "text": "The subagent works in its own context window and returns only its conclusion, so the file contents never enter the parent's transcript."
+        },
+        {
+          "key": "C",
+          "text": "Subagent tool results are compressed before being added to the parent context."
+        },
+        {
+          "key": "D",
+          "text": "Subagents run after the main session ends, so there is no overlap."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Context isolation is the primary architectural reason to use a subagent. The parent pays for the task description and the returned summary; the hundred file reads stay in the child's window and are discarded with it.",
+      "distractor_notes": {
+        "A": "Model choice affects cost, not the isolation property.",
+        "C": "It is not compression — the intermediate work simply never crosses the boundary.",
+        "D": "Subagents run within the parent's task."
+      },
+      "analogy": {
+        "frame": "Microservices",
+        "text": "It is why you call a service instead of importing its whole database: you get the answer across the boundary, not the working set."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "subagents",
+        "context",
+        "isolation"
+      ]
+    },
+    {
+      "id": "D2-017",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "when NOT to use a subagent",
+      "stem": "In which situation is a subagent the WRONG choice?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Sweeping 400 files to find every caller of a deprecated function."
+        },
+        {
+          "key": "B",
+          "text": "A tightly interactive refactor where the parent needs the full detail of every file it touches."
+        },
+        {
+          "key": "C",
+          "text": "Running an independent security review of a diff."
+        },
+        {
+          "key": "D",
+          "text": "Summarising a large log file down to its distinct error signatures."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Isolation cuts both ways. When the parent genuinely needs the detail, sending it to a child and getting a summary back destroys the information you needed and adds a round trip. Subagents pay off when the ratio of material examined to conclusion returned is high.",
+      "distractor_notes": {
+        "A": "Classic high-ratio fan-out — ideal.",
+        "C": "Independence is a feature here.",
+        "D": "High-ratio reduction — ideal."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "subagents",
+        "trade-offs"
+      ]
+    },
+    {
+      "id": "D2-018",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "SessionStart hook",
+      "stem": "A team wants every session in their repository to begin with the current sprint's ticket list already in context. Which mechanism fits best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Paste the tickets into `CLAUDE.md` and update it daily by hand."
+        },
+        {
+          "key": "B",
+          "text": "A `SessionStart` hook that fetches the tickets and emits them as additional context."
+        },
+        {
+          "key": "C",
+          "text": "A `PostToolUse` hook on the Read tool."
+        },
+        {
+          "key": "D",
+          "text": "A slash command each developer must remember to run."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`SessionStart` fires when a session begins or resumes and can inject dynamic context — current branch, open tickets, recent deploys — that would be stale the moment it was written into a static file.",
+      "distractor_notes": {
+        "A": "Guaranteed staleness and manual toil.",
+        "C": "Fires after unrelated reads, far too late and too often.",
+        "D": "Depends on human memory; hooks are the deterministic layer."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is the shell's `.bashrc` versus a note telling everyone to export the variable themselves."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": ".claude/settings.json",
+        "code": "{\n  \"hooks\": {\n    \"SessionStart\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \".claude/scripts/sprint-context.sh\" }\n        ]\n      }\n    ]\n  }\n}"
+      },
+      "cheatsheet": "d2-context",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "session-start",
+        "context"
+      ]
+    },
+    {
+      "id": "D2-019",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "tool-result bloat",
+      "stem": "An agent runs `npm test` on a suite that prints 40,000 lines on failure. What is the most effective mitigation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Increase the context window."
+        },
+        {
+          "key": "B",
+          "text": "Have the agent run the suite with a reporter or filter that surfaces only failures, e.g. piping through a summariser or using a compact reporter."
+        },
+        {
+          "key": "C",
+          "text": "Ask the agent not to read the output."
+        },
+        {
+          "key": "D",
+          "text": "Disable the Bash tool and read the test files instead."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Tool output lands in context verbatim, so the cheapest fix is at the source: make the command emit less. A compact reporter, a quiet flag, or a wrapper that extracts only failing cases turns 40,000 lines into the twenty that matter.",
+      "distractor_notes": {
+        "A": "Buys headroom for one run and costs money on every run.",
+        "C": "It is already in context by then.",
+        "D": "Removes the ability to know whether tests pass."
+      },
+      "analogy": {
+        "frame": "Observability",
+        "text": "Same principle as sampling and log levels: you do not ship DEBUG from production to your SIEM and then filter at the dashboard — you filter at the emitter."
+      },
+      "cheatsheet": "d2-context#budgeting",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "context",
+        "tools",
+        "cost"
+      ]
+    },
+    {
+      "id": "D2-020",
+      "domain": "CMR",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "context window accounting",
+      "stem": "Which of the following does NOT consume the context window?",
+      "options": [
+        {
+          "key": "A",
+          "text": "System prompt and loaded `CLAUDE.md` files"
+        },
+        {
+          "key": "B",
+          "text": "Tool definitions for every enabled MCP server"
+        },
+        {
+          "key": "C",
+          "text": "Files on disk that the agent has not read"
+        },
+        {
+          "key": "D",
+          "text": "The full text of previous assistant turns"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Only what is actually placed in the request counts: system prompt, memory files, tool schemas, the transcript, and tool results. Unread files cost nothing — which is precisely why targeted retrieval is the core context discipline.",
+      "distractor_notes": {
+        "A": "Loaded on every request.",
+        "B": "Tool schemas are sent with each request; a dozen chatty servers can cost thousands of tokens before you type anything.",
+        "D": "The whole transcript is re-sent each turn."
+      },
+      "cheatsheet": "d2-context#budgeting",
+      "sources": [
+        "c-claude-api",
+        "c-claude-code"
+      ],
+      "tags": [
+        "context",
+        "tokens",
+        "mcp"
+      ]
+    },
+    {
+      "id": "D2-021",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A repository has 14 MCP servers enabled, and engineers report that sessions feel slow and the model sometimes picks odd tools. Select the TWO sound remedies.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Scope servers to the projects that need them rather than enabling all of them at user scope."
+        },
+        {
+          "key": "B",
+          "text": "Disable tool descriptions to shrink the schema payload."
+        },
+        {
+          "key": "C",
+          "text": "Consolidate overlapping servers so there is one obvious tool per job, reducing selection ambiguity."
+        },
+        {
+          "key": "D",
+          "text": "Switch every session to a larger context window."
+        },
+        {
+          "key": "E",
+          "text": "Instruct the model in `CLAUDE.md` to ignore the servers it does not need."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Every enabled server's tool schemas are sent on every request, and near-duplicate tools make selection genuinely ambiguous. Fix both structurally: narrow scope so a project sees only its own servers, and remove overlap so each capability has one canonical tool.",
+      "distractor_notes": {
+        "B": "Descriptions are how the model chooses correctly; removing them makes selection worse.",
+        "D": "Pays money to keep the noise.",
+        "E": "The schemas are still sent and still cost tokens; an instruction does not unload them."
+      },
+      "analogy": {
+        "frame": "Kubernetes",
+        "text": "It is admission-webhook sprawl. Every registered webhook is consulted on every request, and two that do nearly the same thing are worse than one that does it well."
+      },
+      "cheatsheet": "d2-context",
+      "sources": [
+        "c-mcp-advanced",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "mcp",
+        "context",
+        "performance"
+      ]
+    },
+    {
+      "id": "D2-022",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "explore-plan-code-commit",
+      "stem": "Anthropic's recommended agentic-coding workflow for a non-trivial change is best summarised as:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Code first, then explain the change afterwards."
+        },
+        {
+          "key": "B",
+          "text": "Explore the relevant code, produce a plan and have it reviewed, implement, then commit with tests."
+        },
+        {
+          "key": "C",
+          "text": "Generate ten candidate implementations and pick the shortest."
+        },
+        {
+          "key": "D",
+          "text": "Write the commit message first and let it drive the code."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Explore → plan → code → commit. The expensive mistakes are made in the first two phases, and they are also the cheapest phases to correct — which is why plan mode and an explicit human approval step exist between them.",
+      "distractor_notes": {
+        "A": "Skips the phase where design errors are cheap.",
+        "C": "Wasteful and rarely converges on quality.",
+        "D": "A stunt, not a workflow."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is design review before implementation, the same reason an RFC precedes a large PR."
+      },
+      "cheatsheet": "d2-context#workflow",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "workflow",
+        "plan-mode"
+      ]
+    },
+    {
+      "id": "D2-023",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "memory for test discipline",
+      "stem": "A team wants Claude Code to never mark work complete on the basis of an unverified claim. Which `CLAUDE.md` entry best encodes that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "'Always be accurate.'"
+        },
+        {
+          "key": "B",
+          "text": "'Before reporting a task complete, run `pnpm test` and paste the summary line; if you did not run it, say so explicitly.'"
+        },
+        {
+          "key": "C",
+          "text": "'Tests are important to this team.'"
+        },
+        {
+          "key": "D",
+          "text": "'Never make mistakes.'"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The instruction names the action, the command, the evidence to produce, and the fallback when it could not be done. That is a rule an agent can actually follow and a reviewer can actually check.",
+      "distractor_notes": {
+        "A": "No behaviour attached.",
+        "C": "A sentiment, not a procedure.",
+        "D": "Unachievable and unactionable."
+      },
+      "cheatsheet": "d2-context#what-belongs",
+      "sources": [
+        "c-cc-best-practices",
+        "c-prompt-eng"
+      ],
+      "tags": [
+        "claude-md",
+        "verification"
+      ]
+    },
+    {
+      "id": "D2-024",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "recovering from a bad turn",
+      "stem": "Claude Code has made several edits down a wrong path. The developer wants to return the conversation and the files to an earlier point rather than manually undoing changes. Which capability is designed for this?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`/rewind`, which restores to an earlier checkpoint in the session."
+        },
+        {
+          "key": "B",
+          "text": "`/compact`, which drops the bad turns from context."
+        },
+        {
+          "key": "C",
+          "text": "`/clear`, which reverts the working tree."
+        },
+        {
+          "key": "D",
+          "text": "There is none; recover with git."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`/rewind` steps the session back to an earlier checkpoint, with the option to restore code, conversation, or both. Git remains the durable safety net, but rewind handles the in-session case without leaving the tool.",
+      "distractor_notes": {
+        "B": "Summarises; it does not undo edits.",
+        "C": "Clears conversation only — files are untouched.",
+        "D": "Git works, but there is a purpose-built affordance."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "Rewind is a hard reset to a checkpoint, scoped to the session, with the transcript reset alongside the tree."
+      },
+      "cheatsheet": "d2-context",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "rewind",
+        "recovery",
+        "sessions"
+      ]
+    },
+    {
+      "id": "D2-025",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "documentation as agent interface",
+      "stem": "An architect argues that improving a repository's README and module docstrings is 'AI enablement work' with measurable ROI. What is the strongest technical justification?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Agents cannot read code, only prose."
+        },
+        {
+          "key": "B",
+          "text": "Good docs let the agent orient with a few cheap reads instead of exploratory searching, which reduces tokens, latency and the chance of building on a wrong mental model."
+        },
+        {
+          "key": "C",
+          "text": "Documentation is cached by the provider and therefore free."
+        },
+        {
+          "key": "D",
+          "text": "It lets the team delete their `CLAUDE.md`."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Orientation cost is real and recurring: every session pays it. Documentation that answers 'what is this, where does it live, what are the rules' converts a dozen speculative searches into two targeted reads, and it happens to be the same investment that helps human newcomers.",
+      "distractor_notes": {
+        "A": "Agents read code fine; it is just slower and more token-hungry than reading a good summary.",
+        "C": "Caching is a request-level optimisation, not a property of documentation.",
+        "D": "They complement each other."
+      },
+      "cheatsheet": "d2-context#budgeting",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "documentation",
+        "roi",
+        "context"
+      ]
+    },
+    {
+      "id": "D2-026",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "import depth",
+      "stem": "Which statement about `@` imports in memory files is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Imports may nest to a bounded depth, and cycles are not expanded infinitely."
+        },
+        {
+          "key": "B",
+          "text": "Imports are single-level only; an imported file's own imports are ignored entirely and reported as an error."
+        },
+        {
+          "key": "C",
+          "text": "Imports may nest without limit, so a cycle will exhaust the context window."
+        },
+        {
+          "key": "D",
+          "text": "Imports are resolved lazily at the moment the agent decides it needs the file."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Nested imports are supported up to a bounded depth, which both enables composition (a root file importing team files that import module files) and prevents a cycle from being expanded forever.",
+      "distractor_notes": {
+        "B": "Nesting is supported.",
+        "C": "The depth bound exists precisely to stop that.",
+        "D": "Imports are resolved when memory is loaded."
+      },
+      "cheatsheet": "d2-context#imports",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "claude-md",
+        "imports"
+      ]
+    },
+    {
+      "id": "D2-027",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "Select the TWO signals that most reliably indicate a session should be cleared rather than compacted.",
+      "options": [
+        {
+          "key": "A",
+          "text": "The developer is moving to an unrelated ticket."
+        },
+        {
+          "key": "B",
+          "text": "The context indicator is at 80% but the current task is half done."
+        },
+        {
+          "key": "C",
+          "text": "The agent keeps referring to a file from a previous, abandoned approach."
+        },
+        {
+          "key": "D",
+          "text": "The last tool call returned a large diff."
+        },
+        {
+          "key": "E",
+          "text": "The session has been open for more than an hour."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Clear at a *topic* boundary: a new ticket, or contamination from an abandoned approach that keeps resurfacing. Compact when the topic is unchanged but the transcript has grown. Elapsed time and a single large tool result are not, by themselves, reasons to discard the thread.",
+      "distractor_notes": {
+        "B": "Textbook compaction case — same task, too much transcript.",
+        "D": "One big result is a compaction or filtering concern.",
+        "E": "Duration is a proxy at best; topic drift is the real signal."
+      },
+      "cheatsheet": "d2-context#compaction",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "context",
+        "clear",
+        "compact"
+      ]
+    },
+    {
+      "id": "D2-028",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "memory governance",
+      "stem": "Which governance practice best prevents a shared `CLAUDE.md` from decaying in a 60-engineer organisation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Quarterly manual audits by the architecture guild."
+        },
+        {
+          "key": "B",
+          "text": "Requiring that any PR changing build commands, test tooling or a documented invariant updates `CLAUDE.md` in the same PR, enforced by a CODEOWNERS rule and a CI check."
+        },
+        {
+          "key": "C",
+          "text": "Locking the file so only architects can change it."
+        },
+        {
+          "key": "D",
+          "text": "Regenerating it with `/init` every sprint."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Decay happens in the gap between a change and the documentation of that change. Closing the gap inside the same PR — with ownership and an automated reminder — is the only approach that scales; audits find rot late and locking the file guarantees it.",
+      "distractor_notes": {
+        "A": "Detects rot up to three months after it started misleading people.",
+        "C": "Creates a bottleneck, so the file simply stops being updated.",
+        "D": "Regeneration discards the hard-won human curation that made it valuable."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "The same reason schema migrations ship in the PR that changes the model, not in a quarterly cleanup ticket."
+      },
+      "cheatsheet": "d2-context#maintenance",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "governance",
+        "claude-md",
+        "process"
+      ]
+    },
+    {
+      "id": "D2-029",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "headless context",
+      "stem": "In a headless CI run, which memory sources are loaded?",
+      "options": [
+        {
+          "key": "A",
+          "text": "None; memory is an interactive-only feature."
+        },
+        {
+          "key": "B",
+          "text": "The same hierarchy as interactive use — enterprise, project and user memory — subject to what exists on the runner."
+        },
+        {
+          "key": "C",
+          "text": "Only the enterprise managed policy."
+        },
+        {
+          "key": "D",
+          "text": "Only files explicitly passed with `--memory`."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Headless mode changes the interaction model, not the configuration model. The practical caveat is that an ephemeral CI runner has no `~/.claude/CLAUDE.md`, so behaviour can differ from a laptop — which is an argument for keeping anything CI depends on in the committed project memory.",
+      "distractor_notes": {
+        "A": "Memory loads in both modes.",
+        "C": "Project memory loads too.",
+        "D": "No such flag; discovery is hierarchical."
+      },
+      "cheatsheet": "d2-context#hierarchy",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "headless",
+        "ci",
+        "claude-md"
+      ]
+    },
+    {
+      "id": "D2-030",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "context strategy selection",
+      "stem": "A 90-minute agent task must survive several compactions and produce a coherent final report. Which design is most robust?",
+      "options": [
+        {
+          "key": "A",
+          "text": "One long session, relying on auto-compaction to preserve what matters."
+        },
+        {
+          "key": "B",
+          "text": "A driver that writes findings to a structured file after each phase, with each phase starting from a fresh context that reads that file."
+        },
+        {
+          "key": "C",
+          "text": "Ten parallel agents, merging their transcripts at the end."
+        },
+        {
+          "key": "D",
+          "text": "One session with `/compact` run every five minutes."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Make the durable artefact the source of truth and treat context as disposable working memory. Each phase then starts clean, reads the accumulated findings, does one bounded job, and appends — so no compaction can lose the result, and the final report is assembled from the file, not from recollection.",
+      "distractor_notes": {
+        "A": "Auto-compaction optimises for continuity, not for your report's completeness.",
+        "C": "Merging ten raw transcripts is a context problem, not a solution.",
+        "D": "Frequent lossy summarisation compounds the loss."
+      },
+      "analogy": {
+        "frame": "AWS Step Functions",
+        "text": "Phases are states, the findings file is the execution state, and each Lambda is stateless. That is how long workflows survive restarts — and compactions."
+      },
+      "snippet": {
+        "lang": "python",
+        "title": "Phase driver with externalised state (Claude Agent SDK)",
+        "code": "import pathlib\nfrom claude_agent_sdk import query, ClaudeAgentOptions\n\nSTATE = pathlib.Path(\"findings.json\")\n\nasync def run_phase(name: str, instruction: str) -> None:\n    prior = STATE.read_text() if STATE.exists() else \"{}\"\n    prompt = (\n        f\"Prior findings:\\n{prior}\\n\\n\"\n        f\"Phase '{name}': {instruction}\\n\"\n        \"Append your findings to findings.json. Do not rewrite earlier entries.\"\n    )\n    async for _ in query(prompt=prompt, options=ClaudeAgentOptions(\n        allowed_tools=[\"Read\", \"Write\", \"Grep\"], permission_mode=\"acceptEdits\")):\n        pass"
+      },
+      "cheatsheet": "d3-agentic",
+      "sources": [
+        "c-agent-sdk",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "architecture",
+        "state",
+        "long-running"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,700 @@
+{
+  "questions": [
+    {
+      "id": "D4-016",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "building a server",
+      "stem": "You are writing an MCP server in Python. Which statement about tool definitions is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Tool names alone are enough; descriptions and input schemas are optional decoration."
+        },
+        {
+          "key": "B",
+          "text": "Each tool needs a name, a description written for the model, and a JSON-schema input definition — the description and schema are how the model decides to call it correctly."
+        },
+        {
+          "key": "C",
+          "text": "Input validation is unnecessary because the model always sends well-formed arguments."
+        },
+        {
+          "key": "D",
+          "text": "Tools must return plain strings; structured content is not supported."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The tool definition is a prompt in disguise. The description tells the model when to use it and the schema tells it what to send; both are the interface. And the model is an untrusted caller like any other — validate inputs server-side.",
+      "distractor_notes": {
+        "A": "They are the selection signal.",
+        "C": "Never trust caller input, model or not.",
+        "D": "Structured content is supported."
+      },
+      "snippet": {
+        "lang": "python",
+        "title": "A well-specified MCP tool",
+        "code": "from mcp.server.fastmcp import FastMCP\n\nmcp = FastMCP(\"orders\")\n\n@mcp.tool()\ndef get_order_status(order_id: str) -> dict:\n    \"\"\"Look up the current fulfilment status of one order.\n\n    Use when the user asks where an order is, whether it shipped,\n    or for its tracking number. Requires the full order id (e.g. ORD-91422).\n    Does not modify anything.\n    \"\"\"\n    if not order_id.startswith(\"ORD-\"):\n        raise ValueError(\"order_id must look like ORD-12345\")\n    return lookup(order_id)"
+      },
+      "cheatsheet": "d4-mcp#building",
+      "sources": [
+        "c-mcp-intro",
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "mcp",
+        "server",
+        "schema"
+      ]
+    },
+    {
+      "id": "D4-017",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool description quality",
+      "stem": "An MCP server exposes `search` and `find`, with descriptions 'Search things' and 'Find things'. The model picks the wrong one constantly. What is the correct fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Rename them `search1` and `search2`."
+        },
+        {
+          "key": "B",
+          "text": "Merge them into one tool if they do the same job, or rewrite the descriptions to state precisely what each searches, when to use it, and what it returns."
+        },
+        {
+          "key": "C",
+          "text": "Add a `priority` field so one is always chosen first."
+        },
+        {
+          "key": "D",
+          "text": "Tell the model in `CLAUDE.md` which to use."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The model is choosing between two indistinguishable options and getting it right half the time — which is the expected outcome. Either the distinction is real, in which case the descriptions must express it, or it is not, in which case there should be one tool.",
+      "distractor_notes": {
+        "A": "Now they are indistinguishable and unreadable.",
+        "C": "No such field, and a static winner is not the goal.",
+        "D": "Papers over a broken interface, only for repositories that have that memory file."
+      },
+      "cheatsheet": "d4-mcp#building",
+      "sources": [
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "mcp",
+        "descriptions",
+        "tool-selection"
+      ]
+    },
+    {
+      "id": "D4-018",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "Select the TWO reasons an organisation might prefer a remote HTTP MCP server over a local stdio one.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Centralised deployment: fix or update the integration once for everyone, with no client-side upgrade."
+        },
+        {
+          "key": "B",
+          "text": "Secrets stay server-side rather than being distributed to every developer machine."
+        },
+        {
+          "key": "C",
+          "text": "Remote servers have no authentication requirements."
+        },
+        {
+          "key": "D",
+          "text": "Remote servers cannot be affected by prompt injection."
+        },
+        {
+          "key": "E",
+          "text": "Remote servers consume no context because their schemas are not sent."
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "Remote servers centralise both deployment and credentials — the two operational headaches of distributing stdio servers to hundreds of laptops. They still need authentication, are still subject to injection through whatever data they relay, and their tool schemas still cost context.",
+      "distractor_notes": {
+        "C": "They need it more, not less.",
+        "D": "Transport does not change data trust.",
+        "E": "Schemas are sent regardless of transport."
+      },
+      "cheatsheet": "d4-mcp#transports",
+      "sources": [
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "mcp",
+        "deployment",
+        "transports"
+      ]
+    },
+    {
+      "id": "D4-019",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "debugging MCP",
+      "stem": "An MCP server shows as 'failed' in `/mcp`. Which diagnostic sequence is most efficient?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Reinstall Claude Code."
+        },
+        {
+          "key": "B",
+          "text": "Run the server's command manually in a terminal to see its startup error, then check the transport, path, environment variables and authentication in that order."
+        },
+        {
+          "key": "C",
+          "text": "Delete `.mcp.json` and re-add every server."
+        },
+        {
+          "key": "D",
+          "text": "Switch to a different model."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A stdio server is just a process: run it yourself and read stderr. Most failures are mundane — a missing binary, a relative path resolved from a different directory, an unset environment variable, or an expired token — and all four are visible in seconds outside the host.",
+      "distractor_notes": {
+        "A": "The host is rarely the problem.",
+        "C": "Deletes the evidence.",
+        "D": "Unrelated to a connection failure."
+      },
+      "analogy": {
+        "frame": "Debugging",
+        "text": "You would not restart Docker to debug a container that exits immediately — you would run the entrypoint by hand and read the error."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [
+        "c-mcp-intro"
+      ],
+      "tags": [
+        "mcp",
+        "debugging",
+        "operations"
+      ]
+    },
+    {
+      "id": "D4-020",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "sampling",
+      "stem": "MCP sampling allows a server to request a model completion through the client. What is the primary security consideration?",
+      "options": [
+        {
+          "key": "A",
+          "text": "None; sampling is purely a convenience."
+        },
+        {
+          "key": "B",
+          "text": "The server can cause inference to run on the user's account, so requests should be visible, bounded and subject to user approval."
+        },
+        {
+          "key": "C",
+          "text": "Sampling exposes the model's weights to the server."
+        },
+        {
+          "key": "D",
+          "text": "Sampling bypasses the client's transport encryption."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Sampling inverts the usual direction: the server asks the client for a completion. That is genuinely useful for agentic servers, and it also means a server can spend the user's tokens and shape a prompt on their behalf — which is why the flow is designed around visibility and human approval.",
+      "distractor_notes": {
+        "A": "It has real cost and trust implications.",
+        "C": "No weight access is involved.",
+        "D": "Transport security is unchanged."
+      },
+      "cheatsheet": "d4-mcp#sampling",
+      "sources": [
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "mcp",
+        "sampling",
+        "security"
+      ]
+    },
+    {
+      "id": "D4-021",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "roots",
+      "stem": "What do MCP 'roots' communicate?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The filesystem or URI boundaries the client makes available to the server."
+        },
+        {
+          "key": "B",
+          "text": "The root cause of a server error."
+        },
+        {
+          "key": "C",
+          "text": "The server's administrative credentials."
+        },
+        {
+          "key": "D",
+          "text": "The base URL of the model API."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Roots let the client tell the server which locations are in scope, so a filesystem server knows it should operate within the project directory rather than the whole disk. It is a scoping mechanism, expressed by the client.",
+      "distractor_notes": {
+        "B": "Unrelated.",
+        "C": "Unrelated.",
+        "D": "Unrelated."
+      },
+      "cheatsheet": "d4-mcp#primitives",
+      "sources": [
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "mcp",
+        "roots",
+        "scope"
+      ]
+    },
+    {
+      "id": "D4-022",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "integration architecture",
+      "stem": "An organisation has 30 internal systems it wants agents to reach. Which architecture is most maintainable?",
+      "options": [
+        {
+          "key": "A",
+          "text": "One monolithic MCP server exposing all 30 systems through 200 tools."
+        },
+        {
+          "key": "B",
+          "text": "Servers grouped by bounded context and owned by the teams that own those systems, with each project enabling only the servers it needs."
+        },
+        {
+          "key": "C",
+          "text": "Thirty servers, all enabled at user scope for every engineer."
+        },
+        {
+          "key": "D",
+          "text": "No servers; teach agents to call the internal REST APIs with curl."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Follow ownership and bounded context, then scope enablement to need. That keeps each server small enough for its owning team to maintain, and keeps any given session's tool schemas — and its selection ambiguity — small.",
+      "distractor_notes": {
+        "A": "200 tool schemas on every request, one deploy pipeline, one team as the bottleneck for 30 systems.",
+        "C": "Correct decomposition, wrong enablement: everyone pays for everything.",
+        "D": "Loses schemas, auth, and any structured contract; you are back to screen-scraping."
+      },
+      "analogy": {
+        "frame": "Microservices",
+        "text": "It is the monolith-versus-services question with an extra constraint: every enabled service's interface is re-transmitted on every request, so over-enablement has a direct per-token cost."
+      },
+      "cheatsheet": "d4-mcp#architecture",
+      "sources": [
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "mcp",
+        "architecture",
+        "enterprise"
+      ]
+    },
+    {
+      "id": "D4-023",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "referencing resources",
+      "stem": "How does a user reference an MCP resource inside a Claude Code prompt?",
+      "options": [
+        {
+          "key": "A",
+          "text": "With an `@server:protocol://path` reference."
+        },
+        {
+          "key": "B",
+          "text": "With `#resource-name`."
+        },
+        {
+          "key": "C",
+          "text": "With `!fetch <name>`."
+        },
+        {
+          "key": "D",
+          "text": "Resources cannot be referenced from a prompt."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Resources are referenced with the `@` syntax extended by the server name and the resource URI, which is the same mental model as `@path/to/file` for local files — pulling a named thing into the turn's context.",
+      "distractor_notes": {
+        "B": "`#` starts a memory capture.",
+        "C": "Not a real syntax.",
+        "D": "They are directly referenceable."
+      },
+      "cheatsheet": "d4-mcp#primitives",
+      "sources": [
+        "c-mcp-intro"
+      ],
+      "tags": [
+        "mcp",
+        "resources",
+        "syntax"
+      ]
+    },
+    {
+      "id": "D4-024",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "MCP vs skills",
+      "stem": "A capability is needed only inside one repository, requires no external system, and is essentially a documented procedure. Skill or MCP server?",
+      "options": [
+        {
+          "key": "A",
+          "text": "MCP server, because it is more professional."
+        },
+        {
+          "key": "B",
+          "text": "Skill — no process to run, no schema to version, and it lives with the repository it serves."
+        },
+        {
+          "key": "C",
+          "text": "Both, for redundancy."
+        },
+        {
+          "key": "D",
+          "text": "Neither; put it in `CLAUDE.md`."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "MCP is for connecting to systems; skills are for packaging procedure. A repository-local procedure with no external dependency is the skill case exactly — and it costs nothing when it is not activated, unlike a server's ever-present tool schemas.",
+      "distractor_notes": {
+        "A": "Operational overhead is not professionalism.",
+        "C": "Two things to maintain and keep in sync.",
+        "D": "Possible, but memory is always-on; a skill loads only when relevant."
+      },
+      "cheatsheet": "d4-mcp#when-to-use",
+      "sources": [
+        "c-mcp-advanced",
+        "c-claude-code"
+      ],
+      "tags": [
+        "mcp",
+        "skills",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D4-025",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "protocol basis",
+      "stem": "MCP messages are encoded using which protocol?",
+      "options": [
+        {
+          "key": "A",
+          "text": "JSON-RPC 2.0"
+        },
+        {
+          "key": "B",
+          "text": "GraphQL"
+        },
+        {
+          "key": "C",
+          "text": "Protocol Buffers"
+        },
+        {
+          "key": "D",
+          "text": "SOAP"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "MCP is built on JSON-RPC 2.0, carried over stdio for local servers and Streamable HTTP for remote ones. The wire format is deliberately boring so that implementations in any language are straightforward.",
+      "distractor_notes": {
+        "B": "Not used.",
+        "C": "Not used.",
+        "D": "Not used."
+      },
+      "cheatsheet": "d4-mcp#architecture",
+      "sources": [
+        "c-mcp-intro"
+      ],
+      "tags": [
+        "mcp",
+        "protocol",
+        "json-rpc"
+      ]
+    },
+    {
+      "id": "D4-026",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A vendor's MCP server is being evaluated for enterprise use. Select the TWO strongest evaluation criteria.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Whether tools are narrowly scoped and whether any of them can take destructive action without confirmation."
+        },
+        {
+          "key": "B",
+          "text": "How the server authenticates, where credentials are stored, and what data leaves the network boundary."
+        },
+        {
+          "key": "C",
+          "text": "The number of tools it exposes — more is better."
+        },
+        {
+          "key": "D",
+          "text": "Whether the README uses a recognisable brand."
+        },
+        {
+          "key": "E",
+          "text": "Whether it is written in the same language as your services."
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "You are granting a third party a capability surface inside your developers' sessions. What matters is the blast radius of the worst tool and the data path of every call. Tool count is a cost, not a feature, and implementation language is irrelevant across a protocol boundary.",
+      "distractor_notes": {
+        "C": "More tools means more context cost and more surface.",
+        "D": "Not a control.",
+        "E": "MCP exists so this does not matter."
+      },
+      "cheatsheet": "d4-mcp#security",
+      "sources": [
+        "c-mcp-advanced",
+        "c-security"
+      ],
+      "tags": [
+        "mcp",
+        "vendor",
+        "security"
+      ]
+    },
+    {
+      "id": "D4-027",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "server lifecycle",
+      "stem": "What happens to a stdio MCP server process when a Claude Code session ends?",
+      "options": [
+        {
+          "key": "A",
+          "text": "It is terminated with the session, since the host spawned it as a child process."
+        },
+        {
+          "key": "B",
+          "text": "It keeps running as a daemon until manually stopped."
+        },
+        {
+          "key": "C",
+          "text": "It is restarted automatically every 60 seconds."
+        },
+        {
+          "key": "D",
+          "text": "It is handed over to the next session that starts."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Local stdio servers are child processes with a lifecycle tied to the host connection — which is exactly why they are cheap to reason about, and why any state they need must be external.",
+      "distractor_notes": {
+        "B": "That is a remote server's model.",
+        "C": "No such loop.",
+        "D": "Each session spawns its own."
+      },
+      "cheatsheet": "d4-mcp#transports",
+      "sources": [
+        "c-mcp-intro"
+      ],
+      "tags": [
+        "mcp",
+        "lifecycle",
+        "stdio"
+      ]
+    },
+    {
+      "id": "D4-028",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "confused deputy",
+      "stem": "An MCP server holds a powerful service token and exposes `run_report(query)`. Any user of the server can trigger reports across all tenants. What is the underlying flaw?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The token should have been passed by the client on each call."
+        },
+        {
+          "key": "B",
+          "text": "A confused-deputy problem: the server acts with its own high privilege on behalf of a caller whose authorisation it never checks — it must authorise per caller and scope each query to that caller's tenant."
+        },
+        {
+          "key": "C",
+          "text": "The tool name is too generic."
+        },
+        {
+          "key": "D",
+          "text": "Reports should be resources, not tools."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The server is a deputy holding more authority than any of its callers, and it is being confused into using that authority for whoever asks. The fix is caller identity plus per-caller scoping — the same reason a backend does not run every query as the database superuser.",
+      "distractor_notes": {
+        "A": "Pushing a powerful token to every client widens exposure rather than fixing authorisation.",
+        "C": "Naming is not the vulnerability.",
+        "D": "The primitive choice does not change who is authorised."
+      },
+      "analogy": {
+        "frame": "Web security",
+        "text": "It is an IDOR through a service account: the endpoint authenticates the service, not the user, so `?tenant_id=` becomes the whole authorisation model."
+      },
+      "cheatsheet": "d4-mcp#security",
+      "sources": [
+        "c-mcp-advanced",
+        "c-security"
+      ],
+      "tags": [
+        "mcp",
+        "security",
+        "authorisation"
+      ]
+    },
+    {
+      "id": "D4-029",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "scope precedence",
+      "stem": "The same server name is configured at local, project and user scope with different commands. Which one is used?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The local-scope definition."
+        },
+        {
+          "key": "B",
+          "text": "The project-scope definition."
+        },
+        {
+          "key": "C",
+          "text": "The user-scope definition."
+        },
+        {
+          "key": "D",
+          "text": "The configuration is rejected as ambiguous."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Resolution runs local → project → user, so the most specific configuration wins. That lets a developer point a shared server name at a local build for debugging without editing the committed `.mcp.json`.",
+      "distractor_notes": {
+        "B": "Beaten by local.",
+        "C": "Broadest, so lowest priority.",
+        "D": "Shadowing is expected behaviour, not an error."
+      },
+      "cheatsheet": "d4-mcp#scope",
+      "sources": [
+        "c-mcp-intro"
+      ],
+      "tags": [
+        "mcp",
+        "scope",
+        "precedence"
+      ]
+    },
+    {
+      "id": "D4-030",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "MCP in CI",
+      "stem": "A headless CI job uses an MCP server that requires interactive OAuth. What is the correct design?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Have the pipeline pause and wait for a human to complete the flow."
+        },
+        {
+          "key": "B",
+          "text": "Use a non-interactive credential — a service account or machine token supplied through the CI secret store — and scope it to only what the job needs."
+        },
+        {
+          "key": "C",
+          "text": "Commit a developer's refresh token to the repository."
+        },
+        {
+          "key": "D",
+          "text": "Disable authentication on the server for CI traffic."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Automation needs machine identity. A service credential injected from the secret store, scoped to the job's actual needs and rotatable independently, is the standard answer — and it keeps CI's blast radius separate from any individual's account.",
+      "distractor_notes": {
+        "A": "A pipeline that blocks on a human is not automation.",
+        "C": "A committed long-lived credential is a breach, and it ties CI to one person's access.",
+        "D": "An unauthenticated path is an unauthenticated path, whoever you meant it for."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "It is the same reason CodeBuild assumes a service role instead of using an engineer's console session."
+      },
+      "cheatsheet": "d4-mcp#auth",
+      "sources": [
+        "c-mcp-advanced",
+        "c-security"
+      ],
+      "tags": [
+        "mcp",
+        "ci",
+        "auth"
+      ]
+    }
+  ]
+}

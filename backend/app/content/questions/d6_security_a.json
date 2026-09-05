@@ -1,0 +1,616 @@
+{
+  "questions": [
+    {
+      "id": "D6-001",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "rule precedence",
+      "stem": "A settings file contains both `allow: [\"Bash(git:*)\"]` and `deny: [\"Bash(git push:*)\"]`. What happens when the agent attempts `git push origin main`?",
+      "options": [
+        {
+          "key": "A",
+          "text": "It is allowed, because the allow rule is more general and listed first."
+        },
+        {
+          "key": "B",
+          "text": "It is denied, because deny rules take precedence over allow rules."
+        },
+        {
+          "key": "C",
+          "text": "The user is prompted, because the rules conflict."
+        },
+        {
+          "key": "D",
+          "text": "The configuration fails to load."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Deny always wins. That ordering is what makes it safe to grant a broad capability and then carve out the specific operations you never want — the carve-out cannot be undone by the grant.",
+      "distractor_notes": {
+        "A": "Ordering in the file is irrelevant.",
+        "C": "There is no conflict to resolve; the precedence is defined.",
+        "D": "This is a normal, expected configuration."
+      },
+      "analogy": {
+        "frame": "AWS IAM",
+        "text": "Explicit Deny beats Allow, exactly as in an IAM policy evaluation."
+      },
+      "cheatsheet": "d6-security#permissions",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "permissions",
+        "precedence"
+      ]
+    },
+    {
+      "id": "D6-002",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "secret protection",
+      "stem": "What is the most robust way to prevent Claude Code from reading `.env` files across an organisation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A line in every repository's `CLAUDE.md` asking it not to."
+        },
+        {
+          "key": "B",
+          "text": "A `Read(**/.env)` deny rule in enterprise managed settings, which no project or user configuration can override."
+        },
+        {
+          "key": "C",
+          "text": "Renaming the files to `.env.private`."
+        },
+        {
+          "key": "D",
+          "text": "Adding `.env` to `.gitignore`."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Managed settings sit at the top of the precedence chain, so the deny holds regardless of what any repository or developer configures. Memory instructions are advisory, renaming is obscurity, and `.gitignore` governs git — not the filesystem the agent reads.",
+      "distractor_notes": {
+        "A": "Advisory and inconsistently applied.",
+        "C": "The file is still readable under any name.",
+        "D": "Different concern entirely."
+      },
+      "cheatsheet": "d6-security#secrets",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "secrets",
+        "managed-settings",
+        "permissions"
+      ]
+    },
+    {
+      "id": "D6-003",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 3,
+      "stem": "Select the THREE most effective mitigations against prompt injection reaching an agent through fetched web content.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Deny reads of credential files, so an injected instruction has nothing valuable to reach."
+        },
+        {
+          "key": "B",
+          "text": "Require explicit confirmation for outbound actions such as posting data to a URL."
+        },
+        {
+          "key": "C",
+          "text": "Restrict fetching to an allow-list of trusted domains."
+        },
+        {
+          "key": "D",
+          "text": "Scan fetched content for the phrase 'ignore previous instructions'."
+        },
+        {
+          "key": "E",
+          "text": "Instruct the model in `CLAUDE.md` to distrust web content."
+        }
+      ],
+      "correct": [
+        "A",
+        "B",
+        "C"
+      ],
+      "explanation": "Injection is mitigated by reducing what an injected instruction could accomplish, not by trying to recognise it. Remove the valuable targets, gate the exfiltration paths, and narrow the intake. Pattern matching and counter-instructions both lose to paraphrase.",
+      "distractor_notes": {
+        "D": "Trivially evaded; an attacker will simply phrase it differently.",
+        "E": "Marginally useful, but it is one instruction competing with another — not a control."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is defence in depth against injection generally: least privilege, egress control, and input allow-listing beat blocklists every time."
+      },
+      "cheatsheet": "d6-security#prompt-injection",
+      "sources": [
+        "c-security",
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "prompt-injection",
+        "security",
+        "defence-in-depth"
+      ]
+    },
+    {
+      "id": "D6-004",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "telemetry",
+      "stem": "An enterprise needs per-team visibility into Claude Code usage. Which capability is designed for that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "OpenTelemetry export of metrics and events, enabled through configuration and routed to the organisation's existing collector."
+        },
+        {
+          "key": "B",
+          "text": "Reading each developer's `~/.claude` directory over SSH."
+        },
+        {
+          "key": "C",
+          "text": "Parsing terminal scrollback."
+        },
+        {
+          "key": "D",
+          "text": "There is no telemetry capability."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Claude Code can emit OTel metrics and events to a collector you control, which is how usage, cost and adoption get into the dashboards the organisation already runs — without inventing a bespoke collection mechanism or touching developer machines.",
+      "distractor_notes": {
+        "B": "Invasive, fragile and unnecessary.",
+        "C": "Not a data source.",
+        "D": "It exists and is configurable."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": "Managed settings — telemetry to a corporate collector",
+        "code": "{\n  \"env\": {\n    \"CLAUDE_CODE_ENABLE_TELEMETRY\": \"1\",\n    \"OTEL_METRICS_EXPORTER\": \"otlp\",\n    \"OTEL_EXPORTER_OTLP_ENDPOINT\": \"https://otel.corp.internal:4317\",\n    \"OTEL_EXPORTER_OTLP_PROTOCOL\": \"grpc\"\n  }\n}"
+      },
+      "cheatsheet": "d6-security#telemetry",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "telemetry",
+        "otel",
+        "enterprise"
+      ]
+    },
+    {
+      "id": "D6-005",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "data residency",
+      "stem": "A European customer requires that no source code leave the EU. Which deployment satisfies this most directly?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Public API access with telemetry disabled."
+        },
+        {
+          "key": "B",
+          "text": "Amazon Bedrock or Google Vertex AI in an EU region, enforced through enterprise managed settings."
+        },
+        {
+          "key": "C",
+          "text": "A VPN that makes traffic appear to originate in the EU."
+        },
+        {
+          "key": "D",
+          "text": "Asking developers to avoid sensitive files."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Residency is about where inference actually happens. A cloud provider's EU region gives a contractual and technical boundary, and enforcing the setting centrally means it is not a per-developer choice.",
+      "distractor_notes": {
+        "A": "Telemetry is not the code path.",
+        "C": "Changes apparent origin, not processing location.",
+        "D": "A guideline, not a boundary."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "It is choosing `eu-central-1` and denying every other region by policy — not hoping the SDK's default happens to be right."
+      },
+      "cheatsheet": "d6-security#deployment",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "compliance",
+        "residency",
+        "bedrock"
+      ]
+    },
+    {
+      "id": "D6-006",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "audit trail",
+      "stem": "An auditor asks which files an agent modified during a change window. What is the most reliable source?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The developer's recollection."
+        },
+        {
+          "key": "B",
+          "text": "Version control history plus a hook-emitted audit record of tool calls, correlated by session id."
+        },
+        {
+          "key": "C",
+          "text": "The conversation transcript alone."
+        },
+        {
+          "key": "D",
+          "text": "The model's summary of what it did."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Auditors want evidence produced by systems, not by participants. Git records what changed and a `PostToolUse` audit hook records what was attempted, including calls that never became commits — and the session id ties the two together.",
+      "distractor_notes": {
+        "A": "Not evidence.",
+        "C": "Not tamper-evident and not complete.",
+        "D": "A self-report, which is exactly what an audit is meant to check."
+      },
+      "cheatsheet": "d6-security#audit",
+      "sources": [
+        "c-security",
+        "c-claude-code"
+      ],
+      "tags": [
+        "audit",
+        "compliance",
+        "hooks"
+      ]
+    },
+    {
+      "id": "D6-007",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "threat model",
+      "stem": "Which statement best describes the trust relationship when a developer runs Claude Code on a repository cloned from an untrusted source?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Only the model's output is untrusted."
+        },
+        {
+          "key": "B",
+          "text": "The repository's `.claude/` configuration — hooks, MCP servers, commands — can cause code execution on the developer's machine, so cloning plus running the tool is itself the trust decision."
+        },
+        {
+          "key": "C",
+          "text": "Claude Code sandboxes all repository configuration by default, so there is no risk."
+        },
+        {
+          "key": "D",
+          "text": "Risk exists only if the developer approves a tool call."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A repository can ship hooks that execute commands and MCP server definitions that launch processes. That makes an unfamiliar repository's `.claude/` directory part of the same trust category as its build scripts — review it before you run the tool inside it.",
+      "distractor_notes": {
+        "A": "Understates it considerably.",
+        "C": "Project-scoped servers prompt for approval, but hooks are configuration you are trusting.",
+        "D": "Some execution paths do not route through a tool-call prompt."
+      },
+      "analogy": {
+        "frame": "Supply chain",
+        "text": "It is the `postinstall` script problem. The dangerous moment is not running the app — it is installing and building it."
+      },
+      "cheatsheet": "d6-security#supply-chain",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "threat-model",
+        "supply-chain",
+        "hooks"
+      ]
+    },
+    {
+      "id": "D6-008",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "least privilege in practice",
+      "stem": "Which allow-list best expresses least privilege for an agent whose only job is running the Python test suite?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`[\"Bash\"]`"
+        },
+        {
+          "key": "B",
+          "text": "`[\"Read\", \"Grep\", \"Glob\", \"Bash(pytest:*)\"]`"
+        },
+        {
+          "key": "C",
+          "text": "`[\"Bash(python:*)\"]`"
+        },
+        {
+          "key": "D",
+          "text": "`[\"Read\", \"Write\", \"Edit\", \"Bash\"]`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Grant what the job needs and nothing adjacent: read and search to understand the code, and exactly the test runner. `Bash(python:*)` is a full interpreter — `python -c` will do anything at all — which is why it is not a meaningful restriction.",
+      "distractor_notes": {
+        "A": "Unrestricted shell.",
+        "C": "An arbitrary-code-execution grant wearing a specifier.",
+        "D": "Adds write access to a read-and-run task."
+      },
+      "analogy": {
+        "frame": "AWS IAM",
+        "text": "`Bash(python:*)` is `iam:PassRole` with a wildcard — narrow-looking, effectively unlimited."
+      },
+      "cheatsheet": "d6-security#permissions",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "least-privilege",
+        "permissions",
+        "design"
+      ]
+    },
+    {
+      "id": "D6-009",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "credential handling",
+      "stem": "A user asks Claude Code to log in to a partner portal on their behalf using credentials they paste into the chat. What is the correct response?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Complete the login, since the user supplied the credentials and consented."
+        },
+        {
+          "key": "B",
+          "text": "Decline to enter the credentials, explain why, and let the user authenticate themselves — pasted secrets enter the transcript and any logs derived from it."
+        },
+        {
+          "key": "C",
+          "text": "Store the credentials in `CLAUDE.md` for reuse."
+        },
+        {
+          "key": "D",
+          "text": "Complete the login but delete the message afterwards."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Consent does not remove the exposure: a pasted password is now in the conversation, in any transcript persisted from it, and in anything downstream that ingests those logs. The right pattern is the human authenticates, or a purpose-built credential mechanism supplies the secret without it passing through the transcript.",
+      "distractor_notes": {
+        "A": "The risk is the handling, not the authorisation.",
+        "C": "A plaintext secret in a committed file.",
+        "D": "Deletion does not recall what was already transmitted or logged."
+      },
+      "cheatsheet": "d6-security#credentials",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "credentials",
+        "privacy",
+        "policy"
+      ]
+    },
+    {
+      "id": "D6-010",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "An organisation is drafting an AI coding policy. Select the TWO provisions that are enforceable through Claude Code configuration rather than by asking people nicely.",
+      "options": [
+        {
+          "key": "A",
+          "text": "'Agents may not read files matching credential patterns.'"
+        },
+        {
+          "key": "B",
+          "text": "'Engineers must understand any code they merge.'"
+        },
+        {
+          "key": "C",
+          "text": "'All inference must run through the corporate Bedrock account.'"
+        },
+        {
+          "key": "D",
+          "text": "'Engineers should use AI thoughtfully.'"
+        },
+        {
+          "key": "E",
+          "text": "'Agent-generated code must be architecturally elegant.'"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Deny rules and the inference endpoint are configuration a platform team can enforce centrally. Comprehension, thoughtfulness and elegance are cultural expectations — real and important, but enforced by review and hiring, not by settings.",
+      "distractor_notes": {
+        "B": "A review-process norm.",
+        "D": "Unmeasurable.",
+        "E": "A judgement, not a setting."
+      },
+      "cheatsheet": "d6-security#governance",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "governance",
+        "policy",
+        "enterprise"
+      ]
+    },
+    {
+      "id": "D6-011",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "managed settings location",
+      "stem": "On a Linux fleet, where does the enterprise managed policy file belong?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`/etc/claude-code/managed-settings.json`"
+        },
+        {
+          "key": "B",
+          "text": "`~/.claude/settings.json`"
+        },
+        {
+          "key": "C",
+          "text": "`./.claude/settings.json`"
+        },
+        {
+          "key": "D",
+          "text": "`/opt/claude/config.yaml`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Linux uses `/etc/claude-code/managed-settings.json`; macOS uses `/Library/Application Support/ClaudeCode/managed-settings.json`. Both are root-owned system paths precisely so an unprivileged developer cannot edit them.",
+      "distractor_notes": {
+        "B": "User scope.",
+        "C": "Project scope.",
+        "D": "Not a real path, and not JSON."
+      },
+      "cheatsheet": "d6-security#managed-settings",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "enterprise",
+        "managed-settings",
+        "paths"
+      ]
+    },
+    {
+      "id": "D6-012",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "incident response",
+      "stem": "An agent, following an injected instruction in a scraped page, attempted to POST a config file to an external endpoint. The attempt failed because egress was blocked. What is the most important follow-up?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Nothing — the control worked."
+        },
+        {
+          "key": "B",
+          "text": "Treat it as a near miss: investigate how untrusted content reached a session with that capability, verify no other path was open, and tighten the intake."
+        },
+        {
+          "key": "C",
+          "text": "Disable the agent permanently."
+        },
+        {
+          "key": "D",
+          "text": "Add the attacker's domain to a blocklist and close the ticket."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A control catching an attempt is exactly what near-miss analysis is for: the attempt proves the attack path exists, and only one layer stopped it. Find out how the content got there and whether any session had a route that was not blocked.",
+      "distractor_notes": {
+        "A": "One layer held; you do not know how many there were.",
+        "C": "Disproportionate, and it discards a working defence-in-depth story.",
+        "D": "Blocklisting one domain addresses this attacker, not the class."
+      },
+      "analogy": {
+        "frame": "SRE",
+        "text": "It is a near-miss postmortem. The page did not fire, and that is precisely when you have the calm to find out why it nearly did."
+      },
+      "cheatsheet": "d6-security#incident-response",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "incident-response",
+        "prompt-injection",
+        "process"
+      ]
+    },
+    {
+      "id": "D6-013",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "gateway deployment",
+      "stem": "A company routes all model traffic through an internal LLM gateway for logging and quota enforcement. How is Claude Code pointed at it?",
+      "options": [
+        {
+          "key": "A",
+          "text": "By setting the base URL environment variable to the gateway, ideally through enterprise managed settings so it cannot be bypassed."
+        },
+        {
+          "key": "B",
+          "text": "By editing the installed package's source."
+        },
+        {
+          "key": "C",
+          "text": "By running a local proxy that rewrites DNS for every developer."
+        },
+        {
+          "key": "D",
+          "text": "It is not possible; the endpoint is fixed."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "The base URL is configurable, and putting it in managed settings makes it policy rather than a suggestion. Gateways are the usual place organisations attach central logging, quotas and per-team attribution.",
+      "distractor_notes": {
+        "B": "Unsupported and erased on the next update.",
+        "C": "Fragile and hostile to debug.",
+        "D": "It is configurable by design."
+      },
+      "cheatsheet": "d6-security#deployment",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "gateway",
+        "enterprise",
+        "configuration"
+      ]
+    }
+  ]
+}

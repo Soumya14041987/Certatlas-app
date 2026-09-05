@@ -1,0 +1,675 @@
+{
+  "questions": [
+    {
+      "id": "D3-015",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "skill bundled resources",
+      "stem": "A skill directory contains `SKILL.md`, `reference/api-map.md` and `scripts/validate.py`. When are the reference file and the script loaded into context?",
+      "options": [
+        {
+          "key": "A",
+          "text": "At session start, along with the frontmatter."
+        },
+        {
+          "key": "B",
+          "text": "Only when the skill activates and its instructions direct the agent to read or run them."
+        },
+        {
+          "key": "C",
+          "text": "Never; bundled files are decorative."
+        },
+        {
+          "key": "D",
+          "text": "On every turn once the skill exists on disk."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "This is the three-tier disclosure model: frontmatter always in context, `SKILL.md` body loaded on activation, bundled resources read only when needed. A script may never enter context at all — the agent can execute it and consume just the output.",
+      "distractor_notes": {
+        "A": "Only name and description are always-on.",
+        "C": "They are functional.",
+        "D": "That would defeat the entire design."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "Frontmatter is the package name in your dependency list, `SKILL.md` is the module you import, and the bundled script is a binary you shell out to — you never parse its source."
+      },
+      "cheatsheet": "d3-agentic#skills",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "skills",
+        "progressive-disclosure"
+      ]
+    },
+    {
+      "id": "D3-016",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "script over prose in skills",
+      "stem": "A skill must validate that a 5,000-row CSV conforms to a schema. Why is bundling a Python script better than describing the validation rules in `SKILL.md`?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Scripts are cheaper to write than prose."
+        },
+        {
+          "key": "B",
+          "text": "The script executes deterministically and returns a short pass/fail report, while prose asks the model to perform 5,000 checks in context — slower, costlier and probabilistic."
+        },
+        {
+          "key": "C",
+          "text": "`SKILL.md` has a hard 500-word limit."
+        },
+        {
+          "key": "D",
+          "text": "Models cannot read CSV files."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Push deterministic, repetitive work into code and keep the model for judgement. The agent never needs the 5,000 rows in context — it runs the validator and reasons about the twelve failures it reports.",
+      "distractor_notes": {
+        "A": "Not the reason.",
+        "C": "No such hard limit.",
+        "D": "They can; that is precisely the expensive path being avoided."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "You do not code-review a generated lockfile line by line — you run the checksum. Same instinct: verify mechanically, reason selectively."
+      },
+      "cheatsheet": "d3-agentic#skills",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "skills",
+        "scripts",
+        "determinism"
+      ]
+    },
+    {
+      "id": "D3-017",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "Select the TWO true statements about subagent model selection.",
+      "options": [
+        {
+          "key": "A",
+          "text": "A subagent can specify a `model` in its frontmatter, independent of the parent session's model."
+        },
+        {
+          "key": "B",
+          "text": "All subagents must run on the same model as the parent."
+        },
+        {
+          "key": "C",
+          "text": "Assigning a cheaper model to a high-volume, low-judgement subagent is a legitimate cost-control pattern."
+        },
+        {
+          "key": "D",
+          "text": "Subagents always run on the cheapest available model."
+        },
+        {
+          "key": "E",
+          "text": "The `model` field also determines which tools the subagent may use."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Per-agent model selection is one of the main levers in a multi-agent design: a file-sweeping search agent does not need the same tier as an architectural reviewer. Tool access is governed separately by `tools`.",
+      "distractor_notes": {
+        "B": "They can differ.",
+        "D": "There is no such default.",
+        "E": "Orthogonal concerns."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "subagents",
+        "model",
+        "cost"
+      ]
+    },
+    {
+      "id": "D3-018",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "UserPromptSubmit hook",
+      "stem": "Which hook event is best suited to redacting a customer identifier from a prompt before the model ever sees it?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`UserPromptSubmit`"
+        },
+        {
+          "key": "B",
+          "text": "`PreToolUse`"
+        },
+        {
+          "key": "C",
+          "text": "`Stop`"
+        },
+        {
+          "key": "D",
+          "text": "`SessionEnd`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`UserPromptSubmit` fires between the human typing and the model receiving the prompt, which is the only point where you can still modify or block the input. It can also add context, or reject the prompt outright.",
+      "distractor_notes": {
+        "B": "Tool-scoped and too late for prompt content.",
+        "C": "End of the response.",
+        "D": "End of the session."
+      },
+      "analogy": {
+        "frame": "Web architecture",
+        "text": "It is a request middleware — the last place you can rewrite the payload before it reaches the handler."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code",
+        "c-security"
+      ],
+      "tags": [
+        "hooks",
+        "privacy",
+        "user-prompt-submit"
+      ]
+    },
+    {
+      "id": "D3-019",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "Stop hook",
+      "stem": "A team wants Claude Code to be unable to declare a task finished while the test suite is red. Which hook implements that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A `Stop` hook that runs the suite and blocks completion when it fails, feeding the failures back."
+        },
+        {
+          "key": "B",
+          "text": "A `PostToolUse` hook on Edit."
+        },
+        {
+          "key": "C",
+          "text": "A `SessionEnd` hook that emails the result."
+        },
+        {
+          "key": "D",
+          "text": "A `PreToolUse` hook on Bash."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`Stop` fires when the agent is about to conclude its response, and it can block that conclusion. That makes it the natural place for a definition-of-done gate: run the checks, and if they fail, hand the failures back so the agent keeps working.",
+      "distractor_notes": {
+        "B": "Fires after every edit — noisy, and mid-refactor red is expected.",
+        "C": "Too late and merely informational.",
+        "D": "Guards shell calls; unrelated to completion."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "It is the required test stage between build and deploy. Green is not advice — it is the transition condition."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": "Definition-of-done gate",
+        "code": "{\n  \"hooks\": {\n    \"Stop\": [\n      {\n        \"hooks\": [\n          { \"type\": \"command\", \"command\": \".claude/scripts/require-green.sh\" }\n        ]\n      }\n    ]\n  }\n}"
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "stop",
+        "quality-gate"
+      ]
+    },
+    {
+      "id": "D3-020",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "hook input contract",
+      "stem": "How does a hook command receive information about the event that triggered it?",
+      "options": [
+        {
+          "key": "A",
+          "text": "As a JSON object on stdin."
+        },
+        {
+          "key": "B",
+          "text": "As positional command-line arguments only."
+        },
+        {
+          "key": "C",
+          "text": "By reading a temporary file whose path is fixed."
+        },
+        {
+          "key": "D",
+          "text": "It does not; hooks are fire-and-forget with no input."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Hooks receive a JSON payload on stdin — session id, event name, tool name, tool input, and for post-events the result. Scripts typically pipe it through `jq` to pull out the field they care about.",
+      "distractor_notes": {
+        "B": "Arguments can be templated, but the payload arrives on stdin.",
+        "C": "No fixed temp-file contract.",
+        "D": "They are richly informed and can respond."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "contract",
+        "stdin"
+      ]
+    },
+    {
+      "id": "D3-021",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "orchestration pattern selection",
+      "stem": "A migration must touch 120 independent modules with the same mechanical change, then produce one consistency report. Which orchestration best fits?",
+      "options": [
+        {
+          "key": "A",
+          "text": "One agent working through all 120 modules in a single context."
+        },
+        {
+          "key": "B",
+          "text": "Fan out batches of modules to parallel subagents that each return a structured summary, then have the parent synthesise the report."
+        },
+        {
+          "key": "C",
+          "text": "120 separate human-initiated sessions."
+        },
+        {
+          "key": "D",
+          "text": "A single `-p` invocation with all 120 files pasted into the prompt."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The work partitions cleanly and each partition produces a small result — the ideal fan-out/reduce shape. The parent stays small because it sees 120 summaries, not 120 diffs, and the batches run concurrently.",
+      "distractor_notes": {
+        "A": "Context exhaustion around module 30, with quality decaying before that.",
+        "C": "Unmanageable and inconsistent.",
+        "D": "Blows the window and gives up all parallelism."
+      },
+      "analogy": {
+        "frame": "MapReduce",
+        "text": "Literally map/reduce: subagents are mappers, the parent is the reducer, and the structured summary is the intermediate key-value contract."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "orchestration",
+        "fan-out",
+        "patterns"
+      ]
+    },
+    {
+      "id": "D3-022",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "skill scope",
+      "stem": "A skill should be available to every engineer in a repository, versioned with the code. Where does it belong?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`.claude/skills/<name>/SKILL.md`, committed to the repository."
+        },
+        {
+          "key": "B",
+          "text": "`~/.claude/skills/<name>/SKILL.md` on each machine."
+        },
+        {
+          "key": "C",
+          "text": "In the enterprise managed settings file."
+        },
+        {
+          "key": "D",
+          "text": "Published to npm and installed globally."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Project scope is the repository's `.claude/skills/`, which travels with a clone and is reviewed like any other change. User scope (`~/.claude/skills/`) is for personal skills; plugins are the mechanism for distributing skills across many repositories.",
+      "distractor_notes": {
+        "B": "Per-machine and undistributed.",
+        "C": "Managed settings carries policy, not skills.",
+        "D": "Not the distribution model."
+      },
+      "cheatsheet": "d3-agentic#skills",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "skills",
+        "scope",
+        "distribution"
+      ]
+    },
+    {
+      "id": "D3-023",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "test-driven agentic loop",
+      "stem": "Which workflow gives an agent the most reliable signal that its change is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Write the implementation, then ask the agent to review its own code."
+        },
+        {
+          "key": "B",
+          "text": "Write a failing test that captures the requirement, confirm it fails, implement until it passes, then confirm the rest of the suite is still green."
+        },
+        {
+          "key": "C",
+          "text": "Write the implementation and check that it compiles."
+        },
+        {
+          "key": "D",
+          "text": "Ask the agent how confident it is."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A test that is observed failing before the change and passing after is external, mechanical evidence that the change did the thing asked. Self-review and stated confidence are the agent grading its own homework; compilation only proves syntax.",
+      "distractor_notes": {
+        "A": "Correlated with the same blind spots that produced the bug.",
+        "C": "Type-checks are necessary, not sufficient.",
+        "D": "Confidence is not evidence."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is red-green-refactor, and the 'confirm it fails first' step is what stops you from shipping a test that passes against an empty function."
+      },
+      "cheatsheet": "d3-agentic#verification",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "tdd",
+        "verification",
+        "workflow"
+      ]
+    },
+    {
+      "id": "D3-024",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A subagent is defined for dependency upgrades. Select the TWO design choices that most reduce its blast radius.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Scope `tools` to Read, Grep and a narrow Bash allow-list for the package manager."
+        },
+        {
+          "key": "B",
+          "text": "Give it a longer, more detailed system prompt."
+        },
+        {
+          "key": "C",
+          "text": "Have it produce a branch and a pull request rather than committing to the default branch."
+        },
+        {
+          "key": "D",
+          "text": "Run it on the most capable model tier."
+        },
+        {
+          "key": "E",
+          "text": "Give it a shorter description so it triggers less often."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Blast radius is governed by what the agent can reach and where its output lands. Narrow the tool surface, and route the result through human review. Prompt length, model tier and trigger frequency change quality and cost, not containment.",
+      "distractor_notes": {
+        "B": "Better instructions, same capability.",
+        "D": "A stronger model still executes what it decides to execute.",
+        "E": "Also makes it fail to trigger when you need it."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "Scoped tools are the execution role's policy; the pull request is the change-approval gate. Neither is replaced by writing a better runbook."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code",
+        "c-security"
+      ],
+      "tags": [
+        "subagents",
+        "security",
+        "blast-radius"
+      ]
+    },
+    {
+      "id": "D3-025",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "PreCompact hook",
+      "stem": "What is a legitimate use of the `PreCompact` hook?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Persisting session artefacts or adding instructions about what the summary must retain, before the transcript is condensed."
+        },
+        {
+          "key": "B",
+          "text": "Increasing the context window so compaction is unnecessary."
+        },
+        {
+          "key": "C",
+          "text": "Preventing the model from ever compacting."
+        },
+        {
+          "key": "D",
+          "text": "Switching the model mid-session."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`PreCompact` is your last chance before information is condensed: write the current findings to a file, or inject guidance about what the summary must preserve. It cannot change the size of the window.",
+      "distractor_notes": {
+        "B": "The window is a model property.",
+        "C": "Auto-compaction is a safety valve, not something to disable via hook.",
+        "D": "Not a hook capability."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "compaction"
+      ]
+    },
+    {
+      "id": "D3-026",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "agent failure modes",
+      "stem": "An autonomous agent has been looping for 30 iterations on the same failing test, trying small variations. What is the best structural mitigation for future runs?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Raise the iteration limit so it eventually succeeds."
+        },
+        {
+          "key": "B",
+          "text": "Bound the loop: cap attempts per subtask, and on exhaustion require the agent to stop and escalate with what it tried and what it observed."
+        },
+        {
+          "key": "C",
+          "text": "Switch to a faster model so the loop costs less."
+        },
+        {
+          "key": "D",
+          "text": "Remove the test."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Repeated near-identical attempts signal a wrong hypothesis, not insufficient persistence — more iterations spend more money on the same dead end. Bounded attempts plus a structured escalation turn a runaway into a diagnosable report a human can act on.",
+      "distractor_notes": {
+        "A": "Rewards the failure mode.",
+        "C": "Cheaper looping is still looping.",
+        "D": "Deletes the signal that something is wrong."
+      },
+      "analogy": {
+        "frame": "Distributed systems",
+        "text": "It is a circuit breaker with a retry budget. Infinite retries against a broken dependency is how one failure becomes an outage."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [
+        "c-agent-sdk",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "agents",
+        "loops",
+        "reliability"
+      ]
+    },
+    {
+      "id": "D3-027",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "hooks vs permissions",
+      "stem": "A permission deny rule already blocks `Bash(git push:*)`. What can a `PreToolUse` hook add that the deny rule cannot?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Nothing; they are equivalent."
+        },
+        {
+          "key": "B",
+          "text": "Conditional logic and side effects — allow the push only from a feature branch, log the attempt to an audit sink, and return a tailored explanation."
+        },
+        {
+          "key": "C",
+          "text": "Higher precedence than enterprise managed settings."
+        },
+        {
+          "key": "D",
+          "text": "The ability to modify the model's system prompt."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Permission rules are static pattern matches; hooks are arbitrary code with access to the full call payload and the environment. Use rules for flat always/never decisions, and hooks when the decision depends on runtime state or must produce a side effect such as an audit record.",
+      "distractor_notes": {
+        "A": "Different expressive power.",
+        "C": "Managed policy still outranks everything.",
+        "D": "Not a hook capability."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code",
+        "c-security"
+      ],
+      "tags": [
+        "hooks",
+        "permissions",
+        "design"
+      ]
+    },
+    {
+      "id": "D3-028",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "plan mode in a pipeline",
+      "stem": "A CI job runs Claude Code headlessly against production infrastructure code. Which configuration best matches an 'analyse and propose, never mutate' requirement?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`--permission-mode plan` with an allow-list limited to read and search tools, emitting the plan as JSON for a human to review."
+        },
+        {
+          "key": "B",
+          "text": "`--dangerously-skip-permissions`, with a `Stop` hook that reverts any changes."
+        },
+        {
+          "key": "C",
+          "text": "`acceptEdits` with a post-run `git checkout`."
+        },
+        {
+          "key": "D",
+          "text": "Default mode, relying on the absence of a TTY to block prompts."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Make the guarantee structural: a read-only permission mode plus a read-only tool allow-list means mutation is not possible, rather than possible-but-undone. Compensating controls that clean up afterwards still had a window in which the change existed.",
+      "distractor_notes": {
+        "B": "Grants everything and then hopes to undo it — the change already happened, possibly outside the repo.",
+        "C": "Same flaw, and `git checkout` cannot revert an API call.",
+        "D": "Relying on a prompt that cannot be answered is an accident waiting to be configured away."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "Read-only mode is an IAM role with no write actions. Cleaning up afterwards is granting write access and relying on CloudTrail plus a remediation Lambda — detective control where a preventive one was available."
+      },
+      "cheatsheet": "d3-agentic#plan-mode",
+      "sources": [
+        "c-security",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "plan-mode",
+        "ci",
+        "security"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,670 @@
+{
+  "questions": [
+    {
+      "id": "D5-015",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "SDK options",
+      "stem": "Which `ClaudeAgentOptions` field constrains the filesystem root an SDK agent operates in?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`cwd`"
+        },
+        {
+          "key": "B",
+          "text": "`system_prompt`"
+        },
+        {
+          "key": "C",
+          "text": "`model`"
+        },
+        {
+          "key": "D",
+          "text": "`max_turns`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`cwd` sets the working directory, which is the agent's filesystem anchor. Combined with a narrow `allowed_tools` list, it is the primary containment mechanism in an SDK application.",
+      "distractor_notes": {
+        "B": "Shapes behaviour, grants nothing.",
+        "C": "Capability and cost.",
+        "D": "Bounds iterations."
+      },
+      "cheatsheet": "d5-automation#sdk",
+      "sources": [
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "sdk",
+        "options",
+        "containment"
+      ]
+    },
+    {
+      "id": "D5-016",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "error handling in agent pipelines",
+      "stem": "An agent step in a deployment pipeline occasionally returns a partial result when it hits its turn limit. How should the pipeline treat that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Accept it — a partial result is better than nothing."
+        },
+        {
+          "key": "B",
+          "text": "Fail closed: treat a turn-limit termination as an unsuccessful run, surface it, and do not promote its output."
+        },
+        {
+          "key": "C",
+          "text": "Retry indefinitely until it completes."
+        },
+        {
+          "key": "D",
+          "text": "Ignore the exit condition and parse whatever text was produced."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A run that stopped because it ran out of turns has not verified its own work. Promoting that output means shipping something no one — human or agent — confirmed was finished. Fail closed, surface the reason, and let a human decide.",
+      "distractor_notes": {
+        "A": "Partial changes to a codebase are often worse than none.",
+        "C": "Unbounded retries were the failure mode the limit existed to prevent.",
+        "D": "Discards the one reliable signal you have."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "A timed-out CodeBuild does not transition to deploy just because it produced some artefacts."
+      },
+      "cheatsheet": "d5-automation#bounds",
+      "sources": [
+        "c-agent-sdk",
+        "c-security"
+      ],
+      "tags": [
+        "ci",
+        "error-handling",
+        "reliability"
+      ]
+    },
+    {
+      "id": "D5-017",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "Select the TWO fields most useful to extract from a headless run's JSON result for observability.",
+      "options": [
+        {
+          "key": "A",
+          "text": "`session_id`, to correlate the run with its transcript and any follow-up stage."
+        },
+        {
+          "key": "B",
+          "text": "Cost and usage figures, to attribute spend per pipeline and per repository."
+        },
+        {
+          "key": "C",
+          "text": "The exact wording of the model's first sentence."
+        },
+        {
+          "key": "D",
+          "text": "The colour scheme of the terminal output."
+        },
+        {
+          "key": "E",
+          "text": "The local hostname of the runner, which the result guarantees."
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "Correlation and cost are the two things you will always wish you had recorded: one lets you reconstruct what happened, the other lets you defend or optimise the budget. Prose details are not metrics, and the result object is not where you get runner metadata.",
+      "distractor_notes": {
+        "C": "Not a metric.",
+        "D": "Not present.",
+        "E": "That comes from the CI environment, not the result."
+      },
+      "cheatsheet": "d5-automation#observability",
+      "sources": [
+        "c-agent-sdk",
+        "c-claude-code"
+      ],
+      "tags": [
+        "observability",
+        "ci",
+        "cost"
+      ]
+    },
+    {
+      "id": "D5-018",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "batch vs interactive",
+      "stem": "A company must classify 500,000 support tickets. Latency is irrelevant; cost is the binding constraint. What is the right approach?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The Message Batches API, which processes large asynchronous workloads at a substantial discount."
+        },
+        {
+          "key": "B",
+          "text": "500,000 interactive Claude Code sessions."
+        },
+        {
+          "key": "C",
+          "text": "One prompt containing all 500,000 tickets."
+        },
+        {
+          "key": "D",
+          "text": "A streaming endpoint with maximum concurrency."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Batch processing exists for exactly this shape: high volume, no latency requirement, and roughly half the per-token price. Paying interactive rates for work nobody is waiting on is the most common avoidable line item in an AI budget.",
+      "distractor_notes": {
+        "B": "Absurd overhead and full interactive pricing.",
+        "C": "Exceeds any context window by orders of magnitude.",
+        "D": "Maximum concurrency at full price optimises the wrong variable."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "It is Spot or Batch versus on-demand. When nothing is waiting on the result, paying for immediacy is pure waste."
+      },
+      "cheatsheet": "d7-prompting#cost",
+      "sources": [
+        "c-claude-api",
+        "c-cookbook"
+      ],
+      "tags": [
+        "batch",
+        "cost",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D5-019",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "prompt caching",
+      "stem": "An agent sends the same 30,000-token codebase summary as a prefix on every request in a session. Which technique reduces cost most?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Prompt caching on the stable prefix, so repeated reads of it are billed at a small fraction of the input price."
+        },
+        {
+          "key": "B",
+          "text": "Switching to a smaller model."
+        },
+        {
+          "key": "C",
+          "text": "Removing the summary and letting the agent search each time."
+        },
+        {
+          "key": "D",
+          "text": "Compressing the summary with gzip before sending."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Caching is designed for a large, unchanging prefix reused across requests: you pay a modest premium to write the cache and then read it very cheaply. Order matters — stable content first, variable content last, or you invalidate the cache on every call.",
+      "distractor_notes": {
+        "B": "Changes capability and may cost more in retries.",
+        "C": "Trades a cacheable known cost for repeated uncached searching.",
+        "D": "Billing is on tokens; the model cannot read gzip."
+      },
+      "analogy": {
+        "frame": "Web architecture",
+        "text": "It is a CDN edge cache. Put the static asset in front, keep the query string at the back, and stop paying origin cost for the same bytes."
+      },
+      "cheatsheet": "d7-prompting#caching",
+      "sources": [
+        "c-claude-api",
+        "c-cookbook"
+      ],
+      "tags": [
+        "caching",
+        "cost",
+        "performance"
+      ]
+    },
+    {
+      "id": "D5-020",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "SDK hooks",
+      "stem": "Can an SDK-based application register lifecycle hooks the way the CLI does?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Yes — hooks can be supplied programmatically through the agent options, giving the same lifecycle interception in-process."
+        },
+        {
+          "key": "B",
+          "text": "No; hooks are a CLI-only feature."
+        },
+        {
+          "key": "C",
+          "text": "Only `PreToolUse` is available in the SDK."
+        },
+        {
+          "key": "D",
+          "text": "Only by writing a `settings.json` next to the application."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "The SDK exposes the same lifecycle model, with hooks provided as callables in the options rather than shell commands in a settings file — so an application can enforce policy in its own code, with access to its own state.",
+      "distractor_notes": {
+        "B": "They are supported.",
+        "C": "The event set is not truncated to one.",
+        "D": "A settings file can work, but programmatic registration is the point of the SDK."
+      },
+      "cheatsheet": "d5-automation#sdk",
+      "sources": [
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "sdk",
+        "hooks"
+      ]
+    },
+    {
+      "id": "D5-021",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "agent evaluation",
+      "stem": "Before rolling an agent workflow out to 300 engineers, what is the most important thing to build alongside it?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A marketing page explaining the benefits."
+        },
+        {
+          "key": "B",
+          "text": "An evaluation set of representative tasks with known-good outcomes, so changes to prompts, models or tools can be measured rather than guessed at."
+        },
+        {
+          "key": "C",
+          "text": "A Slack channel for complaints."
+        },
+        {
+          "key": "D",
+          "text": "A dashboard of token spend only."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Without an eval set, every prompt or model change is an unfalsifiable opinion, and regressions are discovered by users. A modest suite of real tasks with expected outcomes turns 'this feels better' into a number you can defend.",
+      "distractor_notes": {
+        "A": "Adoption is not correctness.",
+        "C": "A lagging, biased signal.",
+        "D": "Cost without quality tells you half the story — and the cheap half."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is the regression suite. You would not refactor a payments service with no tests and ship on vibes."
+      },
+      "cheatsheet": "d5-automation#evaluation",
+      "sources": [
+        "c-agent-sdk",
+        "c-cookbook"
+      ],
+      "tags": [
+        "evaluation",
+        "quality",
+        "rollout"
+      ]
+    },
+    {
+      "id": "D5-022",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "containerised agents",
+      "stem": "Why is running an autonomous agent inside a container with no outbound network access (beyond the model endpoint) a strong control?",
+      "options": [
+        {
+          "key": "A",
+          "text": "It makes the agent faster."
+        },
+        {
+          "key": "B",
+          "text": "Even if the agent is manipulated by injected content, it has no route to exfiltrate data or reach internal systems."
+        },
+        {
+          "key": "C",
+          "text": "It reduces token cost."
+        },
+        {
+          "key": "D",
+          "text": "It guarantees the agent's output is correct."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Egress control is a containment boundary that does not depend on the model behaving well. It converts 'the agent was tricked into sending secrets somewhere' from an incident into a failed connection.",
+      "distractor_notes": {
+        "A": "Neutral or slower.",
+        "C": "Unrelated.",
+        "D": "Containment is not correctness."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "It is a private subnet with no NAT gateway and a single VPC endpoint. Compromise stops being exfiltration because there is nowhere for the data to go."
+      },
+      "cheatsheet": "d6-security#containment",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "security",
+        "containers",
+        "autonomy"
+      ]
+    },
+    {
+      "id": "D5-023",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "SDK vs CLI selection",
+      "stem": "When should a team build on the Agent SDK rather than shelling out to the `claude` CLI?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Whenever they need programmatic control — typed message handling, per-call permission decisions, custom in-process tools, or embedding the agent in a product."
+        },
+        {
+          "key": "B",
+          "text": "Only when the CLI is unavailable on the platform."
+        },
+        {
+          "key": "C",
+          "text": "Never; the CLI is always preferable."
+        },
+        {
+          "key": "D",
+          "text": "Only for TypeScript projects."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Shelling out is perfectly reasonable for a scripted step. The SDK earns its place when the agent is part of an application: you need to react to individual messages, authorise calls from your own state, expose your own functions as tools, or manage many concurrent sessions.",
+      "distractor_notes": {
+        "B": "Availability is rarely the deciding factor.",
+        "C": "Parsing stdout is a poor product foundation.",
+        "D": "Python and TypeScript are both supported."
+      },
+      "cheatsheet": "d5-automation#rollout",
+      "sources": [
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "sdk",
+        "cli",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D5-024",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 3,
+      "stem": "An agent will triage incoming production alerts autonomously. Select the THREE design decisions that make this safe to run unattended.",
+      "options": [
+        {
+          "key": "A",
+          "text": "It can read telemetry and write to a triage document, but any remediation action requires human approval."
+        },
+        {
+          "key": "B",
+          "text": "Every run emits a structured record — inputs, tool calls, conclusion — to an audit store."
+        },
+        {
+          "key": "C",
+          "text": "It runs with credentials scoped to read-only observability APIs."
+        },
+        {
+          "key": "D",
+          "text": "It can restart services it judges unhealthy, to reduce mean time to recovery."
+        },
+        {
+          "key": "E",
+          "text": "It suppresses alerts it classifies as noise, without recording them."
+        }
+      ],
+      "correct": [
+        "A",
+        "B",
+        "C"
+      ],
+      "explanation": "Unattended autonomy is safe when the agent's authority is read-shaped, its output is reviewable, and its reasoning is auditable. Granting restart authority makes a misclassification an outage, and silent suppression destroys the evidence you would need afterwards.",
+      "distractor_notes": {
+        "D": "One wrong judgement becomes a self-inflicted incident, at 3am, with no human in the loop.",
+        "E": "Unlogged suppression is indistinguishable from a missed alert."
+      },
+      "analogy": {
+        "frame": "SRE",
+        "text": "It is the difference between a runbook automation that gathers context for the on-call engineer and one that takes remediation actions on its own. The first shortens diagnosis; the second widens outages."
+      },
+      "cheatsheet": "d6-security#autonomy",
+      "sources": [
+        "c-security",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "autonomy",
+        "sre",
+        "governance"
+      ]
+    },
+    {
+      "id": "D5-025",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "concurrency",
+      "stem": "An SDK application runs 50 concurrent agent sessions and starts receiving rate-limit errors. What is the correct response?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Retry immediately in a tight loop until requests succeed."
+        },
+        {
+          "key": "B",
+          "text": "Implement exponential backoff with jitter, respect the retry headers, and bound overall concurrency with a queue."
+        },
+        {
+          "key": "C",
+          "text": "Open additional API accounts to multiply the limit."
+        },
+        {
+          "key": "D",
+          "text": "Ignore the errors; sessions will recover on their own."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "This is ordinary distributed-systems hygiene. Tight retries turn throttling into a self-inflicted denial of service; backoff with jitter plus a bounded work queue keeps you inside the limit and makes throughput predictable.",
+      "distractor_notes": {
+        "A": "Amplifies the problem.",
+        "C": "Circumventing limits invites account-level consequences and does not fix the design.",
+        "D": "Failed requests do not self-heal."
+      },
+      "cheatsheet": "d5-automation#scaling",
+      "sources": [
+        "c-claude-api",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "scaling",
+        "rate-limits",
+        "reliability"
+      ]
+    },
+    {
+      "id": "D5-026",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "reproducibility",
+      "stem": "A pipeline's agent step behaves differently on two runners. Which difference is the most likely cause?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Divergent configuration inputs — a different Claude Code version, a `~/.claude` directory present on one runner, different environment variables or MCP servers."
+        },
+        {
+          "key": "B",
+          "text": "The model was retrained between runs."
+        },
+        {
+          "key": "C",
+          "text": "Cosmic rays."
+        },
+        {
+          "key": "D",
+          "text": "Different CPU architectures change model output."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Debug agent runs like any other build: pin the version, control the environment, and make sure the same configuration is loaded on both machines. A stray user-scoped memory file or an unset variable explains far more discrepancies than anything exotic.",
+      "distractor_notes": {
+        "B": "Model versions are pinned identifiers, not silent updates.",
+        "C": "No.",
+        "D": "Inference runs server-side."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "'Works on my machine' has the same root cause it always had: undeclared inputs."
+      },
+      "cheatsheet": "d5-automation#reproducibility",
+      "sources": [
+        "c-agent-sdk",
+        "c-claude-code"
+      ],
+      "tags": [
+        "ci",
+        "debugging",
+        "reproducibility"
+      ]
+    },
+    {
+      "id": "D5-027",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "rollout strategy",
+      "stem": "What is the most defensible rollout sequence for an agent that can open pull requests across an organisation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Enable it everywhere at once to gather maximum feedback."
+        },
+        {
+          "key": "B",
+          "text": "Start on low-risk repositories in suggest-only mode, measure precision against the eval set, then widen scope and authority as the numbers justify it."
+        },
+        {
+          "key": "C",
+          "text": "Enable it only for the architecture team indefinitely."
+        },
+        {
+          "key": "D",
+          "text": "Enable it on the most business-critical repository first, because that is where value is highest."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Expand blast radius only as fast as evidence accumulates. Low-risk scope plus suggest-only authority produces measurable precision data at near-zero downside, and each widening is then a decision backed by numbers rather than enthusiasm.",
+      "distractor_notes": {
+        "A": "Correlated failure across the whole organisation on day one.",
+        "C": "Never delivers the value.",
+        "D": "Maximum consequence with minimum evidence."
+      },
+      "analogy": {
+        "frame": "Deployment",
+        "text": "It is a canary release. Small blast radius, real traffic, explicit success metrics, then progressive rollout."
+      },
+      "cheatsheet": "d5-automation#rollout",
+      "sources": [
+        "c-cc-best-practices",
+        "c-security"
+      ],
+      "tags": [
+        "rollout",
+        "governance",
+        "strategy"
+      ]
+    },
+    {
+      "id": "D5-028",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "verbose streaming requirement",
+      "stem": "A CI job sets `--output-format stream-json` but sees almost no events. What is the most likely omission?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`--verbose` was not supplied, so intermediate events are suppressed."
+        },
+        {
+          "key": "B",
+          "text": "The model does not support streaming."
+        },
+        {
+          "key": "C",
+          "text": "`stream-json` requires an interactive terminal."
+        },
+        {
+          "key": "D",
+          "text": "Streaming requires an MCP server."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Streaming the full event sequence in print mode pairs with `--verbose`; without it the output is far sparser than expected. It is a common first-run stumble when wiring up CI observability.",
+      "distractor_notes": {
+        "B": "Streaming is broadly supported.",
+        "C": "It is designed for non-interactive use.",
+        "D": "Unrelated."
+      },
+      "cheatsheet": "d5-automation#output",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "cli",
+        "streaming",
+        "debugging"
+      ]
+    }
+  ]
+}

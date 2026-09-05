@@ -1,0 +1,238 @@
+{
+  "note": "These links point at Anthropic's own catalogue and documentation — this app cannot enrol you and does not need your Academy account. This is the free preparation path Anthropic lists on the CCAF certification page, in the order shown there.",
+  "catalogs": [
+    {
+      "name": "Claude Certified Architect – Foundations (certification page)",
+      "url": "https://anthropic-partners.skilljar.com/claude-certified-architect-foundations-certification"
+    },
+    {
+      "name": "Anthropic Academy (course catalogue)",
+      "url": "https://anthropic.skilljar.com/"
+    },
+    {
+      "name": "Anthropic Learn hub",
+      "url": "https://www.anthropic.com/learn"
+    },
+    {
+      "name": "Claude Code documentation",
+      "url": "https://docs.claude.com/en/docs/claude-code/overview"
+    },
+    {
+      "name": "Model Context Protocol specification",
+      "url": "https://modelcontextprotocol.io"
+    }
+  ],
+  "exam_logistics": {
+    "question_types": "Multiple choice and multiple response",
+    "passing_score": "720 (scaled 100–1000)",
+    "delivery": [
+      "Online proctored",
+      "Pearson VUE test center"
+    ],
+    "scheduling_note": "Scheduling and delivery for this and other Anthropic certifications runs through Pearson VUE. This app does not schedule exams — use the certification page above, which hands off to Pearson VUE once you register."
+  },
+  "courses": [
+    {
+      "id": "c-ai-fluency",
+      "title": "AI Fluency: Framework & Foundations",
+      "provider": "Anthropic Academy",
+      "level": "100",
+      "format": "Self-paced course",
+      "est_hours": 2,
+      "link_kind": "catalog",
+      "url": "https://anthropic.skilljar.com/",
+      "domains": [
+        "PES"
+      ],
+      "why": "Establishes the Delegation / Description / Discernment / Diligence vocabulary that underpins effective, safe collaboration with Claude — the frame every other course builds on."
+    },
+    {
+      "id": "c-claude-101",
+      "title": "Claude 101",
+      "provider": "Anthropic Academy",
+      "level": "100",
+      "format": "Self-paced course",
+      "est_hours": 2,
+      "link_kind": "catalog",
+      "url": "https://anthropic.skilljar.com/",
+      "domains": [
+        "PES",
+        "CCW"
+      ],
+      "why": "Everyday use of Claude, the core features, and where to go for more — the on-ramp before the API and Claude Code material gets specific."
+    },
+    {
+      "id": "c-claude-api",
+      "title": "Building with the Claude API",
+      "provider": "Anthropic Academy",
+      "level": "100-200",
+      "format": "Self-paced course",
+      "est_hours": 5,
+      "link_kind": "catalog",
+      "url": "https://anthropic.skilljar.com/",
+      "domains": [
+        "PES",
+        "AAO"
+      ],
+      "why": "Authentication, prompt engineering, evaluations, tool use and agents through the Messages API — the substrate every SDK and structured-output question sits on."
+    },
+    {
+      "id": "c-claude-bedrock",
+      "title": "Claude with Amazon Bedrock",
+      "provider": "Anthropic Academy",
+      "level": "100-200",
+      "format": "Self-paced course",
+      "est_hours": 4,
+      "link_kind": "direct",
+      "url": "https://anthropic-partners.skilljar.com/claude-in-amazon-bedrock",
+      "domains": [
+        "CCW"
+      ],
+      "why": "Setup and production patterns for running Claude through Bedrock — the enterprise-deployment path that shows up directly in configuration and workflow questions."
+    },
+    {
+      "id": "c-claude-vertex",
+      "title": "Claude on Google Cloud",
+      "provider": "Anthropic Academy",
+      "level": "100-200",
+      "format": "Self-paced course",
+      "est_hours": 4,
+      "link_kind": "catalog",
+      "url": "https://anthropic.skilljar.com/",
+      "domains": [
+        "CCW"
+      ],
+      "why": "The Vertex AI counterpart to the Bedrock course — same setup-through-production arc, different cloud, same exam-relevant deployment reasoning."
+    },
+    {
+      "id": "c-mcp-intro",
+      "title": "Introduction to Model Context Protocol",
+      "provider": "Anthropic Academy",
+      "level": "200",
+      "format": "Self-paced course",
+      "est_hours": 3,
+      "link_kind": "catalog",
+      "url": "https://anthropic.skilljar.com/",
+      "domains": [
+        "TDM"
+      ],
+      "why": "Building MCP servers and clients from scratch in Python — tools, resources and prompts, connecting Claude to external services. The single highest-yield course for the Tool Design & MCP domain."
+    },
+    {
+      "id": "c-claude-code-action",
+      "title": "Claude Code in Action",
+      "provider": "Anthropic Academy",
+      "level": "200",
+      "format": "Self-paced course",
+      "est_hours": 6,
+      "link_kind": "catalog",
+      "url": "https://anthropic.skilljar.com/",
+      "domains": [
+        "CCW",
+        "AAO",
+        "CMR"
+      ],
+      "why": "Claude Code integrated into real development workflows: context management, custom commands, hooks and the Agent SDK. The broadest single course on the list — it touches three of the five domains."
+    },
+    {
+      "id": "c-prompt-eng",
+      "title": "Prompt Engineering Interactive Tutorial",
+      "provider": "Anthropic (GitHub)",
+      "level": "supplementary",
+      "format": "Notebook tutorial",
+      "est_hours": 5,
+      "link_kind": "direct",
+      "url": "https://github.com/anthropics/prompt-eng-interactive-tutorial",
+      "domains": [
+        "PES"
+      ],
+      "why": "Not on Anthropic's official prep list, but the deepest hands-on treatment of role prompting, structuring and few-shot technique — directly assessed in Prompt Engineering & Structured Output."
+    },
+    {
+      "id": "c-agent-sdk-docs",
+      "title": "Claude Agent SDK reference",
+      "provider": "Claude Code documentation",
+      "level": "supplementary",
+      "format": "Reference documentation",
+      "est_hours": 3,
+      "link_kind": "direct",
+      "url": "https://docs.claude.com/en/api/agent-sdk/overview",
+      "domains": [
+        "AAO",
+        "TDM"
+      ],
+      "why": "Supplements 'Claude Code in Action' with the full query()/ClaudeSDKClient API surface, permission callbacks and custom tool registration used throughout the Agentic Architecture domain."
+    },
+    {
+      "id": "c-security",
+      "title": "Claude Code security & permissions reference",
+      "provider": "Claude Code documentation",
+      "level": "supplementary",
+      "format": "Documentation set",
+      "est_hours": 2,
+      "link_kind": "direct",
+      "url": "https://docs.claude.com/en/docs/claude-code/security",
+      "domains": [
+        "CCW",
+        "CMR"
+      ],
+      "why": "The exam has no standalone 'security' domain — permission rules live in Configuration & Workflows and injection/containment reasoning lives in Context Management & Reliability. This is the reference for both."
+    }
+  ],
+  "study_plan": [
+    {
+      "week": 1,
+      "focus": "CCW",
+      "courses": [
+        "c-claude-101",
+        "c-claude-bedrock",
+        "c-claude-vertex",
+        "c-security"
+      ],
+      "target": "Two practice sets, 70%+"
+    },
+    {
+      "week": 2,
+      "focus": "AAO",
+      "courses": [
+        "c-claude-code-action",
+        "c-agent-sdk-docs"
+      ],
+      "target": "Four practice sets, 75%+"
+    },
+    {
+      "week": 3,
+      "focus": "TDM",
+      "courses": [
+        "c-mcp-intro",
+        "c-agent-sdk-docs"
+      ],
+      "target": "Four practice sets, 75%+"
+    },
+    {
+      "week": 4,
+      "focus": "PES",
+      "courses": [
+        "c-claude-api",
+        "c-prompt-eng",
+        "c-ai-fluency"
+      ],
+      "target": "Four practice sets, 78%+"
+    },
+    {
+      "week": 5,
+      "focus": "CMR",
+      "courses": [
+        "c-claude-code-action",
+        "c-security"
+      ],
+      "target": "Four practice sets, 80%+"
+    },
+    {
+      "week": 6,
+      "focus": "Full-length rehearsal",
+      "courses": [],
+      "target": "Three timed exam-mode sittings, 80%+ with zero domain under 65%"
+    }
+  ]
+}

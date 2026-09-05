@@ -1,0 +1,712 @@
+{
+  "questions": [
+    {
+      "id": "D1-001",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "settings.json precedence",
+      "stem": "A platform team ships an enterprise managed policy that denies `Bash(curl:*)`. A developer adds an allow rule for `Bash(curl:*)` to their project `.claude/settings.json`, and also passes `--allowedTools \"Bash(curl:*)\"` on the command line. What happens when Claude Code attempts a curl command?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The command runs, because the CLI flag has the highest precedence."
+        },
+        {
+          "key": "B",
+          "text": "The command runs, because project settings override enterprise policy for project-scoped work."
+        },
+        {
+          "key": "C",
+          "text": "The command is denied, because enterprise managed policy sits above every other settings source."
+        },
+        {
+          "key": "D",
+          "text": "Claude Code prompts the user, because the conflicting rules cancel each other out."
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Settings resolution runs highest-to-lowest: enterprise managed policy → command-line arguments → `.claude/settings.local.json` → `.claude/settings.json` → `~/.claude/settings.json`. Managed policy exists precisely so that a developer cannot re-enable something the organisation has forbidden, so neither the project allow rule nor the CLI flag can lift the deny.",
+      "distractor_notes": {
+        "A": "CLI flags beat project and user settings, but they sit *below* managed policy.",
+        "B": "Inverted. Project settings are near the bottom of the chain, not the top.",
+        "D": "There is no cancellation semantic; the highest-precedence source simply wins."
+      },
+      "analogy": {
+        "frame": "AWS IAM",
+        "text": "A Service Control Policy at the AWS Organizations level behaves the same way: an account-level IAM policy that says `Allow s3:*` cannot grant what the SCP denies. Managed settings are Claude Code's SCP."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": "macOS managed policy — /Library/Application Support/ClaudeCode/managed-settings.json",
+        "code": "{\n  \"permissions\": {\n    \"deny\": [\"Bash(curl:*)\", \"Bash(wget:*)\", \"Read(./.env)\"]\n  }\n}"
+      },
+      "cheatsheet": "d1-fundamentals#settings-precedence",
+      "sources": [
+        "c-security",
+        "c-claude-code"
+      ],
+      "tags": [
+        "settings",
+        "precedence",
+        "permissions"
+      ]
+    },
+    {
+      "id": "D1-002",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "print mode vs interactive",
+      "stem": "A nightly job must ask Claude Code to summarise the day's commits and write the result to a file, with no terminal attached. Which invocation is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`claude \"summarise today's commits\" > summary.md`"
+        },
+        {
+          "key": "B",
+          "text": "`claude -p \"summarise today's commits\" > summary.md`"
+        },
+        {
+          "key": "C",
+          "text": "`claude --resume \"summarise today's commits\" > summary.md`"
+        },
+        {
+          "key": "D",
+          "text": "`claude --interactive \"summarise today's commits\" > summary.md`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`-p` / `--print` is non-interactive (headless) mode: Claude Code runs the prompt to completion, prints the final result to stdout and exits. That is the only form safe for cron, CI runners and any context without a TTY.",
+      "distractor_notes": {
+        "A": "Without `-p` the CLI starts an interactive REPL, which will hang or misbehave with no TTY.",
+        "C": "`--resume` reopens a previous session and still expects interaction unless combined with `-p`.",
+        "D": "There is no `--interactive` flag; interactive is the default."
+      },
+      "analogy": {
+        "frame": "SDLC / CI",
+        "text": "This is the same distinction as `psql` vs `psql -c \"SELECT 1\"`, or `vim` vs `sed`. Pipelines need the one-shot form that exits with a status code."
+      },
+      "snippet": {
+        "lang": "bash",
+        "title": "Headless summary job",
+        "code": "claude -p \"Summarise today's commits for the release notes\" \\\n  --output-format json \\\n  --allowedTools \"Bash(git log:*)\",\"Read\" \\\n  > summary.json"
+      },
+      "cheatsheet": "d1-fundamentals#print-mode",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "cli",
+        "headless",
+        "print-mode"
+      ]
+    },
+    {
+      "id": "D1-003",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "session continuity",
+      "stem": "An engineer closed their terminal mid-refactor. They want to reopen the exact same conversation, including the file context Claude had already read, without being shown a picker. Which command should they run from the same directory?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`claude --continue`"
+        },
+        {
+          "key": "B",
+          "text": "`claude --resume`"
+        },
+        {
+          "key": "C",
+          "text": "`claude /clear`"
+        },
+        {
+          "key": "D",
+          "text": "`claude --restore-context`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`--continue` (`-c`) immediately reopens the most recent conversation for the current directory. `--resume` (`-r`) shows an interactive list of past sessions to pick from — useful, but it is a picker unless you pass a specific session ID.",
+      "distractor_notes": {
+        "B": "Correct family, wrong ergonomics: `--resume` prompts with a session list.",
+        "C": "`/clear` wipes conversation history — the opposite of the goal.",
+        "D": "Not a real flag."
+      },
+      "analogy": {
+        "frame": "tmux",
+        "text": "`--continue` is `tmux attach` (grab the last session); `--resume` is `tmux ls` followed by `tmux attach -t <name>`."
+      },
+      "cheatsheet": "d1-fundamentals#sessions",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "sessions",
+        "continue",
+        "resume"
+      ]
+    },
+    {
+      "id": "D1-004",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A team is authoring a custom slash command `/deploy-check` that should be available to everyone who clones the repository and should be restricted to read-only git inspection. Select the TWO correct implementation facts.",
+      "options": [
+        {
+          "key": "A",
+          "text": "The file belongs at `.claude/commands/deploy-check.md` and is committed to the repository."
+        },
+        {
+          "key": "B",
+          "text": "The file belongs at `~/.claude/commands/deploy-check.md` so it survives repository changes."
+        },
+        {
+          "key": "C",
+          "text": "Tool restriction is expressed with an `allowed-tools` key in the command's YAML frontmatter."
+        },
+        {
+          "key": "D",
+          "text": "Tool restriction requires a separate `PreToolUse` hook; slash commands cannot scope tools."
+        },
+        {
+          "key": "E",
+          "text": "The command must be registered in `settings.json` under a `commands` array before it is visible."
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Project commands live in `.claude/commands/` and are shared through version control; personal commands live in `~/.claude/commands/`. A command's markdown file carries YAML frontmatter, where `allowed-tools` narrows what the command may invoke. Discovery is filesystem-based — no registration step.",
+      "distractor_notes": {
+        "B": "That is the personal scope; it would not reach teammates who clone the repo.",
+        "D": "Hooks are a valid extra layer, but frontmatter already scopes tools.",
+        "E": "Commands are discovered from the directory; there is no registry array."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "`.claude/commands/` is to a team what a committed `Makefile` target is: everyone who clones gets it. `~/.claude/commands/` is a shell alias in your own dotfiles — invisible to the rest of the team."
+      },
+      "snippet": {
+        "lang": "markdown",
+        "title": ".claude/commands/deploy-check.md",
+        "code": "---\ndescription: Verify the branch is safe to deploy\nargument-hint: [environment]\nallowed-tools: Bash(git status:*), Bash(git log:*), Read\n---\n\nCheck whether HEAD is safe to deploy to $1.\nReport: unpushed commits, dirty files, and any TODO markers touched since the last tag."
+      },
+      "cheatsheet": "d1-fundamentals#slash-commands",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "slash-commands",
+        "frontmatter"
+      ]
+    },
+    {
+      "id": "D1-005",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "context management",
+      "stem": "During a long session a developer notices responses degrading and the context indicator near its limit. They want to keep working on the same task while reclaiming context. What is the appropriate action?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Run `/clear`, then re-explain the task from scratch."
+        },
+        {
+          "key": "B",
+          "text": "Run `/compact` with a focus instruction so the conversation is summarised but task continuity is preserved."
+        },
+        {
+          "key": "C",
+          "text": "Restart the terminal so a fresh process allocates a larger context window."
+        },
+        {
+          "key": "D",
+          "text": "Switch to a smaller model, which increases the available context window."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`/compact` replaces the transcript with a summary while retaining the thread of work, and it accepts an instruction (`/compact focus on the migration plan and the failing tests`) so you control what survives. `/clear` is the right tool only when you are genuinely switching tasks.",
+      "distractor_notes": {
+        "A": "Correct only at a task boundary; here it throws away work in progress.",
+        "C": "The window is a model property, not a process property.",
+        "D": "Model choice does not enlarge the window in the way implied, and a smaller model would not help reasoning quality here."
+      },
+      "analogy": {
+        "frame": "Database ops",
+        "text": "`/compact` is `VACUUM` — reclaim space, keep the data. `/clear` is `TRUNCATE` — fast, empty, and everything is gone."
+      },
+      "cheatsheet": "d1-fundamentals#context",
+      "sources": [
+        "c-claude-code",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "compact",
+        "context",
+        "sessions"
+      ]
+    },
+    {
+      "id": "D1-006",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "permission modes",
+      "stem": "Which permission mode lets Claude Code apply file edits without prompting, while still asking before it runs shell commands?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`plan`"
+        },
+        {
+          "key": "B",
+          "text": "`acceptEdits`"
+        },
+        {
+          "key": "C",
+          "text": "`bypassPermissions`"
+        },
+        {
+          "key": "D",
+          "text": "`default`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`acceptEdits` auto-approves file edit tools for the session while leaving other tool classes — notably Bash — under the normal prompting rules. `plan` forbids mutation entirely, `bypassPermissions` skips all prompts, and `default` prompts on first use of each tool.",
+      "distractor_notes": {
+        "A": "Plan mode is read-only: no edits at all.",
+        "C": "Bypasses everything including Bash — far broader than asked.",
+        "D": "Default prompts for edits too."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "`acceptEdits` is a stage with automatic transition for artefact updates but a manual-approval action still gated in front of the deploy step."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": ".claude/settings.json",
+        "code": "{\n  \"permissions\": {\n    \"defaultMode\": \"acceptEdits\",\n    \"ask\": [\"Bash\"],\n    \"deny\": [\"Bash(rm -rf:*)\", \"Read(./.env)\"]\n  }\n}"
+      },
+      "cheatsheet": "d1-fundamentals#permission-modes",
+      "sources": [
+        "c-security",
+        "c-claude-code"
+      ],
+      "tags": [
+        "permissions",
+        "modes"
+      ]
+    },
+    {
+      "id": "D1-007",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "output formats",
+      "stem": "A CI job needs to fail the build when Claude Code's headless run reports an error, and it must parse the token cost from the same invocation. Which `--output-format` should be used?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`text` — then grep stdout for the word ERROR."
+        },
+        {
+          "key": "B",
+          "text": "`json` — a single structured result object including cost and an error flag."
+        },
+        {
+          "key": "C",
+          "text": "`markdown` — rendered tables are easy for downstream tools to read."
+        },
+        {
+          "key": "D",
+          "text": "`yaml` — the only format that includes usage metadata."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`--output-format json` emits one machine-readable result object carrying the final text, session id, duration, usage/cost fields and an `is_error` indicator. `stream-json` is the incremental variant when you need events as they happen. Grepping free text is exactly the brittleness structured output exists to remove.",
+      "distractor_notes": {
+        "A": "Works until a commit message contains the word ERROR.",
+        "C": "Not an output format.",
+        "D": "Not an output format."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "Same reason a CodeBuild buildspec writes a `reports` JSON artefact instead of asking the pipeline to scrape CloudWatch log text: contract over scraping."
+      },
+      "snippet": {
+        "lang": "bash",
+        "title": "Gate a pipeline on structured output",
+        "code": "result=$(claude -p \"$PROMPT\" --output-format json)\nif [ \"$(echo \"$result\" | jq -r '.is_error')\" = \"true\" ]; then\n  echo \"$result\" | jq -r '.result' >&2\n  exit 1\nfi\necho \"$result\" | jq -r '.total_cost_usd'"
+      },
+      "cheatsheet": "d1-fundamentals#output-formats",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "cli",
+        "json",
+        "ci"
+      ]
+    },
+    {
+      "id": "D1-008",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "working directories",
+      "stem": "A monorepo developer starts Claude Code in `services/api/` but needs it to also read a shared schema package at `../../packages/schema`. What is the correct way to grant that access?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Symlink the package into the current directory."
+        },
+        {
+          "key": "B",
+          "text": "Use `/add-dir ../../packages/schema`, or start with `--add-dir`."
+        },
+        {
+          "key": "C",
+          "text": "Set `bypassPermissions` mode, which removes directory scoping."
+        },
+        {
+          "key": "D",
+          "text": "Copy the package into `services/api/vendor/`."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Claude Code scopes filesystem access to the working directory. `/add-dir` (in-session) and `--add-dir` (at launch) add extra roots, and `permissions.additionalDirectories` in settings makes it durable for the whole team.",
+      "distractor_notes": {
+        "A": "Symlink games obscure the dependency and still may not be traversed.",
+        "C": "Permission mode governs prompting, not the directory allow-list.",
+        "D": "Duplicating source is a maintenance regression, not an access solution."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": "Durable version in .claude/settings.json",
+        "code": "{\n  \"permissions\": {\n    \"additionalDirectories\": [\"../../packages/schema\", \"../../packages/contracts\"]\n  }\n}"
+      },
+      "cheatsheet": "d1-fundamentals#directories",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "monorepo",
+        "add-dir",
+        "permissions"
+      ]
+    },
+    {
+      "id": "D1-009",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "IDE and surfaces",
+      "stem": "Which statement about Claude Code surfaces is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The IDE extension is a separate product with its own model and settings store."
+        },
+        {
+          "key": "B",
+          "text": "The CLI, IDE extensions and desktop app are surfaces over the same agent, sharing settings and `CLAUDE.md`."
+        },
+        {
+          "key": "C",
+          "text": "Custom slash commands only work in the CLI, never in the IDE extension."
+        },
+        {
+          "key": "D",
+          "text": "MCP servers configured in `.mcp.json` are CLI-only and ignored by other surfaces."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The surfaces differ in presentation, not in engine. The same settings hierarchy, memory files, subagents, skills, hooks and MCP configuration apply, which is why a `.claude/` directory committed to a repo works for every teammate regardless of how they launch Claude Code.",
+      "distractor_notes": {
+        "A": "Shared configuration is the whole design point.",
+        "C": "Project commands are surface-agnostic.",
+        "D": "Project-scoped MCP config is read by every surface."
+      },
+      "cheatsheet": "d1-fundamentals#surfaces",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "surfaces",
+        "ide"
+      ]
+    },
+    {
+      "id": "D1-010",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "model selection at the CLI",
+      "stem": "An architect wants every session in one repository to default to a specific model, without each developer typing `/model`. Which approach is correct and team-shareable?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add a `model` key to the project's `.claude/settings.json` and commit it."
+        },
+        {
+          "key": "B",
+          "text": "Add `export ANTHROPIC_MODEL=...` to each developer's `.zshrc`."
+        },
+        {
+          "key": "C",
+          "text": "Put the model name in `CLAUDE.md` and ask Claude to honour it."
+        },
+        {
+          "key": "D",
+          "text": "There is no way to pin a model per repository."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`settings.json` carries a `model` key and is committed with the repository, so the default applies to everyone who works there. Environment variables work but are per-machine; `CLAUDE.md` is instruction text, not configuration, and cannot change which model is serving the session.",
+      "distractor_notes": {
+        "B": "Works, but is per-developer and drifts.",
+        "C": "A model cannot switch the model it is running on by reading a document.",
+        "D": "It is directly supported."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": ".claude/settings.json",
+        "code": "{\n  \"model\": \"claude-opus-5\",\n  \"permissions\": { \"defaultMode\": \"default\" }\n}"
+      },
+      "cheatsheet": "d1-fundamentals#model",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "model",
+        "settings"
+      ]
+    },
+    {
+      "id": "D1-011",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 3,
+      "stem": "You are standardising Claude Code across 400 engineers. Select the THREE controls that belong in enterprise managed settings rather than in project settings.",
+      "options": [
+        {
+          "key": "A",
+          "text": "A deny rule preventing reads of `**/.env` and `**/credentials.json`."
+        },
+        {
+          "key": "B",
+          "text": "The list of MCP servers a particular microservice needs."
+        },
+        {
+          "key": "C",
+          "text": "Forcing traffic through Amazon Bedrock rather than the public API."
+        },
+        {
+          "key": "D",
+          "text": "Disabling `bypassPermissions` mode organisation-wide."
+        },
+        {
+          "key": "E",
+          "text": "The repository's build and test commands."
+        }
+      ],
+      "correct": [
+        "A",
+        "C",
+        "D"
+      ],
+      "explanation": "Managed settings are for controls that must not be overridable by an individual: secret-file deny rules, the inference endpoint (compliance and data residency), and removing escape hatches such as `bypassPermissions`. Per-repository facts — which MCP servers a service uses, how it builds and tests — belong in project settings and `CLAUDE.md`, where teams own them.",
+      "distractor_notes": {
+        "B": "Service-specific and legitimately per-repo; belongs in `.mcp.json`.",
+        "E": "Project knowledge, not policy; belongs in `CLAUDE.md`."
+      },
+      "analogy": {
+        "frame": "Kubernetes",
+        "text": "Managed settings are cluster-scoped admission policy (Gatekeeper / Pod Security Admission). Project settings are the namespace's own Deployment spec. You do not put a service's replica count in cluster policy, and you do not let a namespace opt out of the security baseline."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": "/etc/claude-code/managed-settings.json (Linux)",
+        "code": "{\n  \"permissions\": {\n    \"deny\": [\"Read(**/.env)\", \"Read(**/credentials.json)\"],\n    \"disableBypassPermissionsMode\": \"disable\"\n  },\n  \"env\": { \"CLAUDE_CODE_USE_BEDROCK\": \"1\" }\n}"
+      },
+      "cheatsheet": "d1-fundamentals#enterprise",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "enterprise",
+        "governance",
+        "managed-settings"
+      ]
+    },
+    {
+      "id": "D1-012",
+      "domain": "CCW",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "diagnostics",
+      "stem": "A developer reports that Claude Code 'cannot see' an MCP server that works for a colleague. Which single command gives the fastest authoritative view of installed servers and their connection state?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`/doctor`"
+        },
+        {
+          "key": "B",
+          "text": "`/mcp`"
+        },
+        {
+          "key": "C",
+          "text": "`/status`"
+        },
+        {
+          "key": "D",
+          "text": "`/context`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`/mcp` lists configured MCP servers with their scope and connection status, and is where you authenticate remote servers. `/doctor` checks the installation health generally, `/status` reports account and session state, `/context` visualises context-window usage.",
+      "distractor_notes": {
+        "A": "Broader install diagnostics; will not enumerate server connection state.",
+        "C": "Account/session oriented.",
+        "D": "Context accounting, unrelated."
+      },
+      "cheatsheet": "d1-fundamentals#diagnostics",
+      "sources": [
+        "c-claude-code",
+        "c-mcp-intro"
+      ],
+      "tags": [
+        "mcp",
+        "diagnostics",
+        "slash-commands"
+      ]
+    },
+    {
+      "id": "D1-013",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "argument passing in commands",
+      "stem": "A slash command file contains the line `Review PR $1 against the standards in $2.` The user runs `/review-pr 482 docs/standards.md`. What is substituted?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`$1` becomes `482 docs/standards.md` and `$2` is empty."
+        },
+        {
+          "key": "B",
+          "text": "`$1` becomes `482` and `$2` becomes `docs/standards.md`."
+        },
+        {
+          "key": "C",
+          "text": "Nothing is substituted; only `$ARGUMENTS` is supported."
+        },
+        {
+          "key": "D",
+          "text": "The command errors because positional parameters require a `params` frontmatter key."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Custom commands support both `$ARGUMENTS` (the whole argument string) and positional `$1`, `$2`, … for individual tokens. Positional parameters let one command take structured input without parsing it yourself.",
+      "distractor_notes": {
+        "A": "That is `$ARGUMENTS` behaviour, not `$1`.",
+        "C": "Positional parameters are supported alongside `$ARGUMENTS`.",
+        "D": "No such frontmatter requirement."
+      },
+      "snippet": {
+        "lang": "markdown",
+        "title": ".claude/commands/review-pr.md",
+        "code": "---\ndescription: Review a pull request against a standards document\nargument-hint: [pr-number] [standards-file]\nallowed-tools: Bash(gh pr view:*), Bash(gh pr diff:*), Read\n---\n\nReview PR $1 against the standards in $2.\nList blocking issues first, then advisory notes."
+      },
+      "cheatsheet": "d1-fundamentals#slash-commands",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "slash-commands",
+        "arguments"
+      ]
+    },
+    {
+      "id": "D1-014",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "surface selection",
+      "stem": "A regulated bank needs Claude Code to run for 2,000 engineers with no source code leaving their AWS account boundary, central spend attribution per team, and no per-developer API keys. Which configuration best meets all three requirements?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Each developer sets `ANTHROPIC_API_KEY` from a shared vault entry."
+        },
+        {
+          "key": "B",
+          "text": "Enterprise managed settings set `CLAUDE_CODE_USE_BEDROCK=1`, engineers authenticate with existing IAM roles, and spend is attributed through AWS cost allocation tags."
+        },
+        {
+          "key": "C",
+          "text": "Developers run Claude Code locally with telemetry disabled to prevent any egress."
+        },
+        {
+          "key": "D",
+          "text": "A single shared service account runs Claude Code on a bastion host that engineers SSH into."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Bedrock keeps inference inside the customer's AWS account and region, IAM roles remove the need to distribute long-lived keys, and AWS cost allocation gives per-team attribution. Enforcing it through managed settings means a developer cannot quietly point back at the public API.",
+      "distractor_notes": {
+        "A": "A shared key defeats attribution and is a credential-sprawl risk.",
+        "C": "Disabling telemetry hides usage from you; it does not change where inference happens.",
+        "D": "A shared bastion identity destroys attribution and creates a single high-value target."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "Same pattern as replacing hard-coded access keys in EC2 apps with an instance profile: identity comes from the platform, the data path stays inside the account, and Cost Explorer can slice spend by tag."
+      },
+      "cheatsheet": "d1-fundamentals#enterprise",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "bedrock",
+        "enterprise",
+        "iam",
+        "cost"
+      ]
+    }
+  ]
+}

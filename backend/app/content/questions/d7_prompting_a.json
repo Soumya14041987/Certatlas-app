@@ -1,0 +1,748 @@
+{
+  "questions": [
+    {
+      "id": "D7-001",
+      "domain": "PES",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "structuring prompts",
+      "stem": "Which technique most reliably improves a complex prompt containing instructions, reference material and examples?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Writing it in a single long paragraph so nothing is missed."
+        },
+        {
+          "key": "B",
+          "text": "Delimiting the parts with clear structure — XML tags or headed sections — so instructions cannot be confused with data."
+        },
+        {
+          "key": "C",
+          "text": "Using capital letters for emphasis throughout."
+        },
+        {
+          "key": "D",
+          "text": "Repeating the instruction five times."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Explicit structure separates the roles of each block: this is the instruction, this is the document, these are the examples. It is the single highest-leverage change for long prompts, and it also makes injection through the data block far less confusing to the model.",
+      "distractor_notes": {
+        "A": "Instructions get lost mid-paragraph.",
+        "C": "Shouting is not structure.",
+        "D": "Adds tokens, not clarity."
+      },
+      "snippet": {
+        "lang": "text",
+        "title": "Structured prompt",
+        "code": "<instructions>\nClassify the ticket into exactly one category from <categories>.\nReturn only the JSON object described in <output_format>.\n</instructions>\n\n<categories>billing, outage, feature_request, how_to</categories>\n\n<ticket>\n{{ticket_text}}\n</ticket>\n\n<output_format>{\"category\": \"...\", \"confidence\": 0.0}</output_format>"
+      },
+      "cheatsheet": "d7-prompting#structure",
+      "sources": [
+        "c-prompt-eng"
+      ],
+      "tags": [
+        "prompting",
+        "structure",
+        "xml"
+      ]
+    },
+    {
+      "id": "D7-002",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "few-shot examples",
+      "stem": "A classification prompt produces inconsistent output formats. What is the most effective fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add two or three examples showing input and the exact expected output."
+        },
+        {
+          "key": "B",
+          "text": "Ask the model to try harder."
+        },
+        {
+          "key": "C",
+          "text": "Raise the temperature."
+        },
+        {
+          "key": "D",
+          "text": "Increase the maximum output tokens."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Examples are the most reliable way to communicate format, because they demonstrate rather than describe. A handful of well-chosen ones — including an edge case — usually beats several paragraphs of specification.",
+      "distractor_notes": {
+        "B": "No mechanism.",
+        "C": "Increases variance, which is the problem.",
+        "D": "Length is not format."
+      },
+      "cheatsheet": "d7-prompting#few-shot",
+      "sources": [
+        "c-prompt-eng"
+      ],
+      "tags": [
+        "prompting",
+        "few-shot",
+        "consistency"
+      ]
+    },
+    {
+      "id": "D7-003",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "model selection",
+      "stem": "Which workload is the best candidate for a smaller, faster model tier?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Designing a migration strategy for a distributed system."
+        },
+        {
+          "key": "B",
+          "text": "Extracting a date and an amount from 200,000 well-formatted invoices."
+        },
+        {
+          "key": "C",
+          "text": "Debugging an intermittent race condition."
+        },
+        {
+          "key": "D",
+          "text": "Reviewing a security-critical authentication change."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "High volume, low ambiguity, easily verified output — that is where a smaller tier delivers most of the quality at a fraction of the cost and latency. The other three are judgement-heavy and low-volume, exactly where capability earns its price.",
+      "distractor_notes": {
+        "A": "Judgement-heavy.",
+        "C": "Subtle reasoning.",
+        "D": "High cost of a miss."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "It is right-sizing. Batch extraction is not the workload you provision for peak reasoning capacity."
+      },
+      "cheatsheet": "d7-prompting#model-selection",
+      "sources": [
+        "c-claude-api",
+        "c-cookbook"
+      ],
+      "tags": [
+        "model-selection",
+        "cost",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D7-004",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "cache ordering",
+      "stem": "For prompt caching to be effective, how should a prompt be ordered?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Variable content first, stable content last."
+        },
+        {
+          "key": "B",
+          "text": "Stable content first, variable content last."
+        },
+        {
+          "key": "C",
+          "text": "Alphabetically by section name."
+        },
+        {
+          "key": "D",
+          "text": "Order is irrelevant to caching."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The cache matches on a prefix, so anything that changes must come after everything that does not. Put the system prompt, tool definitions and large static documents first, and the user's question last.",
+      "distractor_notes": {
+        "A": "Invalidates the cache on every request.",
+        "C": "Irrelevant.",
+        "D": "Order is the whole mechanism."
+      },
+      "analogy": {
+        "frame": "Docker",
+        "text": "It is layer ordering in a Dockerfile: copy the lockfile and install dependencies before copying the source, or every build busts the cache."
+      },
+      "cheatsheet": "d7-prompting#caching",
+      "sources": [
+        "c-claude-api",
+        "c-cookbook"
+      ],
+      "tags": [
+        "caching",
+        "cost",
+        "prompting"
+      ]
+    },
+    {
+      "id": "D7-005",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "chain of thought",
+      "stem": "When does asking the model to reason step by step before answering genuinely help?",
+      "options": [
+        {
+          "key": "A",
+          "text": "On every task, without exception."
+        },
+        {
+          "key": "B",
+          "text": "On multi-step problems — analysis, maths, debugging, planning — where intermediate reasoning changes the final answer."
+        },
+        {
+          "key": "C",
+          "text": "On simple lookups, to double-check them."
+        },
+        {
+          "key": "D",
+          "text": "Only when the output must be JSON."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Explicit reasoning helps where the answer depends on intermediate steps. On a simple retrieval it adds tokens and latency for nothing, and on a strict-format response it can actively interfere unless the reasoning is placed in a designated block.",
+      "distractor_notes": {
+        "A": "Uniform cost against non-uniform benefit.",
+        "C": "Nothing to decompose.",
+        "D": "Reasoning and format are separate concerns — and unstructured reasoning breaks strict JSON."
+      },
+      "cheatsheet": "d7-prompting#reasoning",
+      "sources": [
+        "c-prompt-eng"
+      ],
+      "tags": [
+        "prompting",
+        "chain-of-thought"
+      ]
+    },
+    {
+      "id": "D7-006",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 3,
+      "stem": "An organisation's monthly agent spend has tripled. Select the THREE interventions most likely to reduce it without materially reducing value.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Enable prompt caching for stable prefixes such as system prompts and large reference documents."
+        },
+        {
+          "key": "B",
+          "text": "Route bulk, low-judgement work to a smaller model tier."
+        },
+        {
+          "key": "C",
+          "text": "Move latency-insensitive batch workloads to the Batches API."
+        },
+        {
+          "key": "D",
+          "text": "Cap every engineer at ten sessions a day."
+        },
+        {
+          "key": "E",
+          "text": "Turn off all automation."
+        }
+      ],
+      "correct": [
+        "A",
+        "B",
+        "C"
+      ],
+      "explanation": "Caching, right-sized routing and batch pricing all reduce the cost of the same work. Hard usage caps and switching automation off reduce the work itself — that is not optimisation, it is cutting the thing you were buying.",
+      "distractor_notes": {
+        "D": "A blunt cap penalises the heaviest users, who are often delivering the most.",
+        "E": "Removes the value with the cost."
+      },
+      "cheatsheet": "d7-prompting#cost",
+      "sources": [
+        "c-claude-api",
+        "c-cookbook"
+      ],
+      "tags": [
+        "cost",
+        "optimisation",
+        "strategy"
+      ]
+    },
+    {
+      "id": "D7-007",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "role prompting",
+      "stem": "What does assigning a role — 'You are a senior database reliability engineer' — actually accomplish?",
+      "options": [
+        {
+          "key": "A",
+          "text": "It grants the model access to specialised training data unavailable otherwise."
+        },
+        {
+          "key": "B",
+          "text": "It sets expectations for vocabulary, depth and what the response should prioritise, which improves relevance on domain tasks."
+        },
+        {
+          "key": "C",
+          "text": "It changes the underlying model that serves the request."
+        },
+        {
+          "key": "D",
+          "text": "It has no measurable effect."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A role is framing. It shifts which considerations get surfaced and at what depth — a DBA framing will raise locking and rollout risk unprompted. It unlocks nothing hidden and changes no infrastructure.",
+      "distractor_notes": {
+        "A": "No hidden corpus is unlocked.",
+        "C": "Routing is unaffected.",
+        "D": "The effect on relevance is real."
+      },
+      "cheatsheet": "d7-prompting#roles",
+      "sources": [
+        "c-prompt-eng"
+      ],
+      "tags": [
+        "prompting",
+        "roles"
+      ]
+    },
+    {
+      "id": "D7-008",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "prefilling",
+      "stem": "A response must be a JSON array and nothing else, but the model keeps adding a friendly preamble. Which technique addresses this most directly?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Prefill the start of the assistant's response with the opening bracket so continuation is constrained."
+        },
+        {
+          "key": "B",
+          "text": "Add 'please' to the instruction."
+        },
+        {
+          "key": "C",
+          "text": "Lower the maximum output tokens so the preamble is truncated."
+        },
+        {
+          "key": "D",
+          "text": "Post-process with a regular expression and hope."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Prefilling puts the model mid-structure, so there is nowhere for a preamble to go. It is the most reliable format control available, and it costs nothing.",
+      "distractor_notes": {
+        "B": "No effect on format.",
+        "C": "Truncates the payload, not the preamble.",
+        "D": "Fragile, and it is treating the symptom."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [
+        "c-prompt-eng",
+        "c-cookbook"
+      ],
+      "tags": [
+        "prompting",
+        "json",
+        "prefill"
+      ]
+    },
+    {
+      "id": "D7-009",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "evaluation over intuition",
+      "stem": "Two prompt variants are proposed for a production classifier. How should the choice be made?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Whichever reads better to the team."
+        },
+        {
+          "key": "B",
+          "text": "Run both against a labelled evaluation set and compare accuracy, cost and latency."
+        },
+        {
+          "key": "C",
+          "text": "Whichever is shorter."
+        },
+        {
+          "key": "D",
+          "text": "Ask the model which prompt it prefers."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Prompt changes have non-obvious effects, and human intuition about them is poor — a wordier prompt often wins, and sometimes the elegant one quietly loses three points of recall. Measure on real examples, on all three axes that matter.",
+      "distractor_notes": {
+        "A": "Aesthetics do not predict accuracy.",
+        "C": "Brevity is not a quality metric.",
+        "D": "Not a source of ground truth."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is A/B testing versus arguing in a design review. Prompts are code; hold them to the same evidentiary standard."
+      },
+      "cheatsheet": "d7-prompting#evaluation",
+      "sources": [
+        "c-prompt-eng",
+        "c-cookbook"
+      ],
+      "tags": [
+        "evaluation",
+        "prompting",
+        "methodology"
+      ]
+    },
+    {
+      "id": "D7-010",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "extended thinking budget",
+      "stem": "Which statement about extended thinking is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "It is free, since thinking tokens are not billed."
+        },
+        {
+          "key": "B",
+          "text": "It has a configurable token budget, those tokens are billed, and it pays off on genuinely hard reasoning rather than on routine work."
+        },
+        {
+          "key": "C",
+          "text": "It replaces the need for examples and clear instructions."
+        },
+        {
+          "key": "D",
+          "text": "It guarantees a correct answer."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Thinking is a budgeted, billed resource. Spend it where deliberation changes the outcome — planning, subtle debugging, trade-off analysis — and keep the prompt itself well specified regardless, because thinking does not compensate for an unclear question.",
+      "distractor_notes": {
+        "A": "They are billed.",
+        "C": "A clear prompt still matters.",
+        "D": "Nothing guarantees correctness."
+      },
+      "cheatsheet": "d7-prompting#thinking",
+      "sources": [
+        "c-claude-api"
+      ],
+      "tags": [
+        "thinking",
+        "cost",
+        "reasoning"
+      ]
+    },
+    {
+      "id": "D7-011",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "long-context placement",
+      "stem": "A prompt includes a 60-page document and a question about it. Where should the question go?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Before the document, so the model reads with purpose."
+        },
+        {
+          "key": "B",
+          "text": "After the document, at the end of the prompt."
+        },
+        {
+          "key": "C",
+          "text": "Split in half around the document."
+        },
+        {
+          "key": "D",
+          "text": "It makes no difference."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "With long documents, placing the query after the content is the established guidance for Claude, and it happens to align with caching: the stable document forms a reusable prefix and the varying question sits at the tail.",
+      "distractor_notes": {
+        "A": "Loses the caching benefit and is not the recommended order.",
+        "C": "Fragmented instructions are harder to follow.",
+        "D": "Placement measurably affects both quality and cost."
+      },
+      "cheatsheet": "d7-prompting#long-context",
+      "sources": [
+        "c-prompt-eng",
+        "c-claude-api"
+      ],
+      "tags": [
+        "long-context",
+        "prompting",
+        "caching"
+      ]
+    },
+    {
+      "id": "D7-012",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "cost forecasting",
+      "stem": "An architect must forecast the cost of rolling an agent workflow out to 500 engineers. Which model is most sound?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Multiply one engineer's first-week spend by 500."
+        },
+        {
+          "key": "B",
+          "text": "Model input and output tokens per task type, multiply by measured task frequency per engineer, apply cache-hit and batch discounts, and validate against a pilot cohort."
+        },
+        {
+          "key": "C",
+          "text": "Assume cost scales with headcount only."
+        },
+        {
+          "key": "D",
+          "text": "Use the vendor's list price for one seat."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Spend is driven by tokens per task and tasks per person, not by headcount. Build the model bottom-up from measured task shapes, apply the discounts you will actually realise, then check it against a pilot before committing a number to a budget.",
+      "distractor_notes": {
+        "A": "First-week usage is unrepresentative in both directions — novelty inflates it, inexperience deflates it.",
+        "C": "Usage per engineer varies by an order of magnitude.",
+        "D": "Ignores consumption entirely."
+      },
+      "cheatsheet": "d7-prompting#cost",
+      "sources": [
+        "c-claude-api"
+      ],
+      "tags": [
+        "cost",
+        "forecasting",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D7-013",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "negative instructions",
+      "stem": "Which instruction is more likely to produce the intended behaviour?",
+      "options": [
+        {
+          "key": "A",
+          "text": "'Do not be verbose.'"
+        },
+        {
+          "key": "B",
+          "text": "'Answer in at most three sentences, then stop.'"
+        },
+        {
+          "key": "C",
+          "text": "'Avoid unnecessary words.'"
+        },
+        {
+          "key": "D",
+          "text": "'Never write too much.'"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Positive, specific and checkable beats negative and vague. 'At most three sentences' is a constraint that can be followed and verified; 'not verbose' requires the model to guess your threshold.",
+      "distractor_notes": {
+        "A": "Undefined threshold.",
+        "C": "'Unnecessary' is doing all the work and is undefined.",
+        "D": "Same problem, more emphatic."
+      },
+      "cheatsheet": "d7-prompting#instructions",
+      "sources": [
+        "c-prompt-eng"
+      ],
+      "tags": [
+        "prompting",
+        "specificity"
+      ]
+    },
+    {
+      "id": "D7-014",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "hallucination mitigation",
+      "stem": "A retrieval-backed assistant occasionally invents policy details not present in the retrieved documents. Which mitigation is most effective?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Instruct it to answer only from the provided documents, to quote the supporting passage, and to say explicitly when the documents do not contain the answer."
+        },
+        {
+          "key": "B",
+          "text": "Lower the temperature to zero."
+        },
+        {
+          "key": "C",
+          "text": "Use a larger model and assume the problem resolves."
+        },
+        {
+          "key": "D",
+          "text": "Add 'do not hallucinate' to the prompt."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Grounding works by making the source visible and giving the model a sanctioned way to decline. Requiring a quote makes unsupported claims obvious to a reviewer, and an explicit 'not found' path removes the pressure to fill the gap.",
+      "distractor_notes": {
+        "B": "Reduces variance, not fabrication.",
+        "C": "Reduces frequency at best; the failure mode remains.",
+        "D": "The model has no reliable internal flag to consult."
+      },
+      "analogy": {
+        "frame": "Citations",
+        "text": "It is the difference between an essay and a referenced report. Requiring the citation is what makes the unsupported claim visible."
+      },
+      "cheatsheet": "d7-prompting#grounding",
+      "sources": [
+        "c-prompt-eng",
+        "c-cookbook"
+      ],
+      "tags": [
+        "hallucination",
+        "rag",
+        "grounding"
+      ]
+    },
+    {
+      "id": "D7-015",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "prompt versioning",
+      "stem": "Production prompts are edited directly in a dashboard by three teams. What is the main architectural problem?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Dashboards are slower than editors."
+        },
+        {
+          "key": "B",
+          "text": "Prompts are production behaviour with no version control, review or rollback — a change with no diff and no author, deployed instantly."
+        },
+        {
+          "key": "C",
+          "text": "Dashboards cannot store long prompts."
+        },
+        {
+          "key": "D",
+          "text": "There is no problem if the team is small."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A prompt is source code for behaviour. Without versioning you cannot review a change, attribute a regression, or roll back — the three things you rely on for every other production artefact.",
+      "distractor_notes": {
+        "A": "Ergonomics, not architecture.",
+        "C": "Not the issue.",
+        "D": "Small teams break production too, and they also lose the audit trail."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is editing production configuration through a console with no change management. It works until the day it does not, and then you have no diff to look at."
+      },
+      "cheatsheet": "d7-prompting#operations",
+      "sources": [
+        "c-prompt-eng",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "operations",
+        "versioning",
+        "governance"
+      ]
+    },
+    {
+      "id": "D7-016",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "Select the TWO statements that correctly describe prompt caching economics.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Writing to the cache costs more than an ordinary input token; reading from it costs substantially less."
+        },
+        {
+          "key": "B",
+          "text": "Caching only pays off when the cached prefix is large and reused several times before it expires."
+        },
+        {
+          "key": "C",
+          "text": "Cached tokens are free to write and free to read."
+        },
+        {
+          "key": "D",
+          "text": "Caching increases output token cost."
+        },
+        {
+          "key": "E",
+          "text": "A cache entry persists indefinitely once written."
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "There is a write premium and a large read discount, so the break-even depends on reuse before expiry. A small prefix used twice may not repay the write; a large one used repeatedly in a session repays it immediately.",
+      "distractor_notes": {
+        "C": "Writes carry a premium.",
+        "D": "Output pricing is unaffected.",
+        "E": "Entries have a limited lifetime."
+      },
+      "cheatsheet": "d7-prompting#caching",
+      "sources": [
+        "c-claude-api"
+      ],
+      "tags": [
+        "caching",
+        "cost",
+        "economics"
+      ]
+    }
+  ]
+}

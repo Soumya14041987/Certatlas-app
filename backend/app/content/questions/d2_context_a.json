@@ -1,0 +1,726 @@
+{
+  "questions": [
+    {
+      "id": "D2-001",
+      "domain": "CMR",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "memory hierarchy",
+      "stem": "Which memory file applies to every repository a single developer works on, on their own machine, without being shared with teammates?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`./CLAUDE.md`"
+        },
+        {
+          "key": "B",
+          "text": "`~/.claude/CLAUDE.md`"
+        },
+        {
+          "key": "C",
+          "text": "`.claude/settings.json`"
+        },
+        {
+          "key": "D",
+          "text": "The enterprise managed policy file"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`~/.claude/CLAUDE.md` is user-scoped memory: it loads in every project for that user and is never committed. `./CLAUDE.md` is project memory shared through git; managed policy is organisation-wide and administrator-owned.",
+      "distractor_notes": {
+        "A": "Project-scoped and shared.",
+        "C": "Configuration, not memory.",
+        "D": "Organisation-wide and not user-editable."
+      },
+      "cheatsheet": "d2-context#hierarchy",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "claude-md",
+        "memory",
+        "scope"
+      ]
+    },
+    {
+      "id": "D2-002",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "imports",
+      "stem": "A `CLAUDE.md` is growing past 500 lines and is loaded on every single turn. Which technique keeps the always-on cost down while leaving the detail available?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Move the detail into separate documents and reference them by path, so they are read only when relevant."
+        },
+        {
+          "key": "B",
+          "text": "Compress the file by removing all whitespace and newlines."
+        },
+        {
+          "key": "C",
+          "text": "Move everything into `settings.json`, which is not counted against context."
+        },
+        {
+          "key": "D",
+          "text": "Split it into ten `CLAUDE.md` files in the same directory; only the first is loaded."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "This is progressive disclosure. Keep the always-loaded file to a short, high-signal index — build commands, hard rules, layout — and point to deeper documents (`See docs/testing.md for the test strategy`) that are pulled in only when the task touches them.",
+      "distractor_notes": {
+        "B": "Whitespace is a rounding error; the tokens are in the prose, and unreadable memory is worse memory.",
+        "C": "Settings is configuration and cannot carry project knowledge.",
+        "D": "Only one `CLAUDE.md` per directory is meaningful."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is the README/wiki split. The README is the map everyone reads; the wiki holds the twenty pages nobody needs on a given day."
+      },
+      "snippet": {
+        "lang": "markdown",
+        "title": "A lean CLAUDE.md index",
+        "code": "# Payments service\n\n## Commands\n- Test: `pnpm test`  |  Lint: `pnpm lint`  |  Types: `pnpm typecheck`\n\n## Hard rules\n- Money is `bigint` minor units. Never floats.\n- Every handler goes through `withIdempotency()`.\n\n## Deeper reading (load only when relevant)\n- Ledger invariants: @docs/ledger.md\n- PSP failover runbook: @docs/psp-failover.md"
+      },
+      "cheatsheet": "d2-context#progressive-disclosure",
+      "sources": [
+        "c-cc-best-practices",
+        "c-claude-code"
+      ],
+      "tags": [
+        "claude-md",
+        "progressive-disclosure",
+        "imports"
+      ]
+    },
+    {
+      "id": "D2-003",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "directory-scoped memory",
+      "stem": "In a monorepo, `services/payments/CLAUDE.md` documents payment-specific rules. When is it loaded?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Always, at session start, alongside the root `CLAUDE.md`."
+        },
+        {
+          "key": "B",
+          "text": "When Claude Code works with files under `services/payments/`."
+        },
+        {
+          "key": "C",
+          "text": "Only if the root `CLAUDE.md` imports it explicitly."
+        },
+        {
+          "key": "D",
+          "text": "Never; only the root file is supported."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Subdirectory memory is loaded on demand when work touches that subtree. That is what makes monorepo memory scale: a developer in `services/search` never pays for the payments team's rules.",
+      "distractor_notes": {
+        "A": "Loading every subtree's memory eagerly would blow the context budget in a large monorepo.",
+        "C": "An explicit import works, but is not required.",
+        "D": "Nested memory is supported."
+      },
+      "analogy": {
+        "frame": "Kubernetes",
+        "text": "Root `CLAUDE.md` is cluster-wide policy; a service's `CLAUDE.md` is a namespace ConfigMap that only matters when you are in that namespace."
+      },
+      "cheatsheet": "d2-context#hierarchy",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "monorepo",
+        "claude-md",
+        "scope"
+      ]
+    },
+    {
+      "id": "D2-004",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "memory vs skill vs subagent",
+      "stem": "Your organisation has a 40-page incident-response runbook. Engineers need Claude Code to follow it correctly during an incident, but it is irrelevant 99% of the time. What is the best structure?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Paste the runbook into the project `CLAUDE.md`."
+        },
+        {
+          "key": "B",
+          "text": "Package it as an Agent Skill whose description matches incident scenarios, so it loads only when triggered."
+        },
+        {
+          "key": "C",
+          "text": "Give every engineer a personal `~/.claude/CLAUDE.md` containing the runbook."
+        },
+        {
+          "key": "D",
+          "text": "Add it as an MCP resource that the model must fetch on every turn."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Skills exist for exactly this shape: large, procedural, situational knowledge. Only the name and description sit in context permanently; the body — and any bundled scripts or templates — load when the description matches what the user is doing.",
+      "distractor_notes": {
+        "A": "Charges 40 pages of context on every turn of every unrelated task.",
+        "C": "Same cost, worse — now duplicated per engineer and impossible to update centrally.",
+        "D": "Fetching on every turn reproduces the always-on cost with added latency."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is lazy loading versus bundling everything into the initial JavaScript payload. You ship the route, not the whole app."
+      },
+      "snippet": {
+        "lang": "markdown",
+        "title": ".claude/skills/incident-response/SKILL.md",
+        "code": "---\nname: incident-response\ndescription: Use when handling a production incident — triage, severity classification, comms, postmortem. Trigger on \"incident\", \"outage\", \"sev1\", \"pager\".\n---\n\n# Incident response\n\n## 1. Classify severity\n...\n\n## Reference\n- Escalation matrix: ./escalation.md\n- Comms templates: ./templates/"
+      },
+      "cheatsheet": "d2-context#memory-vs-skill",
+      "sources": [
+        "c-claude-code",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "skills",
+        "progressive-disclosure",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D2-005",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 3,
+      "stem": "Select the THREE items that genuinely belong in a project `CLAUDE.md`.",
+      "options": [
+        {
+          "key": "A",
+          "text": "The exact commands to build, test and lint the project."
+        },
+        {
+          "key": "B",
+          "text": "A non-obvious constraint, e.g. 'the `orders` table is append-only; never issue UPDATE'."
+        },
+        {
+          "key": "C",
+          "text": "A full copy of the REST API reference documentation."
+        },
+        {
+          "key": "D",
+          "text": "Repository conventions a newcomer would get wrong, e.g. 'integration tests live beside the module, not in `tests/`'."
+        },
+        {
+          "key": "E",
+          "text": "The team's on-call rota for this quarter."
+        }
+      ],
+      "correct": [
+        "A",
+        "B",
+        "D"
+      ],
+      "explanation": "Memory earns its permanent context cost when it carries things that are load-bearing and not discoverable by reading a couple of files: how to run things, invariants that are invisible in the code, and conventions that violate the reader's default expectations. Bulk reference material and fast-decaying facts do not qualify.",
+      "distractor_notes": {
+        "C": "Large, static and rarely all needed — a skill or an on-demand document.",
+        "E": "Changes every quarter and has no bearing on code decisions; stale memory is actively misleading."
+      },
+      "cheatsheet": "d2-context#what-belongs",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "claude-md",
+        "curation"
+      ]
+    },
+    {
+      "id": "D2-006",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "import syntax",
+      "stem": "Which line in a `CLAUDE.md` correctly imports another memory file?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`@docs/architecture.md`"
+        },
+        {
+          "key": "B",
+          "text": "`!include docs/architecture.md`"
+        },
+        {
+          "key": "C",
+          "text": "`{{ docs/architecture.md }}`"
+        },
+        {
+          "key": "D",
+          "text": "`import \"docs/architecture.md\"`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`@path` is the import syntax in memory files, and imports may nest a few levels deep. The other forms are invented.",
+      "distractor_notes": {
+        "B": "Not supported.",
+        "C": "Not supported.",
+        "D": "Not supported."
+      },
+      "cheatsheet": "d2-context#imports",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "claude-md",
+        "imports",
+        "syntax"
+      ]
+    },
+    {
+      "id": "D2-007",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "context rot",
+      "stem": "Six months after adoption, a team's `CLAUDE.md` says the project uses Jest, but it migrated to Vitest four months ago. Claude keeps generating Jest-shaped tests. What does this incident best illustrate?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A model limitation that a more capable model would avoid."
+        },
+        {
+          "key": "B",
+          "text": "That memory is code: stale instructions are authoritative and will be followed, so memory needs the same review and maintenance discipline as source."
+        },
+        {
+          "key": "C",
+          "text": "That `CLAUDE.md` should never mention specific tools."
+        },
+        {
+          "key": "D",
+          "text": "That the team should disable memory loading entirely."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The agent is behaving correctly — it trusted the instruction it was given. Memory files carry high authority precisely because they are always in context, which makes them dangerous when stale. Treat `CLAUDE.md` as a reviewed artefact: change it in the same PR that changes the thing it describes.",
+      "distractor_notes": {
+        "A": "No model can know the file is lying to it.",
+        "C": "Tool specifics are among the most valuable content — they just have to be kept true.",
+        "D": "Throwing away the mechanism because it was not maintained is an overcorrection."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "This is comment rot with teeth. A stale code comment misleads a reader who may notice; a stale `CLAUDE.md` line silently steers every generated change."
+      },
+      "cheatsheet": "d2-context#maintenance",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "maintenance",
+        "claude-md",
+        "governance"
+      ]
+    },
+    {
+      "id": "D2-008",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "quick memory capture",
+      "stem": "Mid-session, a developer wants to record a durable project rule they just discovered. What is the fastest supported way?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Begin the message with `#`, and choose which memory file to save it to."
+        },
+        {
+          "key": "B",
+          "text": "Ask Claude to remember it; it persists automatically at session end."
+        },
+        {
+          "key": "C",
+          "text": "Run `/compact remember this rule`."
+        },
+        {
+          "key": "D",
+          "text": "Nothing in-session; memory can only be edited in an external editor."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A message starting with `#` is captured as a memory entry, and you are asked which memory file it belongs in. `/memory` opens the files for fuller editing.",
+      "distractor_notes": {
+        "B": "Conversation is not persisted to memory on its own; it is discarded with the session.",
+        "C": "`/compact` summarises the transcript; it does not write memory files.",
+        "D": "Both `#` and `/memory` work in-session."
+      },
+      "cheatsheet": "d2-context#capture",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "memory",
+        "workflow"
+      ]
+    },
+    {
+      "id": "D2-009",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "context budgeting",
+      "stem": "An agent is asked to fix a bug in a 300-file service. Which approach spends context most effectively?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Read every file first so the agent has complete information."
+        },
+        {
+          "key": "B",
+          "text": "Search for the symptom, read only the files on the implicated path, then widen if the hypothesis fails."
+        },
+        {
+          "key": "C",
+          "text": "Paste the entire repository into the prompt to eliminate tool-call latency."
+        },
+        {
+          "key": "D",
+          "text": "Disable search tools so the agent reasons purely from `CLAUDE.md`."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Targeted retrieval beats exhaustive loading. Reading everything both exhausts the window and dilutes attention across hundreds of irrelevant files — the relevant three lines end up competing with 300 files of noise.",
+      "distractor_notes": {
+        "A": "Guarantees context exhaustion and degrades reasoning.",
+        "C": "Same failure with worse cost, and most repos will not fit.",
+        "D": "Removes the agent's ability to find the bug at all."
+      },
+      "analogy": {
+        "frame": "Debugging",
+        "text": "You do not read the whole codebase to fix a null-pointer exception; you follow the stack trace. Same instinct, applied to an agent's context budget."
+      },
+      "cheatsheet": "d2-context#budgeting",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "context",
+        "search",
+        "strategy"
+      ]
+    },
+    {
+      "id": "D2-010",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A 60-repository monorepo has one 2,000-line root `CLAUDE.md`. Engineers complain about slow, unfocused responses. Select the TWO changes that best address the root cause.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Reduce the root file to organisation-wide invariants and shared commands only."
+        },
+        {
+          "key": "B",
+          "text": "Move per-service knowledge into `CLAUDE.md` files inside each service directory."
+        },
+        {
+          "key": "C",
+          "text": "Increase the context window by upgrading every engineer's plan."
+        },
+        {
+          "key": "D",
+          "text": "Convert the root file to a single line pointing at Confluence."
+        },
+        {
+          "key": "E",
+          "text": "Ask engineers to run `/compact` after every second turn."
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "The problem is that everyone pays for everyone else's knowledge on every turn. Splitting along the axis of relevance — global truths at the root, service truths in the service directory, loaded on demand — fixes it structurally.",
+      "distractor_notes": {
+        "C": "Buying a bigger window to hold more irrelevant text is treating the symptom.",
+        "D": "Now nothing useful is loaded and the agent cannot reach the wiki.",
+        "E": "Compaction is a recovery tool, not an architecture."
+      },
+      "analogy": {
+        "frame": "Kubernetes",
+        "text": "You would not put every namespace's ConfigMap into a single cluster-wide mount. Scope the configuration to where it applies."
+      },
+      "cheatsheet": "d2-context#monorepo",
+      "sources": [
+        "c-cc-best-practices",
+        "c-claude-code"
+      ],
+      "tags": [
+        "monorepo",
+        "architecture",
+        "claude-md"
+      ]
+    },
+    {
+      "id": "D2-011",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "instruction specificity",
+      "stem": "Which `CLAUDE.md` line is most likely to actually change the agent's behaviour?",
+      "options": [
+        {
+          "key": "A",
+          "text": "'Write good, clean, maintainable code.'"
+        },
+        {
+          "key": "B",
+          "text": "'Follow best practices at all times.'"
+        },
+        {
+          "key": "C",
+          "text": "'Every exported function needs a JSDoc block with @param and @returns; CI fails without it.'"
+        },
+        {
+          "key": "D",
+          "text": "'Be careful with the database.'"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Effective memory is specific, checkable and states the consequence. 'Good', 'clean' and 'careful' are already the model's defaults and carry no decision content — they consume context without changing any choice.",
+      "distractor_notes": {
+        "A": "Unfalsifiable.",
+        "B": "Zero information.",
+        "D": "Careful how? It cannot be acted on."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "The same reason 'write good code' is a useless PR comment and 'this query is unindexed on `tenant_id`, add the composite index' is a useful one."
+      },
+      "cheatsheet": "d2-context#what-belongs",
+      "sources": [
+        "c-cc-best-practices",
+        "c-prompt-eng"
+      ],
+      "tags": [
+        "claude-md",
+        "specificity"
+      ]
+    },
+    {
+      "id": "D2-012",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "compaction control",
+      "stem": "A long debugging session is about to auto-compact. The engineer wants the summary to retain the reproduction steps and the three hypotheses already ruled out. What should they do?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Nothing — auto-compaction always preserves the most recent turns verbatim."
+        },
+        {
+          "key": "B",
+          "text": "Run `/compact` with an explicit instruction naming what must survive."
+        },
+        {
+          "key": "C",
+          "text": "Run `/clear` and re-paste the important parts."
+        },
+        {
+          "key": "D",
+          "text": "Configure a `PreCompact` hook to raise the context limit."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`/compact <instruction>` steers the summary. Compacting deliberately, at a moment you choose, with a statement of what matters, is far better than letting an automatic compaction decide for you at an arbitrary point.",
+      "distractor_notes": {
+        "A": "Recency is not the same as importance, and reproduction steps are usually old.",
+        "C": "Loses everything not manually re-pasted.",
+        "D": "A `PreCompact` hook can add instructions, but it cannot enlarge the context window."
+      },
+      "cheatsheet": "d2-context#compaction",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "compact",
+        "context"
+      ]
+    },
+    {
+      "id": "D2-013",
+      "domain": "CMR",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "memory precedence",
+      "stem": "A project `CLAUDE.md` says 'use tabs'. The user's `~/.claude/CLAUDE.md` says 'use spaces'. What is the expected outcome?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The project instruction wins for work in that project; it is the more specific scope."
+        },
+        {
+          "key": "B",
+          "text": "The user instruction wins because it was configured first."
+        },
+        {
+          "key": "C",
+          "text": "Claude Code refuses to start until the conflict is resolved."
+        },
+        {
+          "key": "D",
+          "text": "Both are ignored and the model uses its own default."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Memory composes from broad to specific, with the more specific scope taking priority for conflicts. A repository's own convention should beat a personal preference — otherwise the repo's formatting would depend on who edited it.",
+      "distractor_notes": {
+        "B": "Ordering is by scope, not by configuration time.",
+        "C": "There is no hard failure on conflicting guidance.",
+        "D": "Both are loaded and used."
+      },
+      "cheatsheet": "d2-context#hierarchy",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "claude-md",
+        "precedence"
+      ]
+    },
+    {
+      "id": "D2-014",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "context for agentic loops",
+      "stem": "An autonomous agent loop runs 40 iterations against a task list. By iteration 25 it starts repeating work it already completed. What is the most likely architectural cause?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The model is non-deterministic and this is unavoidable."
+        },
+        {
+          "key": "B",
+          "text": "Completed work is held only in conversation context, which compaction eventually discards; progress needs to live in durable external state the loop re-reads each iteration."
+        },
+        {
+          "key": "C",
+          "text": "Tool calls are being rate-limited."
+        },
+        {
+          "key": "D",
+          "text": "The temperature setting is too low."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Conversation context is volatile — it gets summarised, truncated and eventually lost. Any long-running loop needs its progress externalised: a checklist file, an issue tracker, a database row that is read at the start of every iteration and written at the end. Context is working memory, not the system of record.",
+      "distractor_notes": {
+        "A": "Determinism is not the issue; state durability is.",
+        "C": "Rate limiting causes errors and stalls, not amnesia.",
+        "D": "Temperature does not govern memory."
+      },
+      "analogy": {
+        "frame": "AWS Step Functions",
+        "text": "You do not keep workflow state in a Lambda's local variables between invocations — you keep it in the state machine's execution state or DynamoDB. An agent loop needs the same separation of compute from state."
+      },
+      "snippet": {
+        "lang": "markdown",
+        "title": "Externalised progress the loop re-reads each iteration",
+        "code": "# TASKS.md — source of truth, not the transcript\n- [x] Extract PaymentValidator from OrderService\n- [x] Add unit tests for PaymentValidator\n- [ ] Migrate callers in services/checkout   <- next\n- [ ] Delete the legacy validate() helper"
+      },
+      "cheatsheet": "d2-context#agent-state",
+      "sources": [
+        "c-agent-sdk",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "agents",
+        "state",
+        "loops"
+      ]
+    },
+    {
+      "id": "D2-015",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "untrusted content in context",
+      "stem": "A CLAUDE.md instructs the agent to read `notes/vendor-feedback.md`, a file populated from customer submissions. Why is this a security-relevant design choice?",
+      "options": [
+        {
+          "key": "A",
+          "text": "It is not; file contents are inert."
+        },
+        {
+          "key": "B",
+          "text": "Content from an untrusted source enters context with no boundary, so text inside it can attempt to steer the agent's actions — it must be treated as data, never instruction."
+        },
+        {
+          "key": "C",
+          "text": "Markdown files cannot be read safely and should be converted to plain text."
+        },
+        {
+          "key": "D",
+          "text": "It doubles token cost."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Prompt injection travels through any channel that reaches the model: files, web pages, issue comments, tool output. The mitigation is architectural — label the boundary, do not grant the session tools that make injected instructions consequential, and keep confirmation gates on outward-facing or destructive actions.",
+      "distractor_notes": {
+        "A": "Inert to a compiler, not to a model reading it as language.",
+        "C": "The format is irrelevant; the provenance is what matters.",
+        "D": "True but trivial next to the injection surface."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is SQL injection's shape: the danger is not the string, it is that the string reaches an interpreter with authority. Parameterise — or in this case, scope the tools."
+      },
+      "cheatsheet": "d2-context",
+      "sources": [
+        "c-security",
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "security",
+        "prompt-injection",
+        "context"
+      ]
+    }
+  ]
+}

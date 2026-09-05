@@ -1,0 +1,383 @@
+{
+  "questions": [
+    {
+      "id": "D5-029",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "scheduled agents",
+      "stem": "A scheduled agent job must not run twice concurrently if a previous run is still in progress. Where should that constraint live?",
+      "options": [
+        {
+          "key": "A",
+          "text": "In the prompt, asking the agent to check whether another instance is running."
+        },
+        {
+          "key": "B",
+          "text": "In the scheduler or orchestrator — a concurrency limit or lock outside the agent process."
+        },
+        {
+          "key": "C",
+          "text": "In `CLAUDE.md`."
+        },
+        {
+          "key": "D",
+          "text": "Nowhere; concurrent runs are harmless."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Mutual exclusion is an orchestration property. The agent cannot reliably observe or enforce it, and by the time it could, the second run has already started doing work.",
+      "distractor_notes": {
+        "A": "Racy and unenforceable.",
+        "C": "Guidance cannot hold a lock.",
+        "D": "Two runs writing the same branch is a real conflict."
+      },
+      "analogy": {
+        "frame": "Kubernetes",
+        "text": "It is `concurrencyPolicy: Forbid` on a CronJob. The controller enforces it, not the workload."
+      },
+      "cheatsheet": "d5-automation#scheduling",
+      "sources": [
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "scheduling",
+        "concurrency",
+        "automation"
+      ]
+    },
+    {
+      "id": "D5-030",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "agent output review burden",
+      "stem": "An agent opens 40 pull requests a week and reviewers cannot keep up, so PRs are merged with cursory review. What is the correct intervention?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Hire more reviewers."
+        },
+        {
+          "key": "B",
+          "text": "Reduce throughput to what review capacity can actually absorb, and raise the bar for what the agent may open a PR about."
+        },
+        {
+          "key": "C",
+          "text": "Enable auto-merge on agent PRs."
+        },
+        {
+          "key": "D",
+          "text": "Ask the agent to review its own pull requests."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Generation capacity that exceeds review capacity does not create value — it creates unreviewed changes with a review-shaped ritual in front of them. Throttle at the source until the human gate is real again.",
+      "distractor_notes": {
+        "A": "Sometimes right, rarely available, and it does not address a generator that can outpace any team.",
+        "C": "Formalises the problem.",
+        "D": "Self-review does not provide the independence the gate exists for."
+      },
+      "analogy": {
+        "frame": "Queueing theory",
+        "text": "Arrival rate above service rate means an unbounded queue. You fix it at the arrival side or the queue eats the system."
+      },
+      "cheatsheet": "d5-automation#rollout",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "governance",
+        "process",
+        "throughput"
+      ]
+    },
+    {
+      "id": "D5-031",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "secrets in agent environments",
+      "stem": "A CI runner exports 30 environment variables, including production database credentials, and the agent step only needs a GitHub token. What should change?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Nothing; the agent will ignore variables it does not need."
+        },
+        {
+          "key": "B",
+          "text": "Scope the step's environment to the single credential it needs, so the others are simply not present in that process."
+        },
+        {
+          "key": "C",
+          "text": "Add a `CLAUDE.md` rule not to read environment variables."
+        },
+        {
+          "key": "D",
+          "text": "Rename the variables so they look unimportant."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Anything in the process environment is reachable by any command the agent runs. Least privilege here is cheap and absolute: inject only the credential the step requires.",
+      "distractor_notes": {
+        "A": "Availability is exposure, regardless of intent.",
+        "C": "Advisory, and irrelevant to a subprocess that inherits the environment.",
+        "D": "Obscurity is not a control."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "It is scoping a task role per task definition instead of attaching one god-role to the whole cluster."
+      },
+      "cheatsheet": "d6-security#secrets",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "secrets",
+        "ci",
+        "least-privilege"
+      ]
+    },
+    {
+      "id": "D5-032",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "structured extraction",
+      "stem": "A pipeline needs the agent to return a machine-readable verdict. Which prompt design is most reliable?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Ask for a summary and parse the prose with a regular expression."
+        },
+        {
+          "key": "B",
+          "text": "Specify the exact JSON schema, show one example, and instruct that the response contain nothing but that JSON."
+        },
+        {
+          "key": "C",
+          "text": "Ask it to 'return JSON' with no schema."
+        },
+        {
+          "key": "D",
+          "text": "Ask for a yes or no and check the first word."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Reliable structured output comes from stating the schema, demonstrating it, and constraining the response envelope. An unspecified 'return JSON' produces valid JSON with a different shape every time, which is the harder bug to notice.",
+      "distractor_notes": {
+        "A": "Brittle by construction.",
+        "C": "Valid but unstable keys.",
+        "D": "Loses all reasoning and fails on any hedged answer."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [
+        "c-prompt-eng",
+        "c-cookbook"
+      ],
+      "tags": [
+        "prompting",
+        "json",
+        "ci"
+      ]
+    },
+    {
+      "id": "D5-033",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "SDLC integration point",
+      "stem": "In a standard SDLC, at which point does an agent reviewer deliver the highest value per token spent?",
+      "options": [
+        {
+          "key": "A",
+          "text": "After deployment, reviewing production incidents."
+        },
+        {
+          "key": "B",
+          "text": "On the pull request, before human review — the change is small, self-contained, and the cost of a fix is still low."
+        },
+        {
+          "key": "C",
+          "text": "During quarterly planning."
+        },
+        {
+          "key": "D",
+          "text": "On the whole repository, nightly, regardless of what changed."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A PR is the ideal unit of agent review: bounded diff, clear intent, and a moment when fixing something is a comment rather than a rollback. Whole-repository sweeps re-analyse unchanged code every night and mostly rediscover the same findings.",
+      "distractor_notes": {
+        "A": "Valuable, but far past the cheapest fix point.",
+        "C": "Not a code-review moment.",
+        "D": "Maximum tokens, minimum marginal signal."
+      },
+      "analogy": {
+        "frame": "Defect economics",
+        "text": "The classic curve: a defect found at review costs a fraction of the same defect found in production. Agents do not change the curve; they let you sample it more often."
+      },
+      "cheatsheet": "d5-automation#sdlc",
+      "sources": [
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "sdlc",
+        "review",
+        "value"
+      ]
+    },
+    {
+      "id": "D5-034",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "artifact hand-off",
+      "stem": "Two pipeline stages both need the agent's findings. What is the cleanest hand-off?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Re-run the agent in the second stage with the same prompt."
+        },
+        {
+          "key": "B",
+          "text": "Write the structured result to a build artefact in stage one and read it in stage two."
+        },
+        {
+          "key": "C",
+          "text": "Pass the full transcript as a command-line argument."
+        },
+        {
+          "key": "D",
+          "text": "Store it in a global environment variable."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Artefacts are the pipeline's own hand-off mechanism: durable, inspectable, and free of a second inference bill. Re-running costs money and may produce a different answer, which is worse than either outcome alone.",
+      "distractor_notes": {
+        "A": "Pays twice for a possibly different result.",
+        "C": "Argument length limits and quoting misery.",
+        "D": "Environment variables do not reliably cross stage boundaries."
+      },
+      "cheatsheet": "d5-automation#pipelines",
+      "sources": [
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "ci",
+        "artifacts",
+        "design"
+      ]
+    },
+    {
+      "id": "D5-035",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "model routing",
+      "stem": "An automation runs two steps: classify 10,000 log lines into known categories, then design a remediation plan for the top failure. What is the sensible model strategy?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Use the most capable model for both, for consistency."
+        },
+        {
+          "key": "B",
+          "text": "Use a fast, inexpensive model for the bulk classification and a more capable model for the design step."
+        },
+        {
+          "key": "C",
+          "text": "Use the cheapest model for both to minimise cost."
+        },
+        {
+          "key": "D",
+          "text": "Alternate models randomly to average out weaknesses."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Route by task difficulty. Bulk classification into a known taxonomy is a well-specified, high-volume job; architectural design is exactly where capability pays. Uniform routing overpays on one step or under-delivers on the other.",
+      "distractor_notes": {
+        "A": "Pays premium rates for mechanical labelling.",
+        "C": "Saves pennies on the step where quality actually matters.",
+        "D": "Not a strategy."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "It is instance-type selection. You do not run a batch ETL and a latency-critical API on the same instance family just for tidiness."
+      },
+      "cheatsheet": "d7-prompting#model-selection",
+      "sources": [
+        "c-claude-api",
+        "c-cookbook"
+      ],
+      "tags": [
+        "model-selection",
+        "cost",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D5-036",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "failure transparency",
+      "stem": "An agent step reports success but the change it claims to have made is not in the diff. What should the pipeline have done to catch this?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Trusted the agent's summary, since it has visibility into its own actions."
+        },
+        {
+          "key": "B",
+          "text": "Verified the claim independently — assert the diff is non-empty and that the tests covering the change pass — rather than accepting a self-report."
+        },
+        {
+          "key": "C",
+          "text": "Asked the agent to double-check its own work."
+        },
+        {
+          "key": "D",
+          "text": "Logged the summary for later reading."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A claim is not evidence. Pipelines should assert on observable state — the diff, the test result, the artefact — so a confident but incorrect summary cannot pass a gate.",
+      "distractor_notes": {
+        "A": "Self-report is the thing under suspicion.",
+        "C": "Same source, same blind spot.",
+        "D": "Detection after the fact, not prevention."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is why CI runs the tests rather than trusting the PR description's claim that they pass."
+      },
+      "cheatsheet": "d5-automation#verification",
+      "sources": [
+        "c-cc-best-practices",
+        "c-security"
+      ],
+      "tags": [
+        "verification",
+        "ci",
+        "trust"
+      ]
+    }
+  ]
+}

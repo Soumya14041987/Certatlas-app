@@ -1,0 +1,687 @@
+{
+  "questions": [
+    {
+      "id": "D5-001",
+      "domain": "AAO",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "SDK entry points",
+      "stem": "In the Claude Agent SDK for Python, what is the difference between `query()` and `ClaudeSDKClient`?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`query()` is synchronous; `ClaudeSDKClient` is asynchronous."
+        },
+        {
+          "key": "B",
+          "text": "`query()` runs a stateless one-shot task and streams its messages; `ClaudeSDKClient` holds a persistent, bidirectional session supporting multiple turns and interrupts."
+        },
+        {
+          "key": "C",
+          "text": "`query()` is for production; `ClaudeSDKClient` is a test double."
+        },
+        {
+          "key": "D",
+          "text": "They are aliases of the same function."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`query()` is the fire-and-forget form — ideal for a CI step or a scheduled job. `ClaudeSDKClient` keeps the conversation open, which is what you need for an interactive product surface, follow-up turns, or the ability to interrupt work in flight.",
+      "distractor_notes": {
+        "A": "Both are async.",
+        "C": "Both are production APIs.",
+        "D": "Different lifecycles entirely."
+      },
+      "snippet": {
+        "lang": "python",
+        "title": "One-shot versus persistent",
+        "code": "from claude_agent_sdk import query, ClaudeSDKClient, ClaudeAgentOptions\n\n# One-shot: a CI step\nasync for msg in query(prompt=\"Summarise the failing tests\",\n                      options=ClaudeAgentOptions(allowed_tools=[\"Read\", \"Bash\"])):\n    print(msg)\n\n# Persistent: a chat surface with follow-ups\nasync with ClaudeSDKClient(options=ClaudeAgentOptions()) as client:\n    await client.query(\"Analyse this repository\")\n    async for msg in client.receive_response():\n        print(msg)\n    await client.query(\"Now propose the migration order\")"
+      },
+      "cheatsheet": "d5-automation#sdk",
+      "sources": [
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "sdk",
+        "python",
+        "api"
+      ]
+    },
+    {
+      "id": "D5-002",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "streaming output",
+      "stem": "A CI job must display progress live and also record every tool call for audit. Which output format fits?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`text`"
+        },
+        {
+          "key": "B",
+          "text": "`json`"
+        },
+        {
+          "key": "C",
+          "text": "`stream-json`"
+        },
+        {
+          "key": "D",
+          "text": "`csv`"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "`stream-json` emits newline-delimited JSON events as they happen — assistant messages, tool calls, tool results, and a final result event. `json` gives you only the terminal object, which arrives after everything is over.",
+      "distractor_notes": {
+        "A": "Unstructured, unauditable.",
+        "B": "Correct shape, wrong timing — nothing until the end.",
+        "D": "Not an output format."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "It is streaming CloudWatch Logs during a build versus reading the final build report. Auditors want the event stream; the gate wants the final object. Here you get both."
+      },
+      "cheatsheet": "d5-automation#output",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "streaming",
+        "ci",
+        "audit"
+      ]
+    },
+    {
+      "id": "D5-003",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "non-interactive permissions",
+      "stem": "A headless run in CI needs to read files and run the test suite, and must never be able to push or delete. Which configuration is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`--dangerously-skip-permissions`, because prompts cannot be answered in CI."
+        },
+        {
+          "key": "B",
+          "text": "An explicit allow-list of the exact tools needed, plus deny rules for the dangerous ones."
+        },
+        {
+          "key": "C",
+          "text": "Default mode; unanswered prompts are treated as approvals."
+        },
+        {
+          "key": "D",
+          "text": "`acceptEdits`, which covers all non-interactive cases."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Headless means nobody can answer a prompt, so the decision has to be made in advance and written down. An allow-list of exactly what the job needs is both the safest and the most self-documenting form of that decision.",
+      "distractor_notes": {
+        "A": "Removes every guardrail on an unattended process — the worst place to have none.",
+        "C": "They are not; that would be a catastrophic default.",
+        "D": "Covers edits only, and still says nothing about push or delete."
+      },
+      "snippet": {
+        "lang": "bash",
+        "title": "Least-privilege CI invocation",
+        "code": "claude -p \"Fix the failing unit tests and explain each change\" \\\n  --output-format stream-json --verbose \\\n  --allowedTools \"Read\" \"Grep\" \"Edit\" \"Bash(npm run test:*)\" \\\n  --disallowedTools \"Bash(git push:*)\" \"Bash(gh:*)\" \\\n  --max-turns 25"
+      },
+      "cheatsheet": "d5-automation#ci-permissions",
+      "sources": [
+        "c-security",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "ci",
+        "permissions",
+        "least-privilege"
+      ]
+    },
+    {
+      "id": "D5-004",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "bounding runs",
+      "stem": "Why does an unattended agent run need `--max-turns` or an equivalent bound?",
+      "options": [
+        {
+          "key": "A",
+          "text": "It improves answer quality."
+        },
+        {
+          "key": "B",
+          "text": "It caps cost and wall-clock time when the agent cannot converge, converting a runaway into a visible failure."
+        },
+        {
+          "key": "C",
+          "text": "It is required for the JSON output format."
+        },
+        {
+          "key": "D",
+          "text": "It enables prompt caching."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The failure mode of an unattended agent is not stopping. A turn bound makes non-convergence loud and cheap: the job fails, a human looks, instead of a loop quietly burning budget all weekend.",
+      "distractor_notes": {
+        "A": "It constrains, it does not improve.",
+        "C": "Independent.",
+        "D": "Independent."
+      },
+      "analogy": {
+        "frame": "AWS Lambda",
+        "text": "It is the function timeout. You do not set it because you expect to hit it — you set it so that hitting it is bounded."
+      },
+      "cheatsheet": "d5-automation#bounds",
+      "sources": [
+        "c-agent-sdk",
+        "c-security"
+      ],
+      "tags": [
+        "ci",
+        "cost",
+        "reliability"
+      ]
+    },
+    {
+      "id": "D5-005",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 3,
+      "stem": "You are adding an agent step to an AWS CodePipeline release flow. Select the THREE controls that should be in place before it runs against a real repository.",
+      "options": [
+        {
+          "key": "A",
+          "text": "The agent runs in a build container with a scoped IAM role, not the pipeline's administrative role."
+        },
+        {
+          "key": "B",
+          "text": "Its output lands on a branch and a pull request, never directly on the release branch."
+        },
+        {
+          "key": "C",
+          "text": "Structured output is parsed and the stage fails closed on `is_error`."
+        },
+        {
+          "key": "D",
+          "text": "The agent is given the full pipeline role so it can self-heal any stage."
+        },
+        {
+          "key": "E",
+          "text": "The prompt asks it to be careful with production."
+        }
+      ],
+      "correct": [
+        "A",
+        "B",
+        "C"
+      ],
+      "explanation": "Treat the agent as an untrusted build actor: least-privilege identity, output routed through review, and a deterministic pass/fail contract that fails closed. Broad permissions and polite prompts are not controls.",
+      "distractor_notes": {
+        "D": "Maximises blast radius precisely where it should be minimal.",
+        "E": "An instruction, enforced by nothing."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "It is the same posture as any third-party build action: scoped role, artefact-based hand-off, explicit success criteria."
+      },
+      "cheatsheet": "d5-automation#pipelines",
+      "sources": [
+        "c-security",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "ci",
+        "aws",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D5-006",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "SDK permission callback",
+      "stem": "In the Agent SDK, what does a `can_use_tool` callback let you build?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Programmatic, per-call authorisation — approve, deny, or modify each tool invocation using your own logic."
+        },
+        {
+          "key": "B",
+          "text": "A way to add new tools at runtime."
+        },
+        {
+          "key": "C",
+          "text": "A logger that observes calls but cannot affect them."
+        },
+        {
+          "key": "D",
+          "text": "Automatic retries for failed tools."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "The callback is the programmatic equivalent of the interactive permission prompt. Your application decides — from its own state, the user's role, a rate limit, whatever it knows — and can also rewrite the arguments before allowing the call.",
+      "distractor_notes": {
+        "B": "Tools are registered through options and MCP servers.",
+        "C": "It is a decision point, not an observer.",
+        "D": "Retries are a separate concern."
+      },
+      "snippet": {
+        "lang": "python",
+        "title": "Per-call authorisation in your own application",
+        "code": "from claude_agent_sdk import ClaudeAgentOptions\n\nasync def can_use_tool(tool_name: str, tool_input: dict, ctx) -> dict:\n    if tool_name == \"Bash\" and \"git push\" in tool_input.get(\"command\", \"\"):\n        return {\"behavior\": \"deny\", \"message\": \"Pushes go through the release pipeline.\"}\n    if tool_name == \"Write\" and tool_input[\"file_path\"].startswith(\"/etc\"):\n        return {\"behavior\": \"deny\", \"message\": \"System paths are out of scope.\"}\n    return {\"behavior\": \"allow\", \"updatedInput\": tool_input}\n\noptions = ClaudeAgentOptions(can_use_tool=can_use_tool)"
+      },
+      "cheatsheet": "d5-automation#sdk-permissions",
+      "sources": [
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "sdk",
+        "permissions",
+        "callbacks"
+      ]
+    },
+    {
+      "id": "D5-007",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "custom SDK tools",
+      "stem": "You want an SDK-based agent to call a function inside your own Python process, with no separate server process. Which mechanism fits?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Define the function with the SDK's `@tool` decorator and register it as an in-process MCP server."
+        },
+        {
+          "key": "B",
+          "text": "Publish it to npm and add it as a stdio server."
+        },
+        {
+          "key": "C",
+          "text": "Write it to a file and let the agent read the source."
+        },
+        {
+          "key": "D",
+          "text": "Custom tools are not supported; use Bash."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "The SDK lets you declare tools in-process and expose them through an SDK MCP server, so the agent gets a typed tool without you deploying or supervising anything. It is the shortest path from 'my app already has this function' to 'the agent can call it'.",
+      "distractor_notes": {
+        "B": "Unnecessary process and deployment overhead for in-process logic.",
+        "C": "Reading source does not make it callable.",
+        "D": "They are first-class."
+      },
+      "snippet": {
+        "lang": "python",
+        "title": "In-process custom tool",
+        "code": "from claude_agent_sdk import tool, create_sdk_mcp_server, ClaudeAgentOptions\n\n@tool(\"refund_order\", \"Issue a refund for an order. Amount is in minor units.\",\n      {\"order_id\": str, \"amount_minor\": int})\nasync def refund_order(args):\n    result = await billing.refund(args[\"order_id\"], args[\"amount_minor\"])\n    return {\"content\": [{\"type\": \"text\", \"text\": f\"Refunded: {result.id}\"}]}\n\nserver = create_sdk_mcp_server(name=\"billing\", tools=[refund_order])\noptions = ClaudeAgentOptions(\n    mcp_servers={\"billing\": server},\n    allowed_tools=[\"mcp__billing__refund_order\"],\n)"
+      },
+      "cheatsheet": "d5-automation#sdk-tools",
+      "sources": [
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "sdk",
+        "tools",
+        "mcp"
+      ]
+    },
+    {
+      "id": "D5-008",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "idempotency in automation",
+      "stem": "A nightly agent job opens a pull request for lint fixes. After a week there are seven near-identical open PRs. What is the design flaw?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The schedule is too frequent."
+        },
+        {
+          "key": "B",
+          "text": "The job is not idempotent: it must check for an existing open PR and update it, rather than creating a new one each run."
+        },
+        {
+          "key": "C",
+          "text": "The model is non-deterministic."
+        },
+        {
+          "key": "D",
+          "text": "Pull requests should never be created by automation."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Any recurring automation needs to reconcile against current state instead of blindly creating. Look for the open PR, update its branch if one exists, create only if none does — the same discipline as a controller reconciling toward a desired state.",
+      "distractor_notes": {
+        "A": "Daily is fine; the operation is what is broken.",
+        "C": "Even a perfectly deterministic job would create seven PRs.",
+        "D": "Automation-authored PRs are a good pattern when idempotent."
+      },
+      "analogy": {
+        "frame": "Kubernetes",
+        "text": "It is the difference between `kubectl create` in a cron job and a controller that reconciles. Declare the desired end state; do not append an action every tick."
+      },
+      "cheatsheet": "d5-automation#idempotency",
+      "sources": [
+        "c-agent-sdk",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "automation",
+        "idempotency",
+        "design"
+      ]
+    },
+    {
+      "id": "D5-009",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "GitHub integration",
+      "stem": "Which is the standard way to run Claude Code inside a GitHub Actions workflow?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Use the official Claude Code GitHub Action, supplying the API credential from repository secrets."
+        },
+        {
+          "key": "B",
+          "text": "SSH into a runner and start an interactive session."
+        },
+        {
+          "key": "C",
+          "text": "Commit the API key to the workflow file for reproducibility."
+        },
+        {
+          "key": "D",
+          "text": "It is not supported in GitHub Actions."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "The official action handles installation, authentication and the event wiring for issue and PR triggers. The credential comes from repository or organisation secrets — never from the workflow file, which is world-readable in a public repository and in every fork.",
+      "distractor_notes": {
+        "B": "Not automation.",
+        "C": "An immediate credential leak.",
+        "D": "It is a first-class integration."
+      },
+      "snippet": {
+        "lang": "yaml",
+        "title": ".github/workflows/claude.yml",
+        "code": "name: Claude\non:\n  issue_comment:\n    types: [created]\n\njobs:\n  claude:\n    if: contains(github.event.comment.body, '@claude')\n    runs-on: ubuntu-latest\n    permissions:\n      contents: write\n      pull-requests: write\n    steps:\n      - uses: actions/checkout@v4\n      - uses: anthropics/claude-code-action@v1\n        with:\n          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}"
+      },
+      "cheatsheet": "d5-automation#github",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "github-actions",
+        "ci",
+        "secrets"
+      ]
+    },
+    {
+      "id": "D5-010",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "fork-safety in CI",
+      "stem": "A public repository triggers an agent workflow on `pull_request` from forks. What is the most serious risk?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Slower builds."
+        },
+        {
+          "key": "B",
+          "text": "Untrusted contributors control the code and the prompt content the agent processes, so a malicious PR can attempt to exfiltrate secrets or push changes using the workflow's credentials."
+        },
+        {
+          "key": "C",
+          "text": "The agent might produce lower-quality reviews."
+        },
+        {
+          "key": "D",
+          "text": "GitHub bills the fork owner."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Fork PR content is attacker-controlled input reaching an agent that holds your credentials. Standard mitigations apply and are non-optional: do not expose secrets to fork-triggered runs, use the least-privileged token possible, require maintainer approval before the workflow runs, and keep the agent's write capabilities off that path.",
+      "distractor_notes": {
+        "A": "Not a security concern.",
+        "C": "Quality is not the exposure.",
+        "D": "Billing is not the issue."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is the classic `pull_request_target` footgun: running privileged automation against code you have not reviewed."
+      },
+      "cheatsheet": "d5-automation#github",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "ci",
+        "security",
+        "github-actions"
+      ]
+    },
+    {
+      "id": "D5-011",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "system prompt in automation",
+      "stem": "A headless job needs domain rules on top of Claude Code's normal behaviour. Which flag adds them without replacing the default system prompt?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`--system-prompt`"
+        },
+        {
+          "key": "B",
+          "text": "`--append-system-prompt`"
+        },
+        {
+          "key": "C",
+          "text": "`--prepend-context`"
+        },
+        {
+          "key": "D",
+          "text": "`--claude-md`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`--append-system-prompt` adds to the built-in prompt; replacing it wholesale discards the tool-use and safety scaffolding that makes the agent work well in the first place. Reach for replacement only when you genuinely want a different agent.",
+      "distractor_notes": {
+        "A": "Replaces rather than augments.",
+        "C": "Not a flag.",
+        "D": "Not a flag; memory is discovered from the filesystem."
+      },
+      "cheatsheet": "d5-automation#prompting",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "cli",
+        "system-prompt",
+        "ci"
+      ]
+    },
+    {
+      "id": "D5-012",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "agent product architecture",
+      "stem": "You are building a customer-facing product on the Agent SDK where each end user gets an agent session. What is the most important isolation requirement?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Each session must run with the working directory, credentials and tool permissions of that user only, so one user's agent cannot reach another user's data."
+        },
+        {
+          "key": "B",
+          "text": "Every session must use the same model for consistent pricing."
+        },
+        {
+          "key": "C",
+          "text": "Sessions must share a context window to reduce cost."
+        },
+        {
+          "key": "D",
+          "text": "All sessions should run as root in one container for simplicity."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Multi-tenancy is the whole problem. The agent's filesystem root, credentials and tool allow-list all have to be derived from the authenticated user; anything shared across tenants becomes a cross-tenant data path the moment one prompt goes wrong.",
+      "distractor_notes": {
+        "B": "A pricing preference, not isolation.",
+        "C": "Shared context across users is a direct data leak.",
+        "D": "One compromise reaches every tenant."
+      },
+      "analogy": {
+        "frame": "SaaS",
+        "text": "It is row-level security. You would not let a tenant's query run without a `tenant_id` predicate; do not let their agent run without a scoped root and role."
+      },
+      "cheatsheet": "d5-automation#multi-tenancy",
+      "sources": [
+        "c-agent-sdk",
+        "c-security"
+      ],
+      "tags": [
+        "sdk",
+        "multi-tenancy",
+        "security"
+      ]
+    },
+    {
+      "id": "D5-013",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "cost control in automation",
+      "stem": "A team's agent spend triples after adding a nightly job across 200 repositories. Which change most directly reduces cost without abandoning the job?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Run it only on repositories with changes since the last run, and scope the prompt to the diff rather than the whole repository."
+        },
+        {
+          "key": "B",
+          "text": "Run it twice nightly for better coverage."
+        },
+        {
+          "key": "C",
+          "text": "Increase `--max-turns` so it finishes in one pass."
+        },
+        {
+          "key": "D",
+          "text": "Disable structured output."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Cost tracks tokens, and tokens track how much material each run examines. Skipping unchanged repositories eliminates most runs entirely, and diff-scoping shrinks the ones that remain — two multipliers on the same bill.",
+      "distractor_notes": {
+        "B": "Doubles it.",
+        "C": "Raises the ceiling on spend.",
+        "D": "Negligible, and you lose the gate."
+      },
+      "analogy": {
+        "frame": "CI",
+        "text": "It is build-affected-only versus rebuilding the monorepo on every commit."
+      },
+      "cheatsheet": "d5-automation#cost",
+      "sources": [
+        "c-agent-sdk",
+        "c-claude-api"
+      ],
+      "tags": [
+        "cost",
+        "automation",
+        "scaling"
+      ]
+    },
+    {
+      "id": "D5-014",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "piping input",
+      "stem": "Which invocation correctly pipes a log file into Claude Code for analysis in headless mode?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`cat error.log | claude -p \"Find the root cause\"`"
+        },
+        {
+          "key": "B",
+          "text": "`claude -p \"Find the root cause\" --file error.log`"
+        },
+        {
+          "key": "C",
+          "text": "`claude --input error.log -p \"Find the root cause\"`"
+        },
+        {
+          "key": "D",
+          "text": "`claude -p < error.log`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Print mode reads piped stdin as additional input alongside the prompt, which makes Claude Code composable with the rest of the shell. For anything large, prefer letting the agent read the file with a scoped Read permission so it can seek rather than swallow the whole thing.",
+      "distractor_notes": {
+        "B": "No such flag.",
+        "C": "No such flag.",
+        "D": "Supplies no prompt."
+      },
+      "cheatsheet": "d5-automation#cli",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "cli",
+        "unix",
+        "headless"
+      ]
+    }
+  ]
+}

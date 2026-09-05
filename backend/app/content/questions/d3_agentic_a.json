@@ -1,0 +1,672 @@
+{
+  "questions": [
+    {
+      "id": "D3-001",
+      "domain": "AAO",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "subagent definition",
+      "stem": "Where does a project-scoped subagent definition live, and what format does it use?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`.claude/agents/<name>.md` — Markdown with YAML frontmatter."
+        },
+        {
+          "key": "B",
+          "text": "`.claude/subagents.json` — a JSON array of agent objects."
+        },
+        {
+          "key": "C",
+          "text": "`agents/` at the repository root — plain text, one prompt per file."
+        },
+        {
+          "key": "D",
+          "text": "Inside `settings.json` under an `agents` key."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Subagents are Markdown files with YAML frontmatter (`name`, `description`, optionally `tools` and `model`) in `.claude/agents/` for project scope or `~/.claude/agents/` for personal scope. The body is the agent's system prompt.",
+      "distractor_notes": {
+        "B": "Not the format.",
+        "C": "Wrong path and wrong format.",
+        "D": "Settings holds configuration, not agent prompts."
+      },
+      "snippet": {
+        "lang": "markdown",
+        "title": ".claude/agents/security-reviewer.md",
+        "code": "---\nname: security-reviewer\ndescription: Reviews a diff for injection, authz gaps, secret leakage and unsafe deserialisation. Use after any change to auth, input handling or external calls.\ntools: Read, Grep, Glob, Bash(git diff:*)\nmodel: opus\n---\n\nYou are a security reviewer. Read only the diff and the files it touches.\nReport findings as: severity, file:line, the concrete exploit path, the fix.\nDo not report style issues. Do not modify files."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "subagents",
+        "frontmatter"
+      ]
+    },
+    {
+      "id": "D3-002",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "subagent tool scoping",
+      "stem": "A subagent definition omits the `tools` key entirely. What is the effect?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The subagent inherits the tools available to the main session."
+        },
+        {
+          "key": "B",
+          "text": "The subagent gets no tools and can only reason from its prompt."
+        },
+        {
+          "key": "C",
+          "text": "The subagent is rejected at load time as invalid."
+        },
+        {
+          "key": "D",
+          "text": "The subagent gets Read only, as a safe default."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Omitting `tools` means inherit. Listing tools narrows the agent to exactly that set — which is how you build a reviewer that provably cannot write files, or a researcher that provably cannot run shell commands.",
+      "distractor_notes": {
+        "B": "Inheritance is the default, not denial.",
+        "C": "`tools` is optional.",
+        "D": "There is no implicit read-only default."
+      },
+      "analogy": {
+        "frame": "AWS IAM",
+        "text": "Listing `tools` is attaching a scoped role to the task. Omitting it is running with the caller's own permissions — convenient, and exactly what least privilege tells you to avoid for a reviewer."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "subagents",
+        "tools",
+        "least-privilege"
+      ]
+    },
+    {
+      "id": "D3-003",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "subagent invocation",
+      "stem": "What makes Claude Code choose one subagent over another automatically?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Alphabetical order of the filename."
+        },
+        {
+          "key": "B",
+          "text": "The `description` field — it is the matching surface the orchestrator reasons over."
+        },
+        {
+          "key": "C",
+          "text": "The `model` field; higher tiers are preferred."
+        },
+        {
+          "key": "D",
+          "text": "Automatic selection is not supported; subagents must always be named explicitly."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The `description` is not documentation — it is the routing signal. A vague description ('helps with code') will not be selected reliably; one that names the trigger conditions ('Use after any change to authentication or input handling') will.",
+      "distractor_notes": {
+        "A": "Irrelevant.",
+        "C": "Model affects capability and cost, not selection.",
+        "D": "Both automatic and explicit invocation are supported."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "subagents",
+        "routing",
+        "description"
+      ]
+    },
+    {
+      "id": "D3-004",
+      "domain": "AAO",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "skill structure",
+      "stem": "What is the minimum required structure for an Agent Skill?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A directory containing `SKILL.md` with `name` and `description` in its YAML frontmatter."
+        },
+        {
+          "key": "B",
+          "text": "A single `.skill` binary registered through the CLI."
+        },
+        {
+          "key": "C",
+          "text": "A `skill.json` manifest plus at least one executable script."
+        },
+        {
+          "key": "D",
+          "text": "An entry in `settings.json` pointing at a prompt string."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A skill is a folder with `SKILL.md`. The frontmatter's `name` and `description` are the only required fields; everything else — reference documents, scripts, templates — is optional and loaded only when the skill activates.",
+      "distractor_notes": {
+        "B": "Skills are plain files, not binaries.",
+        "C": "Scripts are optional.",
+        "D": "Skills are discovered from the filesystem."
+      },
+      "cheatsheet": "d3-agentic#skills",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "skills",
+        "structure"
+      ]
+    },
+    {
+      "id": "D3-005",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "skill vs subagent",
+      "stem": "You need (a) a reusable procedure for generating compliance reports that the main agent should follow itself, and (b) an independent reviewer that must not see or be influenced by the main conversation. What is the correct pairing?",
+      "options": [
+        {
+          "key": "A",
+          "text": "(a) subagent, (b) skill"
+        },
+        {
+          "key": "B",
+          "text": "(a) skill, (b) subagent"
+        },
+        {
+          "key": "C",
+          "text": "Both as skills"
+        },
+        {
+          "key": "D",
+          "text": "Both as subagents"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A skill injects procedure into the *current* agent's context — right when you want the main agent to do the work a particular way. A subagent runs in a *separate* context and returns a conclusion — right when independence from the current conversation is the requirement.",
+      "distractor_notes": {
+        "A": "Inverted on both counts.",
+        "C": "A skill cannot give you independence; it shares the conversation.",
+        "D": "A subagent for (a) needlessly severs the main agent from work it should be doing directly."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "A skill is a checklist you follow yourself. A subagent is sending the change to a separate reviewer who has not been in your design meetings — which is exactly why their review is worth something."
+      },
+      "cheatsheet": "d3-agentic#skills-vs-subagents",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "skills",
+        "subagents",
+        "architecture"
+      ]
+    },
+    {
+      "id": "D3-006",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "skill description quality",
+      "stem": "A skill for database migrations is never being triggered. Its frontmatter reads `description: Database helper`. What is the fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Rename the skill to something shorter."
+        },
+        {
+          "key": "B",
+          "text": "Rewrite the description to state concretely when to use it and the phrases that should trigger it."
+        },
+        {
+          "key": "C",
+          "text": "Move the skill to user scope."
+        },
+        {
+          "key": "D",
+          "text": "Add `auto: true` to the frontmatter."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Only the name and description are in context before a skill activates, so the description carries the entire activation decision. 'Use when creating, reviewing or rolling back a database migration — covers Alembic, expand/contract patterns and backfills' is selectable; 'Database helper' is not.",
+      "distractor_notes": {
+        "A": "Length is not the problem.",
+        "C": "Scope changes who sees it, not whether it matches.",
+        "D": "No such field."
+      },
+      "snippet": {
+        "lang": "markdown",
+        "title": "Before and after",
+        "code": "# Before — never triggers\n---\nname: db-migrations\ndescription: Database helper\n---\n\n# After — triggers reliably\n---\nname: db-migrations\ndescription: Use when creating, reviewing, or rolling back a database migration. Covers Alembic revisions, expand/contract rollout, backfills, and zero-downtime column changes. Trigger on \"migration\", \"schema change\", \"alter table\", \"backfill\".\n---"
+      },
+      "cheatsheet": "d3-agentic#skills",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "skills",
+        "description",
+        "activation"
+      ]
+    },
+    {
+      "id": "D3-007",
+      "domain": "AAO",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "hook events",
+      "stem": "Which hook event fires immediately BEFORE a tool executes and can prevent it from running?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`PreToolUse`"
+        },
+        {
+          "key": "B",
+          "text": "`PostToolUse`"
+        },
+        {
+          "key": "C",
+          "text": "`UserPromptSubmit`"
+        },
+        {
+          "key": "D",
+          "text": "`Stop`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`PreToolUse` runs before the tool call and can block it. `PostToolUse` runs after (useful for formatting or linting what was just written), `UserPromptSubmit` runs before the model sees a prompt, and `Stop` runs when the agent finishes responding.",
+      "distractor_notes": {
+        "B": "Too late to prevent anything.",
+        "C": "Prompt-level, not tool-level.",
+        "D": "End of turn."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "events"
+      ]
+    },
+    {
+      "id": "D3-008",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "hook exit codes",
+      "stem": "A `PreToolUse` hook script exits with status 2 and writes a message to stderr. What happens?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The tool call is blocked and the stderr message is fed back to the model so it can correct course."
+        },
+        {
+          "key": "B",
+          "text": "The tool call proceeds and the message is shown to the user only."
+        },
+        {
+          "key": "C",
+          "text": "The session terminates."
+        },
+        {
+          "key": "D",
+          "text": "The hook is disabled for the rest of the session."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Exit code 2 is the blocking signal: the tool does not run and stderr becomes feedback the model can act on. Exit 0 means allow; any other non-zero code is a non-blocking error surfaced to the user while the call proceeds.",
+      "distractor_notes": {
+        "B": "That describes a non-zero, non-2 exit.",
+        "C": "Hooks do not kill the session.",
+        "D": "Hooks are not auto-disabled."
+      },
+      "analogy": {
+        "frame": "Git hooks",
+        "text": "It is `pre-commit` returning non-zero — except the rejection message is written for an agent that can then fix the problem and retry, not just for a human reading their terminal."
+      },
+      "snippet": {
+        "lang": "bash",
+        "title": ".claude/scripts/block-prod-writes.sh",
+        "code": "#!/usr/bin/env bash\n# PreToolUse hook: receives the tool call as JSON on stdin.\ninput=$(cat)\npath=$(echo \"$input\" | jq -r '.tool_input.file_path // empty')\n\ncase \"$path\" in\n  */config/production/*)\n    echo \"Blocked: production config is change-managed. Open a CR instead.\" >&2\n    exit 2 ;;\nesac\nexit 0"
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "exit-codes",
+        "blocking"
+      ]
+    },
+    {
+      "id": "D3-009",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "hook determinism",
+      "stem": "A team wants every Python file Claude Code edits to be formatted with `ruff format`, without exception. Which approach is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add 'always run ruff format after editing' to `CLAUDE.md`."
+        },
+        {
+          "key": "B",
+          "text": "Register a `PostToolUse` hook matching the edit tools that runs `ruff format` on the changed file."
+        },
+        {
+          "key": "C",
+          "text": "Ask the agent to remember it at the start of each session."
+        },
+        {
+          "key": "D",
+          "text": "Add a `PreToolUse` hook that formats the file before the edit."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Hooks are the deterministic layer: they run as code, every time, regardless of what the model decides. Instructions in memory are strong guidance but remain probabilistic — 'without exception' is a requirement only a hook can meet.",
+      "distractor_notes": {
+        "A": "Usually works, which is not the same as always.",
+        "C": "Weaker still.",
+        "D": "Formatting the pre-edit content leaves the post-edit content unformatted."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "It is the difference between a team convention and a required status check. Only one of them is enforcement."
+      },
+      "snippet": {
+        "lang": "json",
+        "title": ".claude/settings.json",
+        "code": "{\n  \"hooks\": {\n    \"PostToolUse\": [\n      {\n        \"matcher\": \"Edit|Write|MultiEdit\",\n        \"hooks\": [\n          { \"type\": \"command\",\n            \"command\": \"jq -r '.tool_input.file_path' | grep '\\\\.py$' | xargs -r ruff format\" }\n        ]\n      }\n    ]\n  }\n}"
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "determinism",
+        "formatting"
+      ]
+    },
+    {
+      "id": "D3-010",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 3,
+      "stem": "Select the THREE requirements that are correctly served by a hook rather than by an instruction in `CLAUDE.md`.",
+      "options": [
+        {
+          "key": "A",
+          "text": "'No commit may ever be pushed to the `main` branch by the agent.'"
+        },
+        {
+          "key": "B",
+          "text": "'Prefer composition over inheritance in this codebase.'"
+        },
+        {
+          "key": "C",
+          "text": "'Every session must log the model, cost and session id to our audit sink.'"
+        },
+        {
+          "key": "D",
+          "text": "'Secrets scanning must run on every file the agent writes.'"
+        },
+        {
+          "key": "E",
+          "text": "'Explain trade-offs before proposing a large refactor.'"
+        }
+      ],
+      "correct": [
+        "A",
+        "C",
+        "D"
+      ],
+      "explanation": "Anything with the words 'every', 'never' or 'must' attached to an auditable action needs code enforcement. Stylistic and communicative preferences are exactly what memory is good at — they shape judgement rather than gate an action.",
+      "distractor_notes": {
+        "B": "A judgement call; a hook cannot evaluate it.",
+        "E": "Communication style, not an enforceable gate."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code",
+        "c-security"
+      ],
+      "tags": [
+        "hooks",
+        "governance",
+        "design"
+      ]
+    },
+    {
+      "id": "D3-011",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "hook matchers",
+      "stem": "In a hook configuration, what does the `matcher` field do?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Selects which tools (by name pattern) the hook applies to."
+        },
+        {
+          "key": "B",
+          "text": "Filters which users the hook applies to."
+        },
+        {
+          "key": "C",
+          "text": "Matches text in the model's response."
+        },
+        {
+          "key": "D",
+          "text": "Specifies the file glob the hook script will receive."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`matcher` is a pattern over tool names — `Bash`, `Edit|Write`, `mcp__github__.*` — so a hook fires only for relevant calls. File-level filtering is done inside the script, from the JSON payload on stdin.",
+      "distractor_notes": {
+        "B": "Hooks are not user-scoped.",
+        "C": "Hooks key off tool calls and lifecycle events.",
+        "D": "The script decides that from its input."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "matcher"
+      ]
+    },
+    {
+      "id": "D3-012",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "hook security",
+      "stem": "What is the primary security consideration when a repository ships hooks in its committed `.claude/settings.json`?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Hooks run arbitrary commands with the developer's own privileges, so cloning an untrusted repository and starting Claude Code in it is a code-execution risk that must be reviewed like any build script."
+        },
+        {
+          "key": "B",
+          "text": "Hooks can read the model's weights."
+        },
+        {
+          "key": "C",
+          "text": "Hooks are sent to the API and could leak source code."
+        },
+        {
+          "key": "D",
+          "text": "Hooks bypass the permission system for the model, letting it call denied tools."
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "A hook is a shell command executed on the developer's machine, with their environment and credentials. That makes committed hooks equivalent in trust terms to a `Makefile`, a `postinstall` script or a CI config — review them before running the tool in an unfamiliar repository.",
+      "distractor_notes": {
+        "B": "Not a thing.",
+        "C": "Hooks execute locally; they are not transmitted as prompt content.",
+        "D": "Hooks constrain the model; they do not grant it new capabilities."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is `npm install` running a `postinstall` script. The danger was never the package name — it was that cloning and building gave someone else's code your shell."
+      },
+      "cheatsheet": "d3-agentic",
+      "sources": [
+        "c-security",
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "security",
+        "supply-chain"
+      ]
+    },
+    {
+      "id": "D3-013",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "plan mode approval",
+      "stem": "In plan mode, the agent presents a plan and the user rejects it with corrections. What is the expected behaviour?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The session ends and must be restarted."
+        },
+        {
+          "key": "B",
+          "text": "The agent revises the plan using the feedback, still without mutating anything, until the user approves."
+        },
+        {
+          "key": "C",
+          "text": "The agent implements the original plan anyway and asks forgiveness."
+        },
+        {
+          "key": "D",
+          "text": "Plan mode automatically escalates to `bypassPermissions`."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Plan mode is an iteration loop with a human gate at the end of it. Rejection is normal and cheap — it is a conversation about the design, held before any code exists to argue about.",
+      "distractor_notes": {
+        "A": "Rejection is an ordinary step.",
+        "C": "Approval is the point of the mode.",
+        "D": "Escalation is always an explicit user action."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "A manual approval action that is rejected does not fail the whole pipeline — it returns to the stage for revision."
+      },
+      "cheatsheet": "d3-agentic#plan-mode",
+      "sources": [
+        "c-claude-code",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "plan-mode",
+        "workflow"
+      ]
+    },
+    {
+      "id": "D3-014",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "orchestration cost",
+      "stem": "An architect proposes fanning out every code review to eight parallel subagents, one per concern. What is the most important trade-off to state?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Parallel agents cannot share a repository checkout."
+        },
+        {
+          "key": "B",
+          "text": "Each subagent carries its own context and token cost, so fan-out multiplies spend and latency; it pays off only when the concerns are genuinely independent and the reduction ratio is high."
+        },
+        {
+          "key": "C",
+          "text": "Subagents cannot use the Read tool."
+        },
+        {
+          "key": "D",
+          "text": "Results from parallel subagents cannot be combined."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Fan-out buys independence and breadth at a roughly linear cost multiplier. It is worth it when each reviewer examines a lot and returns a little, and when their concerns do not overlap. Eight agents that all read the same diff and mostly report the same findings is eight times the bill for one review.",
+      "distractor_notes": {
+        "A": "They can.",
+        "C": "They can.",
+        "D": "Aggregation is the parent's job and works fine."
+      },
+      "analogy": {
+        "frame": "Kubernetes",
+        "text": "It is horizontal scaling. More replicas help when work partitions cleanly; they just multiply your bill when every replica processes the same request."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [
+        "c-claude-code",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "orchestration",
+        "cost",
+        "subagents"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,569 @@
+{
+  "questions": [
+    {
+      "id": "D3-029",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "plugins",
+      "stem": "An enterprise wants one curated bundle of skills, subagents, slash commands and hooks installed consistently across 90 repositories. Which mechanism is designed for that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Copy `.claude/` into each repository and keep them in sync manually."
+        },
+        {
+          "key": "B",
+          "text": "Package them as a plugin distributed through a marketplace the organisation controls."
+        },
+        {
+          "key": "C",
+          "text": "Put everything in enterprise managed settings."
+        },
+        {
+          "key": "D",
+          "text": "Ask each team to write their own."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Plugins are the packaging and distribution unit for Claude Code extensions: one versioned bundle, installed from a marketplace, updated centrally. Manual copying guarantees 90 divergent forks within a quarter.",
+      "distractor_notes": {
+        "A": "Unmaintainable at that scale.",
+        "C": "Managed settings carries policy; it is not a content distribution channel.",
+        "D": "Duplicated effort and inconsistent behaviour."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is an internal package registry versus vendoring a shared library by copy-paste into every service."
+      },
+      "cheatsheet": "d3-agentic#plugins",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "plugins",
+        "distribution",
+        "enterprise"
+      ]
+    },
+    {
+      "id": "D3-030",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "managing subagents",
+      "stem": "Which command opens the interface for creating, editing and inspecting subagents?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`/agents`"
+        },
+        {
+          "key": "B",
+          "text": "`/subagent`"
+        },
+        {
+          "key": "C",
+          "text": "`/config agents`"
+        },
+        {
+          "key": "D",
+          "text": "`/hooks`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "`/agents` lists available subagents across scopes and offers guided creation and editing. `/hooks` is the equivalent for hook configuration.",
+      "distractor_notes": {
+        "B": "Not a command.",
+        "C": "Not the path.",
+        "D": "Hooks, not agents."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "subagents",
+        "slash-commands"
+      ]
+    },
+    {
+      "id": "D3-031",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "subagent result contract",
+      "stem": "A parent agent fans out to five reviewer subagents and gets back five long prose essays that are hard to merge. What is the best fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Increase the parent's context window."
+        },
+        {
+          "key": "B",
+          "text": "Specify a structured return contract in each subagent's prompt — fixed fields such as severity, file, line, finding, fix — so results are mergeable and comparable."
+        },
+        {
+          "key": "C",
+          "text": "Run the reviewers sequentially instead."
+        },
+        {
+          "key": "D",
+          "text": "Have the parent re-read every file the reviewers read."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The boundary between agents is an interface and deserves a schema. Once every reviewer returns the same shape, the parent can deduplicate, sort by severity and produce one report — instead of summarising five essays and losing detail.",
+      "distractor_notes": {
+        "A": "More room for unmergeable prose.",
+        "C": "Serialisation does not change the output format.",
+        "D": "Destroys the context saving that motivated the fan-out."
+      },
+      "analogy": {
+        "frame": "Microservices",
+        "text": "It is why services return typed responses rather than free-form text: the caller has to compose them."
+      },
+      "snippet": {
+        "lang": "markdown",
+        "title": "Return contract in a reviewer subagent",
+        "code": "## Output format (strict)\n\nReturn ONLY a JSON array. One object per finding:\n\n```json\n[{\n  \"severity\": \"blocking|advisory\",\n  \"file\": \"src/auth/session.ts\",\n  \"line\": 142,\n  \"finding\": \"Session token compared with ==, enabling timing attack\",\n  \"fix\": \"Use crypto.timingSafeEqual\"\n}]\n```\n\nReturn `[]` if you find nothing. Never return prose."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "subagents",
+        "contracts",
+        "orchestration"
+      ]
+    },
+    {
+      "id": "D3-032",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "SubagentStop",
+      "stem": "Which event fires when a subagent finishes its task, allowing validation of its result before the parent continues?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`Stop`"
+        },
+        {
+          "key": "B",
+          "text": "`SubagentStop`"
+        },
+        {
+          "key": "C",
+          "text": "`PostToolUse`"
+        },
+        {
+          "key": "D",
+          "text": "`SessionEnd`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`SubagentStop` is the subagent-scoped counterpart of `Stop`. It lets you validate or reject a child's output — for instance, checking that a reviewer actually returned the agreed JSON shape — before that result flows into the parent's reasoning.",
+      "distractor_notes": {
+        "A": "Fires for the main agent's response.",
+        "C": "Per tool call.",
+        "D": "End of the whole session."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "subagents",
+        "validation"
+      ]
+    },
+    {
+      "id": "D3-033",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "hook reliability",
+      "stem": "A `PostToolUse` hook shells out to a linter that occasionally takes 90 seconds. What is the main risk and the correct mitigation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "No risk; hooks run asynchronously and never block."
+        },
+        {
+          "key": "B",
+          "text": "It stalls the agent on every edit; give the hook a timeout and move slow checks to a batched or CI stage."
+        },
+        {
+          "key": "C",
+          "text": "The hook will be skipped automatically after the first slow run."
+        },
+        {
+          "key": "D",
+          "text": "Slow hooks corrupt the transcript."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Hooks are in the critical path of the agent's turn, so their latency is the user's latency. Keep in-loop hooks fast and deterministic; anything expensive belongs in a batched check or the pipeline, where it does not tax every keystroke of progress.",
+      "distractor_notes": {
+        "A": "They participate in the turn.",
+        "C": "No such adaptive skipping.",
+        "D": "Latency is not corruption."
+      },
+      "analogy": {
+        "frame": "Git hooks",
+        "text": "It is why `pre-commit` runs a fast formatter and the full test suite runs in CI. Put the 90-second check where a human is not waiting on it."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "performance",
+        "timeouts"
+      ]
+    },
+    {
+      "id": "D3-034",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 3,
+      "stem": "You are designing a `release-notes` skill used by twelve teams. Select the THREE properties that make it robust.",
+      "options": [
+        {
+          "key": "A",
+          "text": "A description that names concrete trigger phrases and situations."
+        },
+        {
+          "key": "B",
+          "text": "A bundled script that extracts merged PR titles deterministically, rather than prose instructions to 'find the PRs'."
+        },
+        {
+          "key": "C",
+          "text": "Bundled templates referenced by path, loaded only when the skill runs."
+        },
+        {
+          "key": "D",
+          "text": "The entire changelog history for the last three years embedded in `SKILL.md`."
+        },
+        {
+          "key": "E",
+          "text": "A hard-coded repository name so behaviour is predictable."
+        }
+      ],
+      "correct": [
+        "A",
+        "B",
+        "C"
+      ],
+      "explanation": "A good shared skill is discoverable (precise description), deterministic where determinism is available (scripts over prose), and lazy (bundled resources loaded on demand). Embedding bulk history bloats every activation, and hard-coding one repository breaks it for eleven of the twelve teams.",
+      "distractor_notes": {
+        "D": "Enormous, mostly irrelevant, and stale within a week.",
+        "E": "Destroys reusability — take it as a parameter."
+      },
+      "cheatsheet": "d3-agentic#skills",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "skills",
+        "design",
+        "reuse"
+      ]
+    },
+    {
+      "id": "D3-035",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "extended thinking",
+      "stem": "When is extended thinking most worth its extra token cost in an agentic workflow?",
+      "options": [
+        {
+          "key": "A",
+          "text": "On every request, to maximise quality uniformly."
+        },
+        {
+          "key": "B",
+          "text": "On genuinely hard reasoning steps — architectural trade-offs, debugging a subtle race, planning a multi-step migration — not on mechanical edits."
+        },
+        {
+          "key": "C",
+          "text": "Only when the model is uncertain, which it decides alone with no way to influence it."
+        },
+        {
+          "key": "D",
+          "text": "Never in agentic contexts; it applies only to chat."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Thinking budget buys deliberation, and deliberation only pays where the problem is actually hard. Renaming a variable across twelve files does not become more correct with a large thinking budget — it just becomes more expensive and slower.",
+      "distractor_notes": {
+        "A": "Uniform spend on non-uniform difficulty.",
+        "C": "The budget is a parameter you control.",
+        "D": "It is directly applicable to planning and debugging."
+      },
+      "cheatsheet": "d3-agentic",
+      "sources": [
+        "c-claude-api",
+        "c-prompt-eng"
+      ],
+      "tags": [
+        "thinking",
+        "cost",
+        "reasoning"
+      ]
+    },
+    {
+      "id": "D3-036",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "human-in-the-loop placement",
+      "stem": "In an agentic pipeline that writes code, opens a PR and can merge it, where does the human approval gate deliver the most value per interruption?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Before each individual file edit."
+        },
+        {
+          "key": "B",
+          "text": "At the plan stage and again before the merge — the two points where a wrong decision is expensive and hard to reverse."
+        },
+        {
+          "key": "C",
+          "text": "Only after the merge, during incident review."
+        },
+        {
+          "key": "D",
+          "text": "Nowhere; the test suite is sufficient."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Put gates where reversibility is low and cost is high. Per-edit approval trains people to click through without reading; post-merge review is too late. Plan approval catches wrong direction cheaply, and merge approval catches wrong outcome before it reaches anyone.",
+      "distractor_notes": {
+        "A": "Approval fatigue — the gate becomes a reflex, which is worse than no gate.",
+        "C": "The damage is already deployed.",
+        "D": "Tests verify what you thought to test, not whether the change was the right one."
+      },
+      "analogy": {
+        "frame": "AWS CodePipeline",
+        "text": "Manual approval actions sit before deploy-to-prod, not between every CodeBuild command. Gate the irreversible transitions."
+      },
+      "cheatsheet": "d3-agentic#human-in-the-loop",
+      "sources": [
+        "c-cc-best-practices",
+        "c-security"
+      ],
+      "tags": [
+        "governance",
+        "workflow",
+        "approval"
+      ]
+    },
+    {
+      "id": "D3-037",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "subagent context inputs",
+      "stem": "What does a subagent know about the parent conversation when it starts?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Everything — it shares the parent's full transcript."
+        },
+        {
+          "key": "B",
+          "text": "Only its own system prompt, the task description it was given, and the project context it loads itself."
+        },
+        {
+          "key": "C",
+          "text": "Nothing at all, including its own instructions."
+        },
+        {
+          "key": "D",
+          "text": "Only the last three turns of the parent."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The child starts fresh. That is the source of both its value (independence, a clean window) and its main failure mode: if the task description omits something essential, the subagent cannot infer it from a conversation it never saw.",
+      "distractor_notes": {
+        "A": "Sharing the transcript would defeat isolation.",
+        "C": "It has its definition and task.",
+        "D": "There is no partial transcript hand-off."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "subagents",
+        "context",
+        "isolation"
+      ]
+    },
+    {
+      "id": "D3-038",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "debugging a misbehaving agent",
+      "stem": "A subagent intermittently ignores its output contract. Which diagnostic step should come first?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Switch it to a larger model."
+        },
+        {
+          "key": "B",
+          "text": "Inspect what the subagent actually received — its resolved system prompt and the task description the parent generated — before changing anything."
+        },
+        {
+          "key": "C",
+          "text": "Add three more sentences emphasising the contract."
+        },
+        {
+          "key": "D",
+          "text": "Disable the subagent and inline the work."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Debug the input before the model. Intermittent contract violations usually trace to an under-specified task description the parent composed differently that time, not to model capability — and no amount of emphasis fixes an instruction the agent never received.",
+      "distractor_notes": {
+        "A": "Expensive guess with no diagnosis.",
+        "C": "Emphasis on an already-correct instruction rarely helps; find out whether it arrived.",
+        "D": "Abandons the design over an unexamined bug."
+      },
+      "analogy": {
+        "frame": "Debugging",
+        "text": "You read the actual request payload before rewriting the handler. Same discipline."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [
+        "c-claude-code",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "debugging",
+        "subagents",
+        "methodology"
+      ]
+    },
+    {
+      "id": "D3-039",
+      "domain": "AAO",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "skill tool restriction",
+      "stem": "A documentation skill should never be able to execute shell commands, even when the session otherwise permits Bash. What is the cleanest way to express that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Write 'do not use Bash' in the skill body and rely on compliance."
+        },
+        {
+          "key": "B",
+          "text": "Declare a restricted `allowed-tools` set in the skill's frontmatter so the constraint is enforced rather than requested."
+        },
+        {
+          "key": "C",
+          "text": "Remove Bash from the whole session's permissions."
+        },
+        {
+          "key": "D",
+          "text": "Add a `PreToolUse` hook that blocks all Bash calls for the entire session."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Scoping tools in the skill's own frontmatter keeps the restriction local to the skill and mechanical rather than advisory. Removing Bash globally, or blocking it for the whole session, punishes every other task to constrain one.",
+      "distractor_notes": {
+        "A": "Advisory, not enforced.",
+        "C": "Over-broad — breaks unrelated work.",
+        "D": "Same over-breadth, plus a hook that cannot easily tell which skill is active."
+      },
+      "cheatsheet": "d3-agentic#skills",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "skills",
+        "tools",
+        "least-privilege"
+      ]
+    },
+    {
+      "id": "D3-040",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "capability selection",
+      "stem": "A requirement reads: 'When anyone edits a file under `infra/`, a Terraform plan must run and its output must be attached to the session.' Which capability is the right primary mechanism?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A skill, triggered by the word 'terraform'."
+        },
+        {
+          "key": "B",
+          "text": "A `PostToolUse` hook matched to the edit tools that inspects the path and runs the plan."
+        },
+        {
+          "key": "C",
+          "text": "A subagent that periodically checks the directory."
+        },
+        {
+          "key": "D",
+          "text": "A `CLAUDE.md` instruction to always run a plan after infra edits."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The trigger is a tool event with a path condition and the requirement says 'must' — that is hook territory. Skills activate on semantic relevance, subagents are invoked for delegated work, and memory is guidance; none of them fire reliably on 'a file under `infra/` was written'.",
+      "distractor_notes": {
+        "A": "Activates on topic, not on a file being written.",
+        "C": "Polling is the wrong shape for an event.",
+        "D": "Probabilistic, and the requirement is absolute."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "It is an EventBridge rule on an S3 object-created event, not a cron job and not a runbook telling people to check."
+      },
+      "cheatsheet": "d3-agentic#capability-selection",
+      "sources": [
+        "c-claude-code"
+      ],
+      "tags": [
+        "hooks",
+        "design",
+        "capability-selection"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,515 @@
+{
+  "questions": [
+    {
+      "id": "D6-014",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "web fetch restriction",
+      "stem": "Which permission rule restricts web fetching to a single trusted documentation domain?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`WebFetch(domain:docs.internal.corp)`"
+        },
+        {
+          "key": "B",
+          "text": "`Web(docs.internal.corp)`"
+        },
+        {
+          "key": "C",
+          "text": "`Fetch(https://docs.internal.corp/*)`"
+        },
+        {
+          "key": "D",
+          "text": "`Network(allow:docs.internal.corp)`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Web fetching is scoped with a `domain:` specifier. Combined with a deny on everything else, it converts an open internet intake into an allow-listed one — which is the single most effective structural mitigation against injection arriving via the web.",
+      "distractor_notes": {
+        "B": "Not the tool name.",
+        "C": "Not the specifier form.",
+        "D": "Not a permission tool."
+      },
+      "cheatsheet": "d6-security#permissions",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "permissions",
+        "web",
+        "allow-list"
+      ]
+    },
+    {
+      "id": "D6-015",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "role separation",
+      "stem": "In an application built on the Agent SDK, why should the agent's credentials differ from the application's own service credentials?",
+      "options": [
+        {
+          "key": "A",
+          "text": "For billing clarity only."
+        },
+        {
+          "key": "B",
+          "text": "So the agent's authority can be scoped to the minimum its tasks require, and a compromise or manipulation of the agent does not inherit the application's full privileges."
+        },
+        {
+          "key": "C",
+          "text": "Because the SDK rejects shared credentials."
+        },
+        {
+          "key": "D",
+          "text": "To improve latency."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The agent takes instructions from content it did not author, which makes it the least trustworthy actor in your system. Give it its own narrowly scoped identity so its worst case is bounded well below the application's.",
+      "distractor_notes": {
+        "A": "A genuine but secondary benefit.",
+        "C": "It does not enforce this.",
+        "D": "Unrelated."
+      },
+      "analogy": {
+        "frame": "AWS",
+        "text": "It is a dedicated task role per workload. You would not let the report generator hold the same role as the billing service."
+      },
+      "cheatsheet": "d6-security#identity",
+      "sources": [
+        "c-security",
+        "c-agent-sdk"
+      ],
+      "tags": [
+        "identity",
+        "least-privilege",
+        "sdk"
+      ]
+    },
+    {
+      "id": "D6-016",
+      "domain": "CMR",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "code review of agent output",
+      "stem": "What is the correct review posture for agent-generated code?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Lighter than human code, since the model is consistent."
+        },
+        {
+          "key": "B",
+          "text": "At least as rigorous as human code, with extra attention to unstated assumptions, silently broadened scope and plausible-looking but unverified claims."
+        },
+        {
+          "key": "C",
+          "text": "No review, if the tests pass."
+        },
+        {
+          "key": "D",
+          "text": "Review only the diff size."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Agent output is fluent, which makes it easy to skim and hard to disbelieve. Volume also rises, so reviewer attention becomes the scarce resource — the errors that survive tend to be confident, well-formatted and wrong in a way a quick read will not catch.",
+      "distractor_notes": {
+        "A": "Consistency is not correctness.",
+        "C": "Tests cover what someone thought to test.",
+        "D": "Size correlates with nothing that matters."
+      },
+      "cheatsheet": "d6-security#review",
+      "sources": [
+        "c-cc-best-practices",
+        "c-security"
+      ],
+      "tags": [
+        "review",
+        "process",
+        "quality"
+      ]
+    },
+    {
+      "id": "D6-017",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A regulated firm must prove which model version produced a given code change eighteen months later. Select the TWO practices that make this possible.",
+      "options": [
+        {
+          "key": "A",
+          "text": "Record the model identifier, session id and configuration hash in the commit trailer or an associated audit record."
+        },
+        {
+          "key": "B",
+          "text": "Retain the structured run records in an immutable, retention-managed store."
+        },
+        {
+          "key": "C",
+          "text": "Rely on the model to recall which version it was."
+        },
+        {
+          "key": "D",
+          "text": "Keep the developer's terminal scrollback."
+        },
+        {
+          "key": "E",
+          "text": "Screenshot the session at the end of each day."
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "Provenance has to be captured at the time and stored where it cannot be edited later. A structured record attached to the artefact, retained under a defined policy, is what an auditor can actually rely on eighteen months out.",
+      "distractor_notes": {
+        "C": "Not a source of truth about itself.",
+        "D": "Ephemeral and unverifiable.",
+        "E": "Not machine-readable and trivially incomplete."
+      },
+      "cheatsheet": "d6-security#audit",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "audit",
+        "provenance",
+        "compliance"
+      ]
+    },
+    {
+      "id": "D6-018",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "onboarding safety",
+      "stem": "What is the most sensible default permission posture for engineers newly onboarded to Claude Code?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`bypassPermissions`, to avoid frustrating them with prompts."
+        },
+        {
+          "key": "B",
+          "text": "Default mode with organisation-wide deny rules for secrets and destructive commands, so they learn the tool while the dangerous paths are already closed."
+        },
+        {
+          "key": "C",
+          "text": "Plan mode permanently, so nothing can change."
+        },
+        {
+          "key": "D",
+          "text": "No configuration; let each engineer decide."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Prompts are a teaching mechanism — they show a newcomer what the agent is about to do. Keep them, and remove the genuinely dangerous options centrally so a wrong click cannot become an incident.",
+      "distractor_notes": {
+        "A": "Removes the guardrail exactly when the user least understands the tool.",
+        "C": "They can never complete real work.",
+        "D": "Inconsistent posture and no baseline."
+      },
+      "cheatsheet": "d6-security#onboarding",
+      "sources": [
+        "c-security",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "onboarding",
+        "permissions",
+        "governance"
+      ]
+    },
+    {
+      "id": "D6-019",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "shadow AI",
+      "stem": "Engineers are pasting proprietary code into unmanaged consumer AI tools. Which response addresses the cause?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Block all AI domains at the firewall."
+        },
+        {
+          "key": "B",
+          "text": "Provide a sanctioned, well-configured tool that is genuinely better for their work, and pair it with a clear policy — people route around controls that make their job harder."
+        },
+        {
+          "key": "C",
+          "text": "Monitor clipboards."
+        },
+        {
+          "key": "D",
+          "text": "Ignore it; the risk is theoretical."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Shadow usage is a demand signal. Blocking without providing an alternative moves the behaviour to phones and personal laptops, where you have neither visibility nor controls. Supply a better sanctioned path and the unmanaged one loses its appeal.",
+      "distractor_notes": {
+        "A": "Displaces rather than removes the risk.",
+        "C": "Invasive, low-yield and corrosive to trust.",
+        "D": "Proprietary code in unmanaged third-party systems is a concrete exposure."
+      },
+      "cheatsheet": "d6-security#governance",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "governance",
+        "shadow-it",
+        "adoption"
+      ]
+    },
+    {
+      "id": "D6-020",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "confirmation fatigue",
+      "stem": "A configuration prompts for approval on nearly every tool call, and engineers now approve reflexively. What is the correct fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add more prompts so the important ones are not missed."
+        },
+        {
+          "key": "B",
+          "text": "Allow-list the safe, high-frequency operations and reserve prompts for genuinely consequential ones, so each prompt carries information again."
+        },
+        {
+          "key": "C",
+          "text": "Switch to `bypassPermissions`."
+        },
+        {
+          "key": "D",
+          "text": "Require a manager's approval for every call."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A prompt that always appears stops being a decision point. Cut the noise so the remaining prompts are rare and meaningful — that is what restores the signal, not more prompting and not none.",
+      "distractor_notes": {
+        "A": "Deepens the fatigue.",
+        "C": "Overcorrects to no gate at all.",
+        "D": "Unworkable, and it just moves the reflex up a level."
+      },
+      "analogy": {
+        "frame": "Alerting",
+        "text": "It is alert fatigue. A pager that fires constantly is not a safety system — it is background noise with an escalation policy attached."
+      },
+      "cheatsheet": "d6-security#permissions",
+      "sources": [
+        "c-security",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "permissions",
+        "human-factors",
+        "design"
+      ]
+    },
+    {
+      "id": "D6-021",
+      "domain": "TDM",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "MCP trust in enterprise",
+      "stem": "How should an enterprise control which MCP servers its engineers may connect to?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Trust engineers to choose responsibly."
+        },
+        {
+          "key": "B",
+          "text": "Maintain a reviewed internal catalogue and use managed policy to restrict connections to approved servers."
+        },
+        {
+          "key": "C",
+          "text": "Block MCP entirely."
+        },
+        {
+          "key": "D",
+          "text": "Allow anything published to a public registry."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "An MCP server is third-party code with a capability surface inside developer sessions — the same review posture as any dependency. A reviewed catalogue plus central enforcement gives you supply-chain control without banning a genuinely useful mechanism.",
+      "distractor_notes": {
+        "A": "No review, no inventory, no recall path.",
+        "C": "Forfeits real value and pushes people to worse workarounds.",
+        "D": "A public registry is not an assurance."
+      },
+      "analogy": {
+        "frame": "SDLC",
+        "text": "It is an internal package mirror with a review gate, rather than pulling straight from the public registry into production."
+      },
+      "cheatsheet": "d6-security#supply-chain",
+      "sources": [
+        "c-security",
+        "c-mcp-advanced"
+      ],
+      "tags": [
+        "mcp",
+        "supply-chain",
+        "governance"
+      ]
+    },
+    {
+      "id": "D6-022",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "risk tiering",
+      "stem": "An organisation wants one policy covering everything from a static marketing site to a payments service. What is the sound approach?",
+      "options": [
+        {
+          "key": "A",
+          "text": "One maximally strict policy everywhere, matching the highest-risk system."
+        },
+        {
+          "key": "B",
+          "text": "Tiered policy: a strict baseline everywhere, with additional controls and stronger review gates applied to higher-risk repositories."
+        },
+        {
+          "key": "C",
+          "text": "One permissive policy, with teams free to tighten it."
+        },
+        {
+          "key": "D",
+          "text": "No central policy; each team decides independently."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Uniform maximum strictness makes routine work painful, which produces workarounds that quietly undermine the policy everywhere. A solid floor plus risk-proportionate additions keeps the strict controls where they are actually justified — and therefore respected.",
+      "distractor_notes": {
+        "A": "Drives circumvention, weakening the control you cared about.",
+        "C": "Optional tightening is tightening that does not happen.",
+        "D": "No floor, no consistency, no way to answer an auditor."
+      },
+      "analogy": {
+        "frame": "Compliance",
+        "text": "It is data classification. You do not apply the controls for regulated customer data to the office lunch menu, and you do not apply the lunch menu's controls to the payments database."
+      },
+      "cheatsheet": "d6-security#governance",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "governance",
+        "risk",
+        "policy"
+      ]
+    },
+    {
+      "id": "D6-023",
+      "domain": "CCW",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "hook-based enforcement",
+      "stem": "Which is the most robust way to guarantee that no commit authored through Claude Code contains a detected secret?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A `CLAUDE.md` rule forbidding secrets in commits."
+        },
+        {
+          "key": "B",
+          "text": "A hook that runs a secret scanner and blocks the commit path when a finding appears, backed by the same scanner as a required CI check."
+        },
+        {
+          "key": "C",
+          "text": "Asking the agent to review its own diff for secrets."
+        },
+        {
+          "key": "D",
+          "text": "Periodic repository scans after the fact."
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Two independent enforcement points: the hook catches it before the commit exists, and the CI check catches anything that bypassed the hook — including commits made outside the agent entirely. Belt and braces, both mechanical.",
+      "distractor_notes": {
+        "A": "Advisory.",
+        "C": "Self-review by the party that wrote it.",
+        "D": "Detects a leak that has already happened, possibly on a pushed branch."
+      },
+      "cheatsheet": "d6-security#secrets",
+      "sources": [
+        "c-security"
+      ],
+      "tags": [
+        "secrets",
+        "hooks",
+        "ci"
+      ]
+    },
+    {
+      "id": "D6-024",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "residual risk communication",
+      "stem": "A CISO asks for a single sentence describing the residual risk of agentic coding after all controls are in place. Which is most accurate?",
+      "options": [
+        {
+          "key": "A",
+          "text": "'There is no residual risk once permissions are configured.'"
+        },
+        {
+          "key": "B",
+          "text": "'An agent can take a correctly permitted action that is wrong for the situation, so controls bound the blast radius while human review and verification remain the mechanism for catching wrong-but-permitted work.'"
+        },
+        {
+          "key": "C",
+          "text": "'The main risk is that the model leaks our code to competitors.'"
+        },
+        {
+          "key": "D",
+          "text": "'Risk is unquantifiable, so no assessment is possible.'"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Permissions answer 'what may it touch', never 'was this the right change'. Naming that boundary honestly is what tells a CISO where to invest — in review capacity and verification, not in yet another allow-list.",
+      "distractor_notes": {
+        "A": "Overclaims and will not survive the first incident.",
+        "C": "Real for unmanaged tools, but it is not the residual risk in a properly deployed one.",
+        "D": "Abdication; the risk is describable and largely bounded."
+      },
+      "cheatsheet": "d6-security#residual-risk",
+      "sources": [
+        "c-security",
+        "c-cc-best-practices"
+      ],
+      "tags": [
+        "risk",
+        "communication",
+        "governance"
+      ]
+    }
+  ]
+}

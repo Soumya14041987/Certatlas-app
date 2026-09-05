@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Backend runtime artefacts
+backend/*.db
+backend/*.db-wal
+backend/*.db-shm
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Editors / OS
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Claude Code local settings (personal, not shared)
+.claude/settings.local.json
+frontend/tsconfig.tsbuildinfo
