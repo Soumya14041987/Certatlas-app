@@ -19,6 +19,7 @@ export default function CurriculumPage() {
 
   const byId = new Map(data.courses.map((course) => [course.id, course]));
   const totalHours = data.courses.reduce((sum, course) => sum + course.est_hours, 0);
+  const certificationPage = data.catalogs.find((c) => c.name.toLowerCase().includes("certification page"));
 
   return (
     <div className="space-y-8 animate-rise">
@@ -42,6 +43,38 @@ export default function CurriculumPage() {
             </a>
           ))}
         </div>
+      </Card>
+
+      <Card className="p-6">
+        <SectionHeading title="Register & schedule your exam" />
+        <p className="max-w-2xl text-sm leading-relaxed text-ink-300">{data.exam_logistics.scheduling_note}</p>
+
+        <dl className="mt-5 grid gap-4 sm:grid-cols-3">
+          <div>
+            <dt className="stat-label">Question format</dt>
+            <dd className="mt-1 text-sm text-ink-200">{data.exam_logistics.question_types}</dd>
+          </div>
+          <div>
+            <dt className="stat-label">Passing score</dt>
+            <dd className="mt-1 text-sm text-ink-200">{data.exam_logistics.passing_score}</dd>
+          </div>
+          <div>
+            <dt className="stat-label">Delivery</dt>
+            <dd className="mt-1 text-sm text-ink-200">{data.exam_logistics.delivery.join(" or ")}</dd>
+          </div>
+        </dl>
+
+        {certificationPage && (
+          <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-white/[0.07] pt-6">
+            <a href={certificationPage.url} target="_blank" rel="noreferrer noopener" className="btn-primary">
+              Register for the exam ↗
+            </a>
+            <span className="text-xs text-ink-500">
+              Opens Anthropic&apos;s own certification page — this app has no scheduling of its own and
+              cannot see or affect your registration there.
+            </span>
+          </div>
+        )}
       </Card>
 
       <section>

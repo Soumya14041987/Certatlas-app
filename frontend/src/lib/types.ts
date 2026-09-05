@@ -182,6 +182,12 @@ export interface Curriculum {
   catalogs: { name: string; url: string }[];
   courses: Course[];
   study_plan: { week: number; focus: string; courses: string[]; target: string }[];
+  exam_logistics: {
+    question_types: string;
+    passing_score: string;
+    delivery: string[];
+    scheduling_note: string;
+  };
 }
 
 export interface Analytics {
