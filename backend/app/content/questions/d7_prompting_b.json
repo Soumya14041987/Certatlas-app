@@ -1,0 +1,417 @@
+{
+  "questions": [
+    {
+      "id": "D7-017",
+      "domain": "PES",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "sampling parameters",
+      "stem": "A support-ticket classifier must return the identical category for the identical ticket every time it runs. Which parameter change is most directly responsible for that?",
+      "options": [
+        { "key": "A", "text": "Set `temperature` to 0, which minimises sampling variance." },
+        { "key": "B", "text": "Set `max_tokens` as low as possible." },
+        { "key": "C", "text": "Enable extended thinking." },
+        { "key": "D", "text": "Switch to a smaller model." }
+      ],
+      "correct": ["A"],
+      "explanation": "Temperature controls how much the model's next-token distribution is flattened before sampling. At 0, the model consistently picks the highest-probability token, which is what 'always the same answer for the same input' actually requires. Note that this reduces variance rather than guaranteeing bit-for-bit identical output on every possible backend, but it is the correct lever to reach for.",
+      "distractor_notes": {
+        "B": "Output length limits truncation, not consistency of the answer given.",
+        "C": "Thinking changes how the model reasons before answering; it does not fix sampling variance.",
+        "D": "Model size affects capability and cost, not determinism."
+      },
+      "analogy": { "frame": "SDLC", "text": "It is the difference between a build with a pinned dependency lockfile and one that resolves 'latest' each time. Temperature 0 is the lockfile for token selection." },
+      "cheatsheet": "d7-prompting#reasoning",
+      "sources": ["c-claude-api"],
+      "tags": ["temperature", "determinism", "sampling"]
+    },
+    {
+      "id": "D7-018",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "system prompt design",
+      "stem": "Where should durable rules that must apply to every request in a customer-support bot live — for example, 'never reveal internal ticket IDs to the customer'?",
+      "options": [
+        { "key": "A", "text": "In the system prompt, since it is set once per conversation and frames every turn." },
+        { "key": "B", "text": "Repeated at the end of every user message." },
+        { "key": "C", "text": "In a follow-up message sent right after the model's first reply." },
+        { "key": "D", "text": "In the `max_tokens` parameter." }
+      ],
+      "correct": ["A"],
+      "explanation": "The system prompt is the correct home for standing behaviour that should not depend on what any particular user says: role, tone, hard constraints. Repeating a rule in every user message is fragile (easy to forget one call) and cedes the framing to whoever composes user turns, including anything an injected document might contribute.",
+      "distractor_notes": {
+        "B": "Works until one caller forgets it, and it competes for attention with the user's actual question every single turn.",
+        "C": "The model has already produced its first reply by the time this arrives.",
+        "D": "Not a prompting mechanism — it is an output-length cap."
+      },
+      "analogy": { "frame": "Web architecture", "text": "The system prompt is middleware that runs on every request; stuffing the rule into each user message is like re-checking auth inside every route handler instead of once, centrally." },
+      "cheatsheet": "d7-prompting#roles",
+      "sources": ["c-claude-api", "c-claude-101"],
+      "tags": ["system-prompt", "design"]
+    },
+    {
+      "id": "D7-019",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "example diversity in few-shot prompting",
+      "stem": "A few-shot sentiment classifier is given three examples, all of them clearly positive reviews, and it now mislabels a sarcastic negative review as positive. What is the most likely cause?",
+      "options": [
+        { "key": "A", "text": "The model cannot understand sarcasm at all." },
+        { "key": "B", "text": "The examples never showed the model a negative or an edge case, so it has no signal for how those should be handled." },
+        { "key": "C", "text": "Three examples is too many; fewer would work better." },
+        { "key": "D", "text": "The prompt is missing a system role." }
+      ],
+      "correct": ["B"],
+      "explanation": "Few-shot examples teach by demonstration, and they can only demonstrate what they contain. A set of examples that only covers one class or one difficulty level leaves the model to guess at everything else — including exactly the hard case, sarcasm, that needed a worked example the most.",
+      "distractor_notes": {
+        "A": "Overstated; the failure here traces to prompt design, not a hard model ceiling.",
+        "C": "Count is not the issue; coverage is.",
+        "D": "A role can help framing, but it does not substitute for a demonstrated negative example."
+      },
+      "analogy": { "frame": "SDLC", "text": "It is a test suite with only happy-path cases: the code that passes review is the code nobody wrote a failing test for first." },
+      "snippet": {
+        "lang": "text",
+        "title": "Covering the edge case explicitly",
+        "code": "Classify sentiment as positive, negative, or sarcastic-negative.\n\nExample 1: \"Absolutely loved it, five stars.\" -> positive\nExample 2: \"Broke on day one, waste of money.\" -> negative\nExample 3: \"Oh great, ANOTHER firmware update that bricks the device.\" -> sarcastic-negative"
+      },
+      "cheatsheet": "d7-prompting#few-shot",
+      "sources": ["c-prompt-eng"],
+      "tags": ["few-shot", "examples", "edge-cases"]
+    },
+    {
+      "id": "D7-020",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "prompt chaining",
+      "stem": "A single prompt asking Claude to 'read this 40-page contract, extract every obligation, check each against our compliance policy, and draft a summary memo' produces inconsistent, shallow results. What is the most effective restructuring?",
+      "options": [
+        { "key": "A", "text": "Ask more forcefully in one prompt: 'Be thorough and check every obligation carefully.'" },
+        { "key": "B", "text": "Chain it into separate steps — extract obligations, then check each against policy, then draft the memo — passing each step's output to the next." },
+        { "key": "C", "text": "Increase `max_tokens` so the single response has more room." },
+        { "key": "D", "text": "Ask for the memo first, then the obligations, since summarising first anchors the model." }
+      ],
+      "correct": ["B"],
+      "explanation": "Each step here has a different cognitive shape — extraction, comparison, synthesis — and bundling them asks the model to juggle all three at once with no chance to verify intermediate work. Chaining turns one hard, unverifiable task into three easier ones, each of which can be checked before the next runs.",
+      "distractor_notes": {
+        "A": "Emphasis does not substitute for structure; the model still has to do three jobs in one pass.",
+        "C": "More room to write does not create room to reason in stages.",
+        "D": "Summarising before extraction guarantees the summary is not grounded in a checked list of obligations."
+      },
+      "analogy": { "frame": "SDLC", "text": "It is a build pipeline versus one shell one-liner that compiles, tests and deploys in a single unreadable command. Stages exist so each one can fail visibly and be inspected." },
+      "cheatsheet": "d7-prompting#structure",
+      "sources": ["c-claude-api", "c-agent-sdk-docs"],
+      "tags": ["prompt-chaining", "workflow", "decomposition"]
+    },
+    {
+      "id": "D7-021",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "stop sequences",
+      "stem": "A code-completion tool asks Claude to continue a Python function and must stop generating the instant a new top-level `def` begins, without post-processing the response. Which mechanism fits?",
+      "options": [
+        { "key": "A", "text": "A `stop_sequences` value of `\"\\ndef \"`, so generation halts exactly at that boundary." },
+        { "key": "B", "text": "A lower `max_tokens` value, tuned by trial and error." },
+        { "key": "C", "text": "An instruction in the prompt asking the model to stop after one function." },
+        { "key": "D", "text": "Extended thinking, so the model plans to stop at the right point." }
+      ],
+      "correct": ["A"],
+      "explanation": "Stop sequences are a hard, mechanical boundary enforced by the API — the moment the sequence appears, generation ends, with no reliance on the model choosing to comply. That is exactly the guarantee 'without post-processing' calls for.",
+      "distractor_notes": {
+        "B": "A token cap is a blunt limit unrelated to the actual boundary; it will cut mid-function on longer ones and run past on shorter ones.",
+        "C": "An instruction is a request the model can still get wrong, especially near a token cap.",
+        "D": "Thinking budget shapes reasoning; it is not a truncation mechanism."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": ["c-claude-api"],
+      "tags": ["stop-sequences", "api", "structured-output"]
+    },
+    {
+      "id": "D7-022",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "Select the TWO changes that most directly reduce the chance a model asks a clarifying question mid-task instead of guessing at an ambiguous instruction.",
+      "options": [
+        { "key": "A", "text": "State the acceptable range of interpretations up front and say which one to default to if the request is ambiguous." },
+        { "key": "B", "text": "Provide a concrete example of the expected input and output." },
+        { "key": "C", "text": "Increase the model's thinking budget." },
+        { "key": "D", "text": "Shorten the prompt so there is less to misread." },
+        { "key": "E", "text": "Lower the temperature to 0." }
+      ],
+      "correct": ["A", "B"],
+      "explanation": "Ambiguity is resolved by giving the model enough information to resolve it itself: an explicit default and a worked example both narrow 'what did they mean' down to one answer. Thinking budget and temperature affect reasoning depth and sampling variance, not the amount of information available to disambiguate, and a shorter prompt can just as easily remove the disambiguating detail as remove noise.",
+      "distractor_notes": {
+        "C": "More deliberation does not manufacture information that was never given.",
+        "D": "Brevity is not the same as clarity — it can cut either the noise or the signal.",
+        "E": "Consistency of output is not the same as correctness of interpretation."
+      },
+      "cheatsheet": "d7-prompting#instructions",
+      "sources": ["c-prompt-eng", "c-claude-api"],
+      "tags": ["ambiguity", "instructions", "few-shot"]
+    },
+    {
+      "id": "D7-023",
+      "domain": "PES",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "XML structuring for multiple documents",
+      "stem": "A prompt must let Claude compare three separate customer contracts without confusing which clause came from which document. What is the clearest way to structure this?",
+      "options": [
+        { "key": "A", "text": "Concatenate all three contracts into one block of plain text." },
+        { "key": "B", "text": "Wrap each contract in its own uniquely identified tag, e.g. `<contract id=\"A\">...</contract>`, `<contract id=\"B\">...</contract>`." },
+        { "key": "C", "text": "Summarise each contract in one sentence before sending it." },
+        { "key": "D", "text": "Send the three contracts in three separate, unrelated API calls." }
+      ],
+      "correct": ["B"],
+      "explanation": "Uniquely tagging each document gives the model — and a human reviewing the prompt — an unambiguous way to refer back to 'clause 4 of contract B'. Structure is what turns three documents dumped together into three documents the model can actually keep straight.",
+      "distractor_notes": {
+        "A": "The exact confusion the question describes — no boundary between documents.",
+        "C": "Loses the detail a clause-level comparison needs.",
+        "D": "Splitting across calls removes the model's ability to compare them against each other at all."
+      },
+      "cheatsheet": "d7-prompting#structure",
+      "sources": ["c-prompt-eng"],
+      "tags": ["structure", "xml", "multi-document"]
+    },
+    {
+      "id": "D7-024",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "self-consistency",
+      "stem": "A hard arithmetic word-problem solver is wrong about 15% of the time on a fixed benchmark, and the task tolerates extra latency and cost. Which technique most directly improves accuracy without changing the model or the prompt's content?",
+      "options": [
+        { "key": "A", "text": "Sample the same prompt several times at a non-zero temperature and take the majority answer (self-consistency)." },
+        { "key": "B", "text": "Set temperature to 0 so the single answer is at least reproducible." },
+        { "key": "C", "text": "Reduce `max_tokens` so the model answers faster." },
+        { "key": "D", "text": "Add a stop sequence after the first number the model writes." }
+      ],
+      "correct": ["A"],
+      "explanation": "Self-consistency spends extra compute to buy accuracy: several independent samples at a moderate temperature explore different reasoning paths, and majority voting cancels out errors that are not systematic. It is the standard move when latency and cost tolerance are available and the content of the prompt is not the bottleneck.",
+      "distractor_notes": {
+        "B": "Reproducible is not the same as correct — it just repeats whatever error the single path makes.",
+        "C": "Speed is not the failure mode described.",
+        "D": "Would cut off the reasoning that leads to the number, not improve it."
+      },
+      "analogy": { "frame": "Distributed systems", "text": "It is quorum voting across replicas: no single replica is trusted alone, and agreement across independent runs is the signal." },
+      "cheatsheet": "d7-prompting#reasoning",
+      "sources": ["c-prompt-eng", "c-claude-api"],
+      "tags": ["self-consistency", "accuracy", "sampling"]
+    },
+    {
+      "id": "D7-025",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "tool-use prompting",
+      "stem": "An agent has one tool, `get_weather(city: str)`, and keeps calling it with a full sentence as the `city` argument instead of a city name. What is the most effective fix?",
+      "options": [
+        { "key": "A", "text": "Tighten the tool's description and parameter description to state the expected format explicitly, e.g. 'the city name only, e.g. \"Paris\", not a sentence'." },
+        { "key": "B", "text": "Rename the parameter from `city` to `input`." },
+        { "key": "C", "text": "Lower the temperature to 0." },
+        { "key": "D", "text": "Remove the tool and ask the model to state the weather from memory." }
+      ],
+      "correct": ["A"],
+      "explanation": "A tool's schema is read by the model the same way a function's docstring is read by a person calling it. A vague parameter description invites a vague argument; stating the expected shape and giving an example is the direct fix, the same discipline as writing a good MCP tool description.",
+      "distractor_notes": {
+        "B": "A different name with the same ambiguity produces the same problem.",
+        "C": "Determinism does not fix a misunderstanding of the expected format.",
+        "D": "Removes the capability instead of fixing its interface, and current weather is not something a model can know from training data."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": ["c-claude-api", "c-mcp-intro"],
+      "tags": ["tool-use", "schemas", "prompting"]
+    },
+    {
+      "id": "D7-026",
+      "domain": "PES",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "context window vs max_tokens",
+      "stem": "What is the difference between a model's context window and the `max_tokens` parameter on a request?",
+      "options": [
+        { "key": "A", "text": "They are the same thing, expressed in different units." },
+        { "key": "B", "text": "The context window is the total input-plus-output budget the model supports; `max_tokens` caps how much that particular request is allowed to generate as output." },
+        { "key": "C", "text": "`max_tokens` limits the input only; the context window limits the output only." },
+        { "key": "D", "text": "The context window can be changed per request; `max_tokens` is fixed per model." }
+      ],
+      "correct": ["B"],
+      "explanation": "The context window is a property of the model (how much it can attend to at once, input and output combined). `max_tokens` is a per-request dial the caller sets to bound generation length — for cost control, latency, or to fit a downstream field limit. Confusing the two leads to either wasted spend or truncated responses.",
+      "distractor_notes": { "A": "Different scopes entirely.", "C": "Reversed and incomplete.", "D": "Backwards — the window is the fixed model property; `max_tokens` is the per-call setting." },
+      "cheatsheet": "d7-prompting#long-context",
+      "sources": ["c-claude-api"],
+      "tags": ["context-window", "max-tokens", "fundamentals"]
+    },
+    {
+      "id": "D7-027",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "constitutional-style guardrail prompting",
+      "stem": "A content-moderation assistant must refuse a narrow category of requests while remaining fully helpful on everything else. Which prompt design is most robust?",
+      "options": [
+        { "key": "A", "text": "State the narrow refusal category explicitly and concretely, with a short example of what does and does not qualify, rather than a broad instruction like 'refuse anything inappropriate'." },
+        { "key": "B", "text": "Tell the model to 'use your best judgement' with no further detail." },
+        { "key": "C", "text": "Refuse every request that contains any sensitive-sounding keyword." },
+        { "key": "D", "text": "Add the instruction in all capital letters for emphasis." }
+      ],
+      "correct": ["A"],
+      "explanation": "A narrow, concrete boundary with examples is both more reliably followed and less likely to over-refuse legitimate requests than a vague standard. 'Best judgement' with no criteria produces inconsistent behaviour, and keyword-blocking over-refuses constantly (a medical question about a 'weapon wound' is not a request to build one).",
+      "distractor_notes": { "B": "No criteria to apply consistently.", "C": "Guarantees false positives on ordinary, legitimate requests.", "D": "Capitalisation is not a semantic signal the model treats specially." },
+      "cheatsheet": "d7-prompting#instructions",
+      "sources": ["c-ai-fluency", "c-prompt-eng"],
+      "tags": ["guardrails", "refusals", "instructions"]
+    },
+    {
+      "id": "D7-028",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A team is deciding whether to validate a model's JSON output with a schema check before using it downstream. Select the TWO correct statements.",
+      "options": [
+        { "key": "A", "text": "Schema validation is still worth doing even with prefilling and a strict prompt, because it converts a silent downstream failure into an immediate, diagnosable one." },
+        { "key": "B", "text": "A well-designed prompt makes schema validation entirely unnecessary." },
+        { "key": "C", "text": "Validation failures are useful signal for iterating on the prompt itself." },
+        { "key": "D", "text": "Only human-facing output needs validation; machine-to-machine output can be trusted." },
+        { "key": "E", "text": "Schema validation should happen inside the model's own reasoning, not in the calling application." }
+      ],
+      "correct": ["A", "C"],
+      "explanation": "No prompting technique gives a hard guarantee — models occasionally drift, especially under load or with unusual input. Validating at the boundary is the same discipline as validating any external input: it catches drift immediately and its failure log is exactly the evidence you need to see where the prompt is under-specified.",
+      "distractor_notes": {
+        "B": "Prompting improves the odds; it does not remove the need for a boundary check.",
+        "D": "Machine-to-machine output is exactly where a malformed field silently corrupts a downstream system with no human to notice.",
+        "E": "The model cannot validate its own output against your application's schema from inside a single generation; that check belongs in your code."
+      },
+      "analogy": { "frame": "API design", "text": "It is the same reason a backend still validates a request body even though the frontend form already validates it — the client is not the only caller, and cannot be trusted as the last line of defence." },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": ["c-claude-api", "c-agent-sdk-docs"],
+      "tags": ["validation", "structured-output", "reliability"]
+    },
+    {
+      "id": "D7-029",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "batch request shape",
+      "stem": "Which detail is essential when submitting 10,000 independent classification requests through the Message Batches API?",
+      "options": [
+        { "key": "A", "text": "Each request needs its own caller-assigned `custom_id`, so results can be matched back to their input after the batch completes asynchronously." },
+        { "key": "B", "text": "All 10,000 requests must share an identical prompt." },
+        { "key": "C", "text": "Batches require a lower `temperature` than interactive requests." },
+        { "key": "D", "text": "Batches cannot use tools." }
+      ],
+      "correct": ["A"],
+      "explanation": "Batch results come back asynchronously and not necessarily in submission order, so the caller-supplied `custom_id` on each request is the only reliable way to reassociate a result with the input that produced it.",
+      "distractor_notes": { "B": "Each request in a batch can have entirely different content.", "C": "No such requirement.", "D": "Not a real restriction." },
+      "cheatsheet": "d7-prompting#cost",
+      "sources": ["c-claude-api"],
+      "tags": ["batch", "api", "operations"]
+    },
+    {
+      "id": "D7-030",
+      "domain": "PES",
+      "difficulty": "foundational",
+      "type": "single",
+      "objective": "prompting for multimodal input",
+      "stem": "A prompt sends an image of a whiteboard diagram alongside the text instruction 'list every box and arrow shown'. Which practice most improves the reliability of that instruction?",
+      "options": [
+        { "key": "A", "text": "Place the image before the text instruction that refers to it, and be specific about the output format expected for each box and arrow." },
+        { "key": "B", "text": "Describe the diagram in words instead of sending the image." },
+        { "key": "C", "text": "Send the image at the lowest possible resolution to save tokens." },
+        { "key": "D", "text": "Omit the instruction and let the model infer the task from the image alone." }
+      ],
+      "correct": ["A"],
+      "explanation": "The same ordering discipline that applies to long text documents applies to images: put the referenced content first, the instruction that acts on it last, and be explicit about the shape of the answer you want. A vague 'list everything' still leaves the output format to chance.",
+      "distractor_notes": { "B": "Defeats the purpose of sending a diagram at all — the visual layout is the content.", "C": "Under-resolving can lose exactly the detail (small labels, arrow direction) the task needs.", "D": "An image with no instruction leaves the task itself ambiguous." },
+      "cheatsheet": "d7-prompting#long-context",
+      "sources": ["c-claude-api"],
+      "tags": ["multimodal", "vision", "prompting"]
+    },
+    {
+      "id": "D7-031",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "metaprompting",
+      "stem": "A team wants Claude to help draft the initial version of a complex extraction prompt before they refine it by hand. What is this practice called, and is it sound?",
+      "options": [
+        { "key": "A", "text": "Metaprompting — using a model to draft or improve a prompt for another (or the same) task. It is a sound starting point, provided the draft is evaluated against real examples afterward, not shipped unverified." },
+        { "key": "B", "text": "It is unsound in every case, because a model can never usefully reason about prompts." },
+        { "key": "C", "text": "It is called fine-tuning, and it permanently changes the model's weights." },
+        { "key": "D", "text": "It only works if the drafting model is more capable than the model that will run the final prompt." }
+      ],
+      "correct": ["A"],
+      "explanation": "Metaprompting is a legitimate, common technique — the model that helped draft a prompt is not blessing its correctness, so the draft still needs the same evaluation-against-real-examples discipline as a prompt written by hand. It is a starting point, not a replacement for that step.",
+      "distractor_notes": { "B": "Overstated; the technique works well as a first draft precisely because the same skills that make Claude good at following instructions help it draft clear ones.", "C": "Fine-tuning changes weights; metaprompting does not touch the model at all.", "D": "No such requirement — the drafting and serving model can be the same or different." },
+      "cheatsheet": "d7-prompting#evaluation",
+      "sources": ["c-prompt-eng", "c-claude-api"],
+      "tags": ["metaprompting", "evaluation"]
+    },
+    {
+      "id": "D7-032",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "interleaved thinking with tool use",
+      "stem": "An agent uses extended thinking and calls three tools in sequence to answer a question. Why might interleaved thinking (reasoning between tool calls, not only before the first one) improve the final answer over thinking once up front?",
+      "options": [
+        { "key": "A", "text": "It lets the model incorporate each tool result into its reasoning before deciding the next action, rather than committing to a fixed plan before it has seen any results." },
+        { "key": "B", "text": "It reduces the total number of tokens billed for the request." },
+        { "key": "C", "text": "It removes the need for tool results to be returned to the model at all." },
+        { "key": "D", "text": "It is required before any tool can be called." }
+      ],
+      "correct": ["A"],
+      "explanation": "A plan made entirely up front cannot react to what the first tool call actually returns — an unexpected result, an error, a value that changes what the second call should even be. Reasoning between calls lets the agent revise course with real information instead of executing a static script.",
+      "distractor_notes": { "B": "Thinking tokens are billed either way; this is about reasoning quality, not cost.", "C": "Tool results still have to reach the model for it to reason about them.", "D": "Thinking is not a prerequisite for calling a tool at all." },
+      "cheatsheet": "d7-prompting#thinking",
+      "sources": ["c-claude-api", "c-agent-sdk-docs"],
+      "tags": ["thinking", "tool-use", "agents"]
+    },
+    {
+      "id": "D7-033",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "localisation in prompts",
+      "stem": "A product needs its assistant to reply in the user's language, which varies per request and is not known in advance. What is the most reliable prompt design?",
+      "options": [
+        { "key": "A", "text": "Instruct the model explicitly to detect the language of the user's message and reply in that same language, stating the fallback if detection is uncertain." },
+        { "key": "B", "text": "Hard-code the reply language to English and translate afterward with a separate tool." },
+        { "key": "C", "text": "Omit any language instruction, since the model will always match the input language by default." },
+        { "key": "D", "text": "Ask the user to select a language from a dropdown before every message." }
+      ],
+      "correct": ["A"],
+      "explanation": "An explicit instruction plus a stated fallback for the uncertain case is both usually unnecessary (the model does default to matching input language) and cheap insurance against the cases where it would not — a short or ambiguous message, or mixed-language input.",
+      "distractor_notes": { "B": "Adds a translation step and its failure modes for no benefit over asking directly.", "C": "Works most of the time, but omitting the instruction removes the fallback for the ambiguous cases that actually cause problems.", "D": "Poor experience for a conversational product, and unnecessary given the model can detect language itself." },
+      "cheatsheet": "d7-prompting#instructions",
+      "sources": ["c-claude-101"],
+      "tags": ["localisation", "instructions", "reliability"]
+    },
+    {
+      "id": "D7-034",
+      "domain": "PES",
+      "difficulty": "applied",
+      "type": "single",
+      "objective": "adversarial input testing",
+      "stem": "Before shipping a prompt that summarises user-submitted free text, what should the evaluation set specifically include, beyond typical well-formed examples?",
+      "options": [
+        { "key": "A", "text": "Empty input, extremely long input, input in an unexpected language, and text that itself contains instruction-like phrases, to see how the prompt behaves under each." },
+        { "key": "B", "text": "Only the ten most common, cleanest examples from production, to keep the evaluation fast." },
+        { "key": "C", "text": "Nothing beyond typical examples — edge cases are the model provider's responsibility to handle." },
+        { "key": "D", "text": "A single very difficult example, since one hard case is representative of all failure modes." }
+      ],
+      "correct": ["A"],
+      "explanation": "An evaluation set exists to find where a prompt breaks, and it can only do that if it contains the shapes of input that actually break prompts: empty or huge input, unexpected language, and — given this is free text from users — text that reads like an instruction, which is exactly the injection-adjacent case worth checking deliberately.",
+      "distractor_notes": { "B": "Clean examples confirm the happy path works; they cannot surface a failure mode.", "C": "The application is responsible for its own prompt's robustness; the provider cannot know this specific use case's edge cases.", "D": "One example cannot cover several independent failure modes." },
+      "cheatsheet": "d7-prompting#evaluation",
+      "sources": ["c-prompt-eng", "c-security"],
+      "tags": ["evaluation", "testing", "edge-cases"]
+    }
+  ]
+}
