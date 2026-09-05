@@ -13,6 +13,7 @@ import Runner from "./pages/Runner";
 import ScorecardPage from "./pages/Scorecard";
 import ReviewPage from "./pages/Review";
 import CheatSheets from "./pages/CheatSheets";
+import HeuristicsPage from "./pages/Heuristics";
 import Curriculum from "./pages/Curriculum";
 import History from "./pages/History";
 import Profile from "./pages/Profile";
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="/attempt/:id/review" element={<ReviewPage />} />
         <Route path="/cheatsheets" element={<CheatSheets />} />
         <Route path="/cheatsheets/:slug" element={<CheatSheets />} />
+        <Route path="/instincts" element={<HeuristicsPage />} />
         <Route path="/curriculum" element={<Curriculum />} />
         <Route path="/history" element={<History />} />
         <Route path="/profile" element={<Profile />} />

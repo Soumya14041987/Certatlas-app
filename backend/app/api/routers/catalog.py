@@ -11,6 +11,7 @@ from app.services.content import (
     get_blueprint,
     get_cheatsheets,
     get_courses,
+    get_heuristics,
     get_questions,
 )
 
@@ -32,6 +33,17 @@ def blueprint() -> dict:
 def courses() -> dict:
     """Public: the curriculum map and the six-week study plan."""
     return get_courses()
+
+
+@router.get("/heuristics")
+def heuristics(_: User = Depends(get_current_user)) -> dict:
+    """Exam Instincts: pattern-recognition rules for reading a question fast.
+
+    Not exam content on its own — a shortcut for mapping a question's wording
+    onto the mechanism it tests, before reading the options. Gated behind auth
+    like the cheat sheets, since it is study material for registered users.
+    """
+    return get_heuristics()
 
 
 @router.get("/cheatsheets")

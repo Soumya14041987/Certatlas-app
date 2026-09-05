@@ -233,6 +233,24 @@ def get_courses() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
+def get_heuristics() -> dict[str, Any]:
+    """Test-taking pattern-recognition rules ("Exam Instincts").
+
+    These are not exam content in themselves — they are shortcuts for mapping a
+    question's wording onto the mechanism it tests, faster than reasoning from
+    scratch each time. Validated the same way as everything else: every
+    ``domains`` key must be a real blueprint domain code, so a typo here fails
+    startup instead of silently producing an empty section in the UI.
+    """
+    payload = _read_json(CONTENT_DIR / "heuristics.json")
+    valid_codes = set(domain_names())
+    unknown = set(payload.get("domains", {})) - valid_codes
+    if unknown:
+        raise ContentError(f"heuristics.json references unknown domain codes: {sorted(unknown)}")
+    return payload
+
+
+@lru_cache(maxsize=1)
 def get_questions() -> dict[str, Question]:
     return _load_questions()
 
@@ -290,4 +308,6 @@ def content_stats() -> dict[str, Any]:
         ],
         "cheatsheets": len(get_cheatsheets()),
         "courses": len(get_courses()["courses"]),
+        "heuristics": sum(len(v) for v in get_heuristics()["domains"].values())
+        + len(get_heuristics()["universal"]),
     }

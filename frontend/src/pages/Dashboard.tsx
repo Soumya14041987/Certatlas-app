@@ -145,6 +145,7 @@ export default function Dashboard() {
                 ))}
               </ol>
               <Link to="/cheatsheets" className="btn-ghost btn-sm mt-6 w-full">Open the cheat sheets</Link>
+              <Link to="/instincts" className="btn-ghost btn-sm mt-2 w-full">Exam Instincts — quick triggers</Link>
             </>
           )}
         </Card>

@@ -1,0 +1,205 @@
+{
+  "note": "They are a shortcut to faster reading, never a substitute for knowing why the mechanism is correct — the review page after every attempt still explains the underlying reasoning.",
+  "universal": [
+    {
+      "id": "u-deny-beats-allow",
+      "title": "Deny always beats allow",
+      "trigger": "The stem describes two conflicting or overlapping permission/settings rules (allow vs deny, project vs enterprise, etc.).",
+      "rule": "Find whichever option names the more restrictive rule, or the higher-authority source (enterprise managed policy > CLI flag > project settings > user settings). That option is correct. There is no 'they cancel out' or 'the user is prompted' outcome in this exam's model.",
+      "caution": "Don't confuse a precedence question (who wins) with a scope question (where does this belong). If the stem is about where a rule *should be written*, look for 'universal for the whole company vs specific to one repo/user' instead."
+    },
+    {
+      "id": "u-opposite-pair",
+      "title": "When two options are exact opposites, the answer is one of them",
+      "trigger": "Two of the four options directly contradict each other (e.g. 'blocks the action' vs 'allows the action').",
+      "rule": "Well-written distractors rarely waste two slots on near-duplicates. If two options are polar opposites, the test is almost always choosing between exactly those two — read those two first, then confirm the other two are irrelevant rather than close contenders.",
+      "caution": "This narrows your attention; it doesn't replace confirming which of the pair is actually correct."
+    },
+    {
+      "id": "u-must-never-enforcement",
+      "title": "\"Must never\", \"every time\", \"cannot be overridden\" → enforcement, not instruction",
+      "trigger": "The stem uses absolute enforcement language: always, never, every single time, no exceptions, audited, cannot be bypassed.",
+      "rule": "An instruction in CLAUDE.md or a system prompt is advisory — the model usually follows it, which is not the same as never failing to. Absolute requirements point at a hook, a deny rule, or enterprise managed policy: something enforced by code, not by asking the model nicely.",
+      "caution": "If the stem instead says 'the team prefers' or 'as a convention', that is exactly the case for memory/CLAUDE.md, not a hook."
+    },
+    {
+      "id": "u-headless-no-human",
+      "title": "Unattended / headless / CI → pre-decided, never \"ask\"",
+      "trigger": "The stem mentions CI, a pipeline, a scheduled job, headless mode, or otherwise says no human is present to respond to a prompt.",
+      "rule": "Nobody can answer an interactive prompt in that context, so the correct answer is always something decided in advance: an explicit allow-list, a scoped permission mode, a bounded turn limit — never 'the default permission mode will prompt the user' or 'ask mode'.",
+      "caution": "Watch for 'skip permissions entirely' as a tempting-looking wrong answer — unattended does not mean unguarded; it means the guardrail was set up beforehand instead of live."
+    },
+    {
+      "id": "u-shared-vs-personal",
+      "title": "\"Everyone who clones it\" vs \"just for me\" → project scope vs user scope",
+      "trigger": "The stem asks where a command, agent, skill, hook, or setting should live, and states who needs to see it.",
+      "rule": "If it must reach every teammate: project scope, committed to the repo (`.claude/...`). If it is one person's personal preference across all their projects: user scope (`~/.claude/...`). Enterprise-wide and non-negotiable: managed policy.",
+      "caution": "Three plausible-sounding scopes exist for most of these mechanisms — match the phrase about *who* needs it, not just what the thing is."
+    },
+    {
+      "id": "u-isolated-vs-loaded",
+      "title": "\"Independent / isolated\" → subagent. \"Loaded only when relevant\" → skill.",
+      "trigger": "The stem is choosing between a skill, a subagent, a hook, and plain memory for some new capability.",
+      "rule": "Independence from the current conversation, a separate context window, 'shouldn't see what came before' → subagent. A large, situational procedure that should sit dormant until its topic comes up → skill. An event that must fire mechanically on a tool call → hook. A fact that is simply always true for this project → memory.",
+      "caution": "A subagent's *description* field is what makes it selectable — if the stem is instead about why a subagent never gets picked, the answer is almost always 'the description is too vague', not a tools/model problem."
+    },
+    {
+      "id": "u-untrusted-content-is-data",
+      "title": "Content from outside the conversation is data, never an instruction",
+      "trigger": "The stem involves a fetched web page, an MCP tool result, an issue comment, or any other externally-sourced text that contains something that reads like a command.",
+      "rule": "The correct answer treats that text as data to reason about, never as something authorised to change what the agent does. Look for options about removing what the injected text could reach (deny secrets, gate outbound actions) rather than options about detecting or filtering the injection itself.",
+      "caution": "\"Tell the model to ignore instructions in untrusted content\" is a tempting wrong answer — it's one instruction competing with another, not a control. The correct answer is almost always structural (permissions/architecture), not a request."
+    },
+    {
+      "id": "u-narrowest-wins",
+      "title": "Between two workable-sounding permission grants, the narrowest one wins",
+      "trigger": "Two options both technically let the required action happen, but one is broader than the other.",
+      "rule": "This exam consistently rewards least privilege. `Bash(npm run test:*)` beats `Bash(npm:*)` beats plain `Bash`, even when all three would 'work'. If an option grants a whole interpreter (`Bash(python:*)`, `Bash(node:*)`), treat it as equivalent to unrestricted access, not a real restriction.",
+      "caution": "Don't over-apply this to non-permission questions — 'narrowest' is not a general tiebreaker for scope or architecture questions, only for what-can-it-touch questions."
+    },
+    {
+      "id": "u-claim-vs-evidence",
+      "title": "A self-report is never the correct verification method",
+      "trigger": "The stem asks how to confirm an agent's work is actually correct or complete.",
+      "rule": "\"Ask the agent to check its own work\" or \"the agent says it ran the tests\" is always the wrong answer when a mechanical alternative is offered. Correct answers point at something observable: the diff, the test result, an assertion in the pipeline, a hook that actually runs the check.",
+      "caution": "This applies to verification questions specifically — for questions about code review quality generally, the answer is usually 'more scrutiny, not less', not a specific mechanism."
+    }
+  ],
+  "domains": {
+    "AAO": [
+      {
+        "trigger": "\"description field\", \"never gets selected\", \"triggers unreliably\"",
+        "points_to": "The subagent or skill's description is too vague — rewrite it with concrete trigger phrases, don't add more prose to the body.",
+        "why": "Only the description is in context before activation; it is the entire routing signal."
+      },
+      {
+        "trigger": "\"tools\" key omitted from a subagent definition",
+        "points_to": "It inherits the parent's tools — omission means inherit, not deny.",
+        "why": "Listing tools narrows; omitting them does not."
+      },
+      {
+        "trigger": "\"eight parallel agents\", \"fan out\", cost/latency trade-off framing",
+        "points_to": "Worth it only when each agent examines a lot and returns a little (high reduction ratio); otherwise it multiplies cost for no benefit.",
+        "why": "Fan-out cost scales roughly linearly with agent count."
+      },
+      {
+        "trigger": "\"kept retrying the same fix\", \"30 iterations\", runaway loop",
+        "points_to": "Bound the attempts and force escalation with what was tried, not a bigger turn limit.",
+        "why": "Repeated near-identical attempts signal a wrong hypothesis, not insufficient persistence."
+      },
+      {
+        "trigger": "\"before/after a large refactor\", reversibility framing",
+        "points_to": "Human approval belongs at the plan stage and before merge — not per-edit (fatigue) and not post-merge (too late).",
+        "why": "Gate where reversibility is low and cost of being wrong is high."
+      }
+    ],
+    "TDM": [
+      {
+        "trigger": "\"run arbitrary SQL\", generic catch-all tool",
+        "points_to": "Wrong — expose narrow, purpose-built tools instead of one escape-hatch tool.",
+        "why": "A tool description is a hint to the model, not access control; narrow verbs are safe by construction."
+      },
+      {
+        "trigger": "\"same server name, different scope\", conflicting MCP config",
+        "points_to": "Local scope wins over project, which wins over user.",
+        "why": "Most-specific scope shadows the broader one, by design."
+      },
+      {
+        "trigger": "\"server acts on behalf of any caller\", one shared powerful token",
+        "points_to": "Confused deputy — fix is per-caller authorisation, not a bigger/smaller token.",
+        "why": "The server has more authority than any single caller and isn't checking whose request it's honouring."
+      },
+      {
+        "trigger": "\"model picks the wrong tool\", two similar tool names",
+        "points_to": "Merge them or rewrite both descriptions to be genuinely distinguishing — not a priority field, not more instructions elsewhere.",
+        "why": "Ambiguous tools are a genuine 50/50 guess for the model, not a bug to patch around."
+      },
+      {
+        "trigger": "\"local script the agent can already run\", proposal to wrap it in a server",
+        "points_to": "Don't build an MCP server for it — a scoped Bash permission or a slash command is enough.",
+        "why": "MCP earns its complexity for reusable cross-application integrations, not for one local script."
+      }
+    ],
+    "CCW": [
+      {
+        "trigger": "CLI flag vs project settings vs enterprise policy, conflicting values",
+        "points_to": "Enterprise managed policy always wins, regardless of what the flag or project says.",
+        "why": "It sits at the top of the precedence chain specifically so it can't be overridden."
+      },
+      {
+        "trigger": "\"context indicator near its limit\", still mid-task",
+        "points_to": "`/compact` with an instruction on what to keep — not `/clear`.",
+        "why": "Compact preserves the thread of work; clear is for a genuine topic change."
+      },
+      {
+        "trigger": "\"CI job\", \"parse the result\", \"gate the pipeline\"",
+        "points_to": "`--output-format json`, check `is_error` — never grep plain text output.",
+        "why": "Structured output is the contract; free text is what it exists to replace."
+      },
+      {
+        "trigger": "\"nightly job\", repeats the same action every run",
+        "points_to": "Make it idempotent — check for existing state before creating, don't just append.",
+        "why": "Recurring automation that only ever creates duplicates the same output every run."
+      },
+      {
+        "trigger": "\".env\", credential file, \"must be unreachable\"",
+        "points_to": "A `deny` rule in enterprise managed settings — not a `CLAUDE.md` instruction, not `.gitignore`.",
+        "why": "Only a deny in managed policy is unoverridable and actually blocks the read."
+      }
+    ],
+    "PES": [
+      {
+        "trigger": "\"same answer every time\", consistency requirement",
+        "points_to": "temperature = 0 — not a smaller model, not max_tokens.",
+        "why": "Temperature controls sampling variance directly; the others don't touch determinism."
+      },
+      {
+        "trigger": "\"stop generating exactly at X\", no post-processing allowed",
+        "points_to": "A stop sequence — not a lower max_tokens, not a prompt instruction.",
+        "why": "Stop sequences are enforced by the API mechanically; the others are approximate or advisory."
+      },
+      {
+        "trigger": "\"large document\" + \"a question about it\"",
+        "points_to": "Put the question after the document, not before.",
+        "why": "This is the recommended order for long context and it doubles as good cache placement."
+      },
+      {
+        "trigger": "\"reduce cost\" with three or more options offered",
+        "points_to": "Prefer caching / right-sized model / batch API — never a blanket usage cap or 'turn it off'.",
+        "why": "The former reduce the cost of the same work; the latter cut the value along with the cost."
+      },
+      {
+        "trigger": "\"return only JSON\", model adds a preamble anyway",
+        "points_to": "Prefill the response with the opening bracket — not a lower max_tokens, not asking more politely.",
+        "why": "Prefilling removes the space where a preamble could go; nothing else structurally prevents it."
+      }
+    ],
+    "CMR": [
+      {
+        "trigger": "\"stale CLAUDE.md\", agent keeps doing the old (wrong) thing",
+        "points_to": "The agent is behaving correctly — memory is authoritative and it trusted a file nobody updated. Fix is process (update memory in the same PR), not a model complaint.",
+        "why": "Memory carries high authority precisely because it's always loaded; staleness is a maintenance failure, not a reasoning failure."
+      },
+      {
+        "trigger": "\"40,000 lines of test output\", context suddenly huge",
+        "points_to": "Fix the command that produced the output (quiet flag, filter) — not a bigger context window.",
+        "why": "Tool output lands in context verbatim; the cheapest fix is at the source, not downstream."
+      },
+      {
+        "trigger": "\"survive several compactions\", long multi-phase agent run",
+        "points_to": "Externalise progress to a file the loop re-reads each phase — not relying on auto-compaction to preserve it.",
+        "why": "Context is disposable working memory; only a durable artefact survives being compacted away."
+      },
+      {
+        "trigger": "\"blocked exfiltration attempt\", one layer caught it",
+        "points_to": "Treat it as a near miss and investigate the path — not 'no action needed, the control worked'.",
+        "why": "One layer holding tells you nothing about how many other layers existed, or how the content got in."
+      },
+      {
+        "trigger": "\"agent took a permitted-but-wrong action\", asking what's left to control for",
+        "points_to": "Permissions bound *what* it can touch, never *whether the action was right* — the honest answer names that gap, it doesn't claim zero residual risk.",
+        "why": "This is the exam's own framing of residual risk; 'fully solved by permissions' is always the wrong option."
+      }
+    ]
+  }
+}

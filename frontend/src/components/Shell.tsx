@@ -7,6 +7,7 @@ const NAV = [
   { to: "/practice", label: "Practice", icon: "▤" },
   { to: "/exam", label: "Exam", icon: "◈" },
   { to: "/cheatsheets", label: "Cheat sheets", icon: "❑" },
+  { to: "/instincts", label: "Exam Instincts", icon: "⚡" },
   { to: "/curriculum", label: "Curriculum", icon: "◧" },
   { to: "/history", label: "History", icon: "◷" },
 ];

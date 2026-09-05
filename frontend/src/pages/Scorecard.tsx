@@ -107,6 +107,7 @@ export default function ScorecardPage() {
           )}
           <div className="mt-7 space-y-2">
             <Link to="/cheatsheets" className="btn-ghost btn-sm w-full">Open the cheat sheets</Link>
+            <Link to="/instincts" className="btn-ghost btn-sm w-full">Exam Instincts — quick triggers</Link>
             <button type="button" className="btn-ghost btn-sm w-full"
                     onClick={async () => {
                       if (card.mode === "exam") { navigate("/exam"); return; }

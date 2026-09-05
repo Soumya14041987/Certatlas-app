@@ -184,3 +184,23 @@ export interface Analytics {
   focus_areas: { code: string; name: string; percent: number | null }[];
   trend: { attempt_id: number; mode: Mode; label: string; score_percent: number; submitted_at: string | null }[];
 }
+
+export interface UniversalHeuristic {
+  id: string;
+  title: string;
+  trigger: string;
+  rule: string;
+  caution: string;
+}
+
+export interface DomainHeuristic {
+  trigger: string;
+  points_to: string;
+  why: string;
+}
+
+export interface Heuristics {
+  note: string;
+  universal: UniversalHeuristic[];
+  domains: Record<string, DomainHeuristic[]>;
+}

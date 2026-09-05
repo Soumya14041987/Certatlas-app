@@ -7,7 +7,7 @@
  */
 import type {
   Analytics, Attempt, AttemptSummary, Blueprint, CheatSheetPayload,
-  Curriculum, ReviewItem, Scorecard, SetSummary, User,
+  Curriculum, Heuristics, ReviewItem, Scorecard, SetSummary, User,
 } from "./types";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
@@ -142,6 +142,7 @@ export const api = {
   blueprint: () => get<Blueprint>("/blueprint"),
   courses: () => get<Curriculum>("/courses"),
   cheatsheets: () => get<Pick<CheatSheetPayload, "slug" | "domain" | "title" | "summary" | "anchors">[]>("/cheatsheets"),
+  heuristics: () => get<Heuristics>("/heuristics"),
   cheatsheet: (slug: string, anchor?: string) =>
     get<CheatSheetPayload>(`/cheatsheets/${slug}${anchor ? `?anchor=${encodeURIComponent(anchor)}` : ""}`),
 

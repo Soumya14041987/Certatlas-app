@@ -1,6 +1,6 @@
 import pytest
 
-from app.services.content import get_blueprint, get_cheatsheets, get_questions, resolve_cheatsheet
+from app.services.content import get_blueprint, get_cheatsheets, get_heuristics, get_questions, resolve_cheatsheet
 from app.services.set_builder import _domain_quota, build_practice_set, catalogue
 
 
@@ -74,3 +74,16 @@ def test_catalogue_pagination_covers_all_sets():
     assert first["sets"][0]["set_number"] == 1
     last = catalogue(page=10, per_page=30)
     assert last["sets"][-1]["set_number"] == 300
+
+
+def test_heuristics_reference_only_real_domain_codes():
+    heuristics = get_heuristics()
+    valid = {d["code"] for d in get_blueprint()["domains"]}
+    assert set(heuristics["domains"]) == valid
+    assert len(heuristics["universal"]) >= 5
+    for code, items in heuristics["domains"].items():
+        assert len(items) >= 3, f"{code} has too few domain-specific triggers"
+        for item in items:
+            assert item["trigger"].strip()
+            assert item["points_to"].strip()
+            assert item["why"].strip()
