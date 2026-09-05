@@ -15,8 +15,14 @@ from app.models import Attempt, AttemptAnswer, AttemptMode, AttemptStatus, User
 from app.schemas import AnswerIn, StartExam, StartPractice
 from app.services import scoring
 from app.services.content import get_question
-from app.services.set_builder import build_exam_paper, build_practice_set, catalogue
-from app.services.set_builder import practice_set_summary
+from app.services.set_builder import (
+    build_diagnostic_paper,
+    build_exam_paper,
+    build_focus_set,
+    build_practice_set,
+    catalogue,
+    practice_set_summary,
+)
 
 router = APIRouter(tags=["attempts"], dependencies=[Depends(api_rate_limit)])
 
@@ -62,7 +68,7 @@ def _summary(attempt: Attempt) -> dict:
         "submitted_at": attempt.submitted_at,
         "score_percent": attempt.score_percent,
         "passed": attempt.passed,
-        "can_pause": attempt.mode == AttemptMode.PRACTICE,
+        "can_pause": attempt.mode in (AttemptMode.PRACTICE, AttemptMode.DIAGNOSTIC),
     }
 
 
@@ -203,12 +209,107 @@ def start_exam(
     return _full(attempt)
 
 
+@router.post("/diagnostic/start", status_code=status.HTTP_201_CREATED)
+def start_diagnostic(
+    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> dict:
+    """A short, untimed readiness check — recommended once, retakeable any time."""
+    existing = db.scalar(
+        select(Attempt)
+        .where(
+            Attempt.user_id == user.id,
+            Attempt.mode == AttemptMode.DIAGNOSTIC,
+            Attempt.status.in_([AttemptStatus.IN_PROGRESS, AttemptStatus.PAUSED]),
+        )
+        .order_by(Attempt.started_at.desc())
+    )
+    if existing:
+        if existing.status == AttemptStatus.PAUSED:
+            existing.status = AttemptStatus.IN_PROGRESS
+            existing.resumed_at = _utcnow()
+            db.commit()
+        return _full(existing)
+
+    seed = f"{user.id}:{_utcnow().timestamp()}"
+    attempt = Attempt(
+        user_id=user.id,
+        mode=AttemptMode.DIAGNOSTIC,
+        status=AttemptStatus.IN_PROGRESS,
+        set_number=None,
+        label="Readiness Check",
+        question_ids=build_diagnostic_paper(seed),
+        time_limit_seconds=None,
+        started_at=_utcnow(),
+        resumed_at=_utcnow(),
+    )
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    return _full(attempt)
+
+
+@router.post("/focus/start", status_code=status.HTTP_201_CREATED)
+def start_focus(
+    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+) -> dict:
+    """A personalised set, weighted toward whatever the user has scored weakest on.
+
+    Draws on every submitted attempt so far — a diagnostic, a practice set, or
+    an exam sitting all count. A brand-new user with nothing submitted yet has
+    no signal to weight from, so this is refused with a clear next step rather
+    than silently returning an unweighted set that looks personalised but isn't.
+    """
+    existing = db.scalar(
+        select(Attempt)
+        .where(
+            Attempt.user_id == user.id,
+            Attempt.mode == AttemptMode.PRACTICE,
+            Attempt.set_number.is_(None),
+            Attempt.status.in_([AttemptStatus.IN_PROGRESS, AttemptStatus.PAUSED]),
+        )
+        .order_by(Attempt.started_at.desc())
+    )
+    if existing:
+        if existing.status == AttemptStatus.PAUSED:
+            existing.status = AttemptStatus.IN_PROGRESS
+            existing.resumed_at = _utcnow()
+            db.commit()
+        return _full(existing)
+
+    accuracy = scoring.domain_accuracy_map(user.id, db)
+    if not any(v is not None for v in accuracy.values()):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "A focus set is generated from your results so far, and there aren't any yet. "
+                "Take the readiness check or a practice set first."
+            ),
+        )
+
+    seed = f"{user.id}:{_utcnow().timestamp()}"
+    attempt = Attempt(
+        user_id=user.id,
+        mode=AttemptMode.PRACTICE,
+        status=AttemptStatus.IN_PROGRESS,
+        set_number=None,
+        label="Personalised Focus Set",
+        question_ids=build_focus_set(accuracy, seed),
+        time_limit_seconds=None,
+        started_at=_utcnow(),
+        resumed_at=_utcnow(),
+    )
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    return _full(attempt)
+
+
 # --------------------------------------------------------------------------
 # Working through an attempt
 # --------------------------------------------------------------------------
 @router.get("/attempts")
 def list_attempts(
-    mode: str | None = Query(None, pattern="^(practice|exam)$"),
+    mode: str | None = Query(None, pattern="^(practice|exam|diagnostic)$"),
     status_filter: str | None = Query(None, alias="status"),
     limit: int = Query(25, ge=1, le=100),
     user: User = Depends(get_current_user),

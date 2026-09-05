@@ -6,8 +6,16 @@
   "question_count": 60,
   "duration_minutes": 90,
   "pass_percent": 72,
-  "scaled_score": { "passing": 720, "min": 100, "max": 1000, "note": "Anthropic reports results on a 100-1000 scale; 720 is ~72%, which is what this app tracks internally." },
-  "delivery": ["Online proctored", "Pearson VUE test center"],
+  "scaled_score": {
+    "passing": 720,
+    "min": 100,
+    "max": 1000,
+    "note": "Anthropic reports results on a 100-1000 scale; 720 is ~72%, which is what this app tracks internally."
+  },
+  "delivery": [
+    "Online proctored",
+    "Pearson VUE test center"
+  ],
   "scoring": "Multiple choice and multiple response. Multi-response items require every correct option and no incorrect one — there is no partial credit.",
   "domains": [
     {
@@ -86,9 +94,26 @@
       ]
     }
   ],
-  "difficulty_mix": { "foundational": 0.3, "applied": 0.5, "architect": 0.2 },
+  "difficulty_mix": {
+    "foundational": 0.3,
+    "applied": 0.5,
+    "architect": 0.2
+  },
   "question_types": {
     "single": "One correct answer of four or five options.",
     "multi": "Two or three correct answers; the stem states how many to select."
+  },
+  "freshness": {
+    "last_verified": "2026-09-05",
+    "verified_by": "initial authoring pass",
+    "source_url": "https://anthropic-partners.skilljar.com/claude-certified-architect-foundations-certification",
+    "note": "This app has no live connection to Anthropic's certification page — it is login-gated and there is no public API for it. Staying current is a manual, admin-reviewed workflow: periodically check the source above against the checklist, update content through the admin console, then mark this reviewed. Never auto-apply unreviewed changes to exam content.",
+    "checklist": [
+      "Domain names and weight percentages under Certifications on the source page",
+      "Passing score and scale (currently 720 out of 100-1000)",
+      "Question format (currently multiple choice and multiple response)",
+      "The recommended course list and their levels (100/200) under 'Prepare for this exam'",
+      "Whether a new certification version or exam code has been announced"
+    ]
   }
 }

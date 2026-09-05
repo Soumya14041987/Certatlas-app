@@ -6,8 +6,8 @@
  * attempt which every concurrent caller shares.
  */
 import type {
-  Analytics, Attempt, AttemptSummary, Blueprint, CheatSheetPayload,
-  Curriculum, Heuristics, ReviewItem, Scorecard, SetSummary, User,
+  AdminQuestion, AdminQuestionList, Analytics, Attempt, AttemptSummary, Blueprint,
+  CheatSheetPayload, Curriculum, Heuristics, ReviewItem, Scorecard, SetSummary, User,
 } from "./types";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
@@ -152,6 +152,8 @@ export const api = {
   startPractice: (set_number: number, resume_existing = true) =>
     post<Attempt>("/practice/start", { set_number, resume_existing }),
   startExam: () => post<Attempt>("/exam/start", { acknowledge_timed: true }),
+  startDiagnostic: () => post<Attempt>("/diagnostic/start", {}),
+  startFocus: () => post<Attempt>("/focus/start", {}),
 
   attempts: (params: { mode?: string; status?: string; limit?: number } = {}) => {
     const query = new URLSearchParams();
@@ -179,4 +181,26 @@ export const api = {
   adminUsers: () => get<User[]>("/admin/users"),
   adminUpdateUser: (id: number, body: { is_active?: boolean; role?: string }) =>
     request<User>(`/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+
+  adminQuestionTemplate: () => get<{ template: Record<string, unknown> }>("/admin/content/questions/template"),
+  adminListQuestions: (params: { domain?: string; search?: string; page?: number; per_page?: number } = {}) => {
+    const query = new URLSearchParams();
+    if (params.domain) query.set("domain", params.domain);
+    if (params.search) query.set("search", params.search);
+    query.set("page", String(params.page ?? 1));
+    query.set("per_page", String(params.per_page ?? 25));
+    return get<AdminQuestionList>(`/admin/content/questions?${query}`);
+  },
+  adminGetQuestion: (id: string) => get<AdminQuestion>(`/admin/content/questions/${id}`),
+  adminImportQuestions: (name: string, questions: Record<string, unknown>[]) =>
+    post<{ imported: number; file: string }>("/admin/content/questions", { name, questions }),
+  adminUpdateQuestion: (id: string, body: Record<string, unknown>) =>
+    request<{ updated: string; file: string }>(`/admin/content/questions/${id}`, {
+      method: "PUT", body: JSON.stringify(body),
+    }),
+  adminDeleteQuestion: (id: string) =>
+    request<void>(`/admin/content/questions/${id}`, { method: "DELETE" }),
+  adminMarkReviewed: (verified_by: string, version?: string) =>
+    post<{ last_verified: string; verified_by: string; version: string }>(
+      "/admin/content/mark-reviewed", { verified_by, version }),
 };

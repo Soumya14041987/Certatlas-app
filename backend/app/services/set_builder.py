@@ -22,22 +22,28 @@ from app.services.content import Question, get_blueprint, questions_by_domain
 SALT = "ccarf-2026.1"
 
 
-def _domain_quota(total: int) -> list[tuple[str, int]]:
-    """Split ``total`` questions across domains by blueprint weight.
+def _apportion(weights: dict[str, float], total: int) -> list[tuple[str, int]]:
+    """Largest-remainder apportionment of ``total`` across ``weights`` (percentages).
 
-    Largest-remainder apportionment, so the parts always sum exactly to
-    ``total`` regardless of rounding.
+    Guarantees the parts sum exactly to ``total`` regardless of rounding, for
+    any weight map — the blueprint's own weights, or a caller-adjusted one
+    (see ``build_focus_set``).
     """
-    domains = get_blueprint()["domains"]
-    exact = [(d["code"], total * d["weight_percent"] / 100) for d in domains]
-    quota = {code: int(value) for code, value in exact}
+    exact = {code: total * w / 100 for code, w in weights.items()}
+    quota = {code: int(value) for code, value in exact.items()}
     remainder = total - sum(quota.values())
-    for code, value in sorted(exact, key=lambda kv: kv[1] - int(kv[1]), reverse=True):
+    for code in sorted(exact, key=lambda c: exact[c] - quota[c], reverse=True):
         if remainder <= 0:
             break
         quota[code] += 1
         remainder -= 1
-    return [(d["code"], quota[d["code"]]) for d in domains]
+    return [(code, quota[code]) for code in weights]
+
+
+def _domain_quota(total: int) -> list[tuple[str, int]]:
+    """Split ``total`` questions across domains by blueprint weight."""
+    weights = {d["code"]: d["weight_percent"] for d in get_blueprint()["domains"]}
+    return _apportion(weights, total)
 
 
 def _sample(pool: list[Question], count: int, rng: random.Random) -> list[Question]:
@@ -52,16 +58,20 @@ def _sample(pool: list[Question], count: int, rng: random.Random) -> list[Questi
     return picked
 
 
-def _compose(seed: str, total: int) -> list[str]:
+def _compose_from_quota(seed: str, quota: list[tuple[str, int]]) -> list[str]:
     rng = random.Random(seed)
     by_domain = questions_by_domain()
     chosen: list[Question] = []
-    for code, count in _domain_quota(total):
+    for code, count in quota:
         pool = by_domain.get(code, [])
         if pool and count:
             chosen.extend(_sample(pool, count, rng))
     rng.shuffle(chosen)
     return [q.id for q in chosen]
+
+
+def _compose(seed: str, total: int) -> list[str]:
+    return _compose_from_quota(seed, _domain_quota(total))
 
 
 def build_practice_set(set_number: int, size: int | None = None) -> list[str]:
@@ -74,6 +84,59 @@ def build_practice_set(set_number: int, size: int | None = None) -> list[str]:
 def build_exam_paper(seed: str) -> list[str]:
     """A blueprint-weighted 60-question paper, unique per sitting."""
     return _compose(f"{SALT}:exam:{seed}", settings.exam_question_count)
+
+
+def build_diagnostic_paper(seed: str) -> list[str]:
+    """A short, blueprint-weighted readiness check — freshly composed per sitting."""
+    return _compose(f"{SALT}:diagnostic:{seed}", settings.diagnostic_question_count)
+
+
+# Focus-set weighting: how much a domain's share is boosted below the pass mark.
+# A domain sitting exactly at the pass mark gets no boost; one at 0% (or never
+# attempted) gets the full FOCUS_BOOST_CAP on top of its blueprint weight.
+FOCUS_BOOST_CAP = 1.2
+FOCUS_MIN_SHARE_PERCENT = 5.0
+
+
+def _focus_weights(domain_accuracy: dict[str, float | None]) -> dict[str, float]:
+    """Blueprint weights, boosted toward domains the candidate is weak in.
+
+    ``domain_accuracy`` maps a domain code to a 0-100 accuracy figure, or
+    ``None`` if the candidate has never been scored on it (treated as
+    maximum-risk, same as a 0% domain — untested is not the same as strong).
+    Weights are boosted, renormalised to sum to 100, then floored so no
+    domain — however strong — drops out of the set entirely.
+    """
+    pass_mark = settings.exam_pass_percent
+    boosted: dict[str, float] = {}
+    for domain in get_blueprint()["domains"]:
+        code, base = domain["code"], domain["weight_percent"]
+        percent = domain_accuracy.get(code)
+        if percent is None:
+            boost = FOCUS_BOOST_CAP
+        else:
+            shortfall = max(0.0, (pass_mark - percent) / pass_mark)
+            boost = FOCUS_BOOST_CAP * min(shortfall, 1.0)
+        boosted[code] = base * (1 + boost)
+
+    total = sum(boosted.values())
+    normalised = {code: w / total * 100 for code, w in boosted.items()}
+    floored = {code: max(w, FOCUS_MIN_SHARE_PERCENT) for code, w in normalised.items()}
+    floored_total = sum(floored.values())
+    return {code: w / floored_total * 100 for code, w in floored.items()}
+
+
+def build_focus_set(
+    domain_accuracy: dict[str, float | None], seed: str, size: int | None = None
+) -> list[str]:
+    """A personalised set skewed toward the candidate's weaker domains.
+
+    Still covers every domain (floored at ``FOCUS_MIN_SHARE_PERCENT``) — this
+    is a rehearsal weighted by need, not a drill that abandons what's already
+    strong. Freshly composed each time, not a numbered catalogue entry.
+    """
+    quota = _apportion(_focus_weights(domain_accuracy), size or settings.practice_set_size)
+    return _compose_from_quota(f"{SALT}:focus:{seed}", quota)
 
 
 def practice_set_summary(set_number: int) -> dict:

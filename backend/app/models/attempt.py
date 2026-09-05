@@ -26,6 +26,7 @@ def _utcnow() -> datetime:
 class AttemptMode(StrEnum):
     PRACTICE = "practice"
     EXAM = "exam"
+    DIAGNOSTIC = "diagnostic"
 
 
 class AttemptStatus(StrEnum):

@@ -10,6 +10,7 @@ export default function ScorecardPage() {
   const navigate = useNavigate();
   const [card, setCard] = useState<Scorecard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busyNext, setBusyNext] = useState(false);
 
   useEffect(() => {
     api.scorecard(Number(id))
@@ -31,7 +32,8 @@ export default function ScorecardPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-xs uppercase tracking-[0.14em] text-ink-500">
-            {card.mode === "exam" ? "Mock exam result" : "Practice result"}
+            {card.mode === "exam" ? "Mock exam result"
+              : card.mode === "diagnostic" ? "Readiness check result" : "Practice result"}
           </div>
           <h1 className="page-title mt-1">{card.label}</h1>
           <p className="page-sub">Submitted {formatDateTime(card.submitted_at)}</p>
@@ -43,6 +45,32 @@ export default function ScorecardPage() {
           <Link to={`/attempt/${card.attempt_id}/review`} className="btn-ghost">Review everything</Link>
         </div>
       </div>
+
+      {card.mode === "diagnostic" && (
+        <Card className="border-brand-400/25 bg-brand-500/[0.07] p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="max-w-xl">
+              <h2 className="text-base font-semibold text-white">Your readiness check is done</h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink-300">
+                Generate a personalised 60-question set weighted toward whatever you scored weakest
+                on below — still covering every domain, just leaning where you need it most.
+              </p>
+            </div>
+            <button type="button" className="btn-primary shrink-0" disabled={busyNext}
+                    onClick={async () => {
+                      setBusyNext(true);
+                      try {
+                        const attempt = await api.startFocus();
+                        navigate(`/attempt/${attempt.id}`);
+                      } catch (err) {
+                        setBusyNext(false);
+                      }
+                    }}>
+              {busyNext ? "Generating…" : "Generate my focus set"}
+            </button>
+          </div>
+        </Card>
+      )}
 
       <Card className="overflow-hidden">
         <div className="grid gap-px bg-white/[0.07] sm:grid-cols-4">
@@ -108,15 +136,24 @@ export default function ScorecardPage() {
           <div className="mt-7 space-y-2">
             <Link to="/cheatsheets" className="btn-ghost btn-sm w-full">Open the cheat sheets</Link>
             <Link to="/instincts" className="btn-ghost btn-sm w-full">Exam Instincts — quick triggers</Link>
-            <button type="button" className="btn-ghost btn-sm w-full"
-                    onClick={async () => {
-                      if (card.mode === "exam") { navigate("/exam"); return; }
-                      const next = ((card.set_number ?? 0) % 300) + 1;
-                      const attempt = await api.startPractice(next);
-                      navigate(`/attempt/${attempt.id}`);
-                    }}>
-              {card.mode === "exam" ? "Back to exam mode" : `Start set ${String(((card.set_number ?? 0) % 300) + 1).padStart(3, "0")}`}
-            </button>
+            {card.mode === "exam" ? (
+              <button type="button" className="btn-ghost btn-sm w-full" onClick={() => navigate("/exam")}>
+                Back to exam mode
+              </button>
+            ) : card.mode === "diagnostic" ? (
+              <Link to="/dashboard" className="btn-ghost btn-sm w-full">Back to dashboard</Link>
+            ) : card.set_number === null ? (
+              <Link to="/dashboard" className="btn-ghost btn-sm w-full">Back to dashboard</Link>
+            ) : (
+              <button type="button" className="btn-ghost btn-sm w-full"
+                      onClick={async () => {
+                        const next = (card.set_number! % 300) + 1;
+                        const attempt = await api.startPractice(next);
+                        navigate(`/attempt/${attempt.id}`);
+                      }}>
+                {`Start set ${String((card.set_number! % 300) + 1).padStart(3, "0")}`}
+              </button>
+            )}
           </div>
         </Card>
       </div>

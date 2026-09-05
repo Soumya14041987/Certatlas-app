@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import PracticeSets from "./pages/PracticeSets";
 import ExamLobby from "./pages/ExamLobby";
+import Diagnostic from "./pages/Diagnostic";
 import Runner from "./pages/Runner";
 import ScorecardPage from "./pages/Scorecard";
 import ReviewPage from "./pages/Review";
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/practice" element={<PracticeSets />} />
         <Route path="/exam" element={<ExamLobby />} />
+        <Route path="/diagnostic" element={<Diagnostic />} />
         <Route path="/attempt/:id/scorecard" element={<ScorecardPage />} />
         <Route path="/attempt/:id/review" element={<ReviewPage />} />
         <Route path="/cheatsheets" element={<CheatSheets />} />

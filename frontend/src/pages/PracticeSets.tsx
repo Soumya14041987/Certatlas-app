@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import type { AttemptSummary, SetSummary } from "../lib/types";
 import { Alert, Card, Meter, Spinner } from "../components/ui";
@@ -81,6 +81,11 @@ export default function PracticeSets() {
           <p className="page-sub">
             300 papers of 60 questions each, weighted to the blueprint. Untimed and pausable —
             every set is fixed, so Set 042 is the same paper each time you sit it.
+          </p>
+          <p className="mt-2 text-sm">
+            <span className="text-ink-500">New here? </span>
+            <Link to="/diagnostic" className="link">Take the 25-question readiness check</Link>
+            <span className="text-ink-500"> to find out where to start instead of guessing.</span>
           </p>
         </div>
         <form className="flex gap-2"

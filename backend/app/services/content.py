@@ -311,3 +311,24 @@ def content_stats() -> dict[str, Any]:
         "heuristics": sum(len(v) for v in get_heuristics()["domains"].values())
         + len(get_heuristics()["universal"]),
     }
+
+
+def clear_content_caches() -> None:
+    """Drop every cached view of the content bank, e.g. after an admin edit."""
+    for cache in (get_questions, questions_by_domain, get_cheatsheets, get_heuristics):
+        cache.cache_clear()
+
+
+def find_question_file(question_id: str) -> Path | None:
+    """Which file a question currently lives in, read fresh from disk.
+
+    Used only by admin mutation endpoints (edit/delete a single question), so
+    it deliberately doesn't trust the in-memory cache — the answer has to be
+    correct even immediately after a previous edit in the same request cycle.
+    """
+    for path in sorted(QUESTIONS_DIR.glob("*.json")):
+        payload = _read_json(path)
+        items = payload["questions"] if isinstance(payload, dict) else payload
+        if any(item.get("id") == question_id for item in items):
+            return path
+    return None

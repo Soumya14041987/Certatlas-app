@@ -129,11 +129,173 @@ def import_questions(payload: dict = Body(...)) -> dict:
             )
 
     path.write_text(json.dumps({"questions": items}, indent=2) + "\n", encoding="utf-8")
-    for cache in (
-        content.get_questions,
-        content.questions_by_domain,
-        content.get_cheatsheets,
-    ):
-        cache.cache_clear()
+    content.clear_content_caches()
 
     return {"imported": len(items), "file": path.name, "bank": content.content_stats()}
+
+
+_TEMPLATE_QUESTION = {
+    "id": "AAO-999",
+    "domain": "AAO",
+    "difficulty": "applied",
+    "type": "single",
+    "objective": "short label for what this tests",
+    "stem": "The question text goes here.",
+    "options": [
+        {"key": "A", "text": "First option"},
+        {"key": "B", "text": "Second option"},
+        {"key": "C", "text": "Third option"},
+        {"key": "D", "text": "Fourth option"},
+    ],
+    "correct": ["A"],
+    "explanation": "Why the correct option is correct.",
+    "distractor_notes": {"B": "Why B is wrong.", "C": "Why C is wrong.", "D": "Why D is wrong."},
+    "analogy": {"frame": "SDLC", "text": "Optional real-world analogy."},
+    "snippet": None,
+    "cheatsheet": "d3-agentic#subagents",
+    "sources": [],
+    "tags": [],
+}
+
+
+@router.get("/content/questions/template")
+def question_template() -> dict:
+    """A worked example admins can copy, edit and paste back through import/edit.
+
+    Domain must be one of AAO/TDM/CCW/PES/CMR. For a multi-select question,
+    set "type": "multi" and add "select_count": <n> matching len(correct).
+    Every wrong option needs an entry in distractor_notes for a single-select
+    question — the same rule the content test suite enforces on authored
+    content, so a template that violates it would just bounce back at import.
+    """
+    return {"template": _TEMPLATE_QUESTION}
+
+
+@router.get("/content/questions")
+def list_all_questions(
+    domain: str | None = None,
+    search: str | None = None,
+    page: int = 1,
+    per_page: int = 25,
+) -> dict:
+    """Paginated, searchable index for the admin browse/edit table.
+
+    Deliberately returns the full reveal() payload per item — unlike the
+    candidate-facing endpoints, an admin reviewing content for correctness
+    needs to see the answer key and explanation right away, not behind an
+    extra click per row.
+    """
+    pool = list(content.get_questions().values())
+    if domain:
+        pool = [q for q in pool if q.domain == domain.upper()]
+    if search:
+        needle = search.lower()
+        pool = [q for q in pool if needle in q.id.lower() or needle in q.stem.lower()]
+    pool.sort(key=lambda q: q.id)
+
+    total = len(pool)
+    per_page = max(1, min(per_page, 100))
+    pages = max(1, -(-total // per_page))
+    page = min(max(page, 1), pages)
+    start = (page - 1) * per_page
+    page_items = pool[start : start + per_page]
+
+    file_index = {
+        item_id: path.name
+        for path in sorted(content.QUESTIONS_DIR.glob("*.json"))
+        for item_id in (
+            entry["id"]
+            for entry in (
+                lambda payload: payload["questions"] if isinstance(payload, dict) else payload
+            )(json.loads(path.read_text(encoding="utf-8")))
+        )
+    }
+
+    return {
+        "page": page,
+        "pages": pages,
+        "per_page": per_page,
+        "total": total,
+        "items": [{**q.reveal(), "source_file": file_index.get(q.id)} for q in page_items],
+    }
+
+
+@router.get("/content/questions/{question_id}")
+def get_question_detail(question_id: str) -> dict:
+    question = content.get_questions().get(question_id)
+    if question is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such question")
+    path = content.find_question_file(question_id)
+    return {**question.reveal(), "source_file": path.name if path else None}
+
+
+@router.put("/content/questions/{question_id}")
+def update_question(question_id: str, payload: dict = Body(...)) -> dict:
+    """Replace one question's fields in place, validated the same way import is.
+
+    This is the "continuous improvement" path: an admin corrects an answer key,
+    tightens an explanation, or re-points a stale cheat-sheet anchor, based on
+    real feedback — without touching the file on disk directly.
+    """
+    if payload.get("id") != question_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The 'id' field in the body must match the URL — a PUT cannot rename a question.",
+        )
+    path = content.find_question_file(question_id)
+    if path is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such question")
+
+    try:
+        content._validate(payload, path)
+    except content.ContentError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for i, existing in enumerate(data["questions"]):
+        if existing["id"] == question_id:
+            data["questions"][i] = payload
+            break
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    content.clear_content_caches()
+
+    return {"updated": question_id, "file": path.name}
+
+
+@router.delete("/content/questions/{question_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
+def delete_question(question_id: str) -> None:
+    path = content.find_question_file(question_id)
+    if path is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such question")
+
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["questions"] = [q for q in data["questions"] if q["id"] != question_id]
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    content.clear_content_caches()
+
+
+@router.post("/content/mark-reviewed")
+def mark_content_reviewed(
+    verified_by: str = Body(embed=True),
+    version: str | None = Body(default=None, embed=True),
+    admin: User = Depends(require_admin),
+) -> dict:
+    """Record that an admin manually checked the blueprint against Anthropic's page.
+
+    There is no live connection to fetch — the certification page is
+    login-gated and there's no public API for it, and even if there were,
+    silently auto-rewriting exam content is exactly the kind of unattended
+    change this app refuses to make on its own (see ``freshness.note`` on the
+    blueprint itself). This is the deliberate, human-in-the-loop alternative:
+    a dated, attributed record that someone actually looked, plus an optional
+    version bump if the source changed enough to warrant one.
+    """
+    path = CONTENT_DIR / "blueprint.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data["freshness"]["last_verified"] = datetime.now(timezone.utc).date().isoformat()
+    data["freshness"]["verified_by"] = verified_by.strip()[:200] or "admin"
+    if version:
+        data["version"] = version.strip()[:40]
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    content.get_blueprint.cache_clear()
+    return data["freshness"] | {"version": data["version"]}

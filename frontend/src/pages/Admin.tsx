@@ -3,6 +3,8 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import type { User } from "../lib/types";
 import { Alert, Card, SectionHeading, Spinner, Stat } from "../components/ui";
+import AdminFreshness from "../components/AdminFreshness";
+import AdminQuestionManager from "../components/AdminQuestionManager";
 import { formatDate } from "../lib/format";
 
 interface Stats {
@@ -151,6 +153,9 @@ export default function Admin() {
           </table>
         </div>
       </Card>
+
+      <AdminFreshness />
+      <AdminQuestionManager />
     </div>
   );
 }

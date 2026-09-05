@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [recent, setRecent] = useState<AttemptSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
+  const [startingFocus, setStartingFocus] = useState(false);
 
   useEffect(() => {
     Promise.all([api.analytics(), api.attempts({ limit: 40 })])
@@ -52,6 +53,17 @@ export default function Dashboard() {
     }
   }
 
+  async function startFocus() {
+    setStartingFocus(true);
+    try {
+      const attempt = await api.startFocus();
+      navigate(`/attempt/${attempt.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not generate a focus set");
+      setStartingFocus(false);
+    }
+  }
+
   return (
     <div className="space-y-8 animate-rise">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -73,6 +85,43 @@ export default function Dashboard() {
           <Link to="/exam" className="btn-ghost">Take a mock exam</Link>
         </div>
       </div>
+
+      {analytics.attempts_submitted === 0 ? (
+        <Card className="border-brand-400/25 bg-brand-500/[0.07] p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="max-w-xl">
+              <span className="chip-brand">Recommended first step</span>
+              <h2 className="mt-3 text-base font-semibold text-white">
+                Not sure where you stand? Take the readiness check.
+              </h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-ink-400">
+                25 quick, blueprint-weighted questions — untimed, pausable. It gives you a genuine
+                per-domain baseline and unlocks a focus set weighted toward whatever you're weakest on,
+                instead of guessing which of the 300 practice sets to start with.
+              </p>
+            </div>
+            <Link to="/diagnostic" className="btn-primary shrink-0">Take the readiness check</Link>
+          </div>
+        </Card>
+      ) : (
+        <Card className="border-brand-400/25 bg-brand-500/[0.07] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-semibold text-white">Your personalised focus set</div>
+              <div className="mt-0.5 text-xs text-ink-400">
+                Weighted toward your weakest domains, generated fresh from all your results so far —
+                still covers everything, just leans where you need it most.
+              </div>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button type="button" className="btn-primary btn-sm" onClick={startFocus} disabled={startingFocus}>
+                {startingFocus ? "Generating…" : "Generate focus set"}
+              </button>
+              <Link to="/diagnostic" className="btn-ghost btn-sm">Retake readiness check</Link>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {open.length > 0 && (
         <Card className="border-brand-400/25 bg-brand-500/[0.07] p-5">

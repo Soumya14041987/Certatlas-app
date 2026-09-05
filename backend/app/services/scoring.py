@@ -3,9 +3,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
-from app.models import Attempt, AttemptAnswer, AttemptMode
-from app.services.content import Question, domain_names, get_question, resolve_cheatsheet
+from app.models import Attempt, AttemptAnswer, AttemptMode, AttemptStatus
+from app.services.content import Question, domain_names, get_blueprint, get_question, resolve_cheatsheet
 
 
 def is_correct(question: Question, selected: list[str]) -> bool:
@@ -129,3 +132,31 @@ def review_items(attempt: Attempt, only_incorrect: bool = False) -> list[dict]:
 def time_limit_for(mode: str) -> int | None:
     """Exam mode is timed; practice mode is not (it supports pause instead)."""
     return settings.exam_duration_minutes * 60 if mode == AttemptMode.EXAM else None
+
+
+def domain_accuracy_map(user_id: int, db: Session) -> dict[str, float | None]:
+    """Per-domain accuracy across every attempt the user has submitted so far.
+
+    ``None`` for a domain the user has never been scored on — kept distinct
+    from a real low score, since a focus set treats "untested" as worth
+    covering too, not as "doing fine".
+    """
+    attempts = db.scalars(
+        select(Attempt).where(Attempt.user_id == user_id, Attempt.status == AttemptStatus.SUBMITTED)
+    ).all()
+
+    totals: dict[str, dict[str, int]] = {}
+    for attempt in attempts:
+        for code, stats in (attempt.domain_breakdown or {}).items():
+            bucket = totals.setdefault(code, {"correct": 0, "total": 0})
+            bucket["correct"] += stats.get("correct", 0)
+            bucket["total"] += stats.get("total", 0)
+
+    return {
+        domain["code"]: (
+            round(100.0 * totals[domain["code"]]["correct"] / totals[domain["code"]]["total"], 1)
+            if domain["code"] in totals and totals[domain["code"]]["total"]
+            else None
+        )
+        for domain in get_blueprint()["domains"]
+    }

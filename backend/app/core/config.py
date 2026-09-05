@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     exam_pass_percent: int = 72
     practice_set_count: int = 300
     practice_set_size: int = 60
+    diagnostic_question_count: int = 25
 
     # --- Bootstrap admin (created by seed.py only when both are set) -----
     first_admin_email: str | None = None

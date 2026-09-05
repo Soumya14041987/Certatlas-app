@@ -1,5 +1,5 @@
 export type Role = "user" | "admin";
-export type Mode = "practice" | "exam";
+export type Mode = "practice" | "exam" | "diagnostic";
 export type AttemptStatus = "in_progress" | "paused" | "submitted" | "abandoned";
 export type Difficulty = "foundational" | "applied" | "architect";
 
@@ -144,6 +144,25 @@ export interface Blueprint {
     courses: number;
     domains: { code: string; name: string; count: number; difficulty: Record<string, number> }[];
   };
+  freshness: {
+    last_verified: string;
+    verified_by: string;
+    source_url: string;
+    note: string;
+    checklist: string[];
+  };
+}
+
+export interface AdminQuestion extends ReviewItem {
+  source_file: string | null;
+}
+
+export interface AdminQuestionList {
+  page: number;
+  pages: number;
+  per_page: number;
+  total: number;
+  items: AdminQuestion[];
 }
 
 export interface Course {

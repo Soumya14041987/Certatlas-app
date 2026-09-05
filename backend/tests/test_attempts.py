@@ -193,3 +193,82 @@ def test_submitted_attempts_cannot_be_discarded(client, auth):
     attempt = client.post("/api/v1/practice/start", headers=auth, json={"set_number": 13}).json()
     client.post(f"/api/v1/attempts/{attempt['id']}/submit", headers=auth)
     assert client.delete(f"/api/v1/attempts/{attempt['id']}", headers=auth).status_code == 409
+
+
+def test_diagnostic_start_returns_a_short_paper(client, auth):
+    response = client.post("/api/v1/diagnostic/start", headers=auth, json={})
+    assert response.status_code == 201
+    body = response.json()
+    assert body["mode"] == "diagnostic"
+    assert body["total_questions"] == 25
+    assert len(body["questions"]) == 25
+    assert body["can_pause"] is True
+    assert body["remaining_seconds"] is None
+
+
+def test_diagnostic_resumes_rather_than_duplicating(client, auth):
+    first = client.post("/api/v1/diagnostic/start", headers=auth, json={}).json()
+    client.post(f"/api/v1/attempts/{first['id']}/pause", headers=auth)
+    second = client.post("/api/v1/diagnostic/start", headers=auth, json={}).json()
+    assert second["id"] == first["id"]
+    assert second["status"] == "in_progress"
+
+
+def test_focus_set_refused_with_no_prior_results(client, auth):
+    response = client.post("/api/v1/focus/start", headers=auth, json={})
+    assert response.status_code == 400
+    assert "readiness check" in response.json()["detail"].lower()
+
+
+def test_focus_set_is_weighted_toward_a_failed_domain(client, auth):
+    # Fail every AAO question on a diagnostic, get everything else right.
+    attempt = client.post("/api/v1/diagnostic/start", headers=auth, json={}).json()
+    for q in attempt["questions"]:
+        question = get_question(q["id"])
+        if question.domain == "AAO":
+            selected = [o["key"] for o in q["options"] if o["key"] not in question.correct][:1]
+        else:
+            selected = question.correct
+        client.post(
+            f"/api/v1/attempts/{attempt['id']}/answer",
+            headers=auth,
+            json={"question_id": q["id"], "selected": selected},
+        )
+    client.post(f"/api/v1/attempts/{attempt['id']}/submit", headers=auth)
+
+    focus = client.post("/api/v1/focus/start", headers=auth, json={})
+    assert focus.status_code == 201
+    body = focus.json()
+    assert body["mode"] == "practice"
+    assert body["set_number"] is None
+
+    domain_counts: dict[str, int] = {}
+    for q in body["questions"]:
+        domain = get_question(q["id"]).domain
+        domain_counts[domain] = domain_counts.get(domain, 0) + 1
+
+    # AAO's blueprint baseline in a 60-question set is 16; a 0%-accuracy
+    # domain must be boosted meaningfully above that baseline.
+    assert domain_counts.get("AAO", 0) > 16
+    # Every other domain still appears — a focus set never abandons a domain
+    # entirely just because the candidate is doing fine on it.
+    for code in ("TDM", "CCW", "PES", "CMR"):
+        assert domain_counts.get(code, 0) > 0
+
+
+def test_focus_set_resumes_rather_than_duplicating(client, auth):
+    attempt = client.post("/api/v1/practice/start", headers=auth, json={"set_number": 14}).json()
+    _answer_all(client, auth, attempt, correct=True)
+    client.post(f"/api/v1/attempts/{attempt['id']}/submit", headers=auth)
+
+    first = client.post("/api/v1/focus/start", headers=auth, json={}).json()
+    client.post(f"/api/v1/attempts/{first['id']}/pause", headers=auth)
+    second = client.post("/api/v1/focus/start", headers=auth, json={}).json()
+    assert second["id"] == first["id"]
+
+
+def test_diagnostic_and_focus_are_pausable_not_timed(client, auth):
+    attempt = client.post("/api/v1/diagnostic/start", headers=auth, json={}).json()
+    paused = client.post(f"/api/v1/attempts/{attempt['id']}/pause", headers=auth)
+    assert paused.status_code == 200
+    assert paused.json()["status"] == "paused"
