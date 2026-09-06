@@ -14,6 +14,7 @@ from app.core.config import settings
 
 ACCESS_TOKEN = "access"  # noqa: S105 - token *type* label, not a secret
 REFRESH_TOKEN = "refresh"  # noqa: S105
+OAUTH_STATE_TOKEN = "oauth_state"  # noqa: S105
 
 
 class TokenError(Exception):
@@ -90,6 +91,17 @@ def create_refresh_token(user_id: int) -> str:
     return _encode(
         str(user_id), REFRESH_TOKEN, timedelta(days=settings.refresh_token_ttl_days)
     )
+
+
+def create_oauth_state_token(provider: str) -> str:
+    """Short-lived, signed CSRF token for the OAuth redirect round trip.
+
+    Carries no server-side session: the same value is sent both as the
+    provider's ``state`` parameter and as an httponly cookie, and the
+    callback rejects the request unless they match and the signature/expiry
+    check out.
+    """
+    return _encode(provider, OAUTH_STATE_TOKEN, timedelta(minutes=10))
 
 
 def decode_token(token: str, expected_type: str) -> dict:

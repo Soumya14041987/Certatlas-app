@@ -10,7 +10,8 @@ An exam-preparation web application, currently covering **Claude Certified Archi
 - **Exam mode** — a single 60-question, 90-minute mock sitting, enforced server-side, no pausing — a faithful rehearsal of the real conditions.
 - **Wrong-answer review** — every miss comes back with the explanation, a note on why each distractor is wrong, a real-world analogy (SDLC, AWS CodePipeline, IAM, Kubernetes, etc.), a working code snippet, and the exact cheat-sheet section — inlined, so there's nothing to go looking for.
 - **Readiness analytics** — per-domain accuracy weighted by the blueprint, a projected score, and a focus-area list.
-- Full auth: registration, login, JWT access + rotating refresh tokens, session listing/revocation, and role-based access control (admin console, content import).
+- **What's New** — Anthropic's latest release/engineering videos, pulled from their YouTube channel (see below). Not exam content — a side feed for keeping up while you study.
+- Full auth: registration, login, JWT access + rotating refresh tokens, session listing/revocation, sign in with Google/GitHub, and role-based access control (admin console, content import).
 
 ## Exam blueprint
 
@@ -70,6 +71,51 @@ docker compose up --build
 ```
 
 The API is on `:8000`, the built frontend on `:5173` (served by nginx). Set `CCARF_FIRST_ADMIN_EMAIL` / `CCARF_FIRST_ADMIN_PASSWORD` to bootstrap an admin account, or just register the first account through the UI — it becomes the administrator automatically.
+
+## OAuth sign-in (Google / GitHub)
+
+The login page always shows "Continue with Google" and "Continue with GitHub".
+Each one only works once its credentials are set — until then the backend
+returns a clear "not configured" error instead of crashing.
+
+1. **Google** — [Google Cloud Console](https://console.cloud.google.com/apis/credentials) →
+   Create OAuth client ID → Web application. Authorized redirect URI:
+   `{CCARF_PUBLIC_BASE_URL}/api/v1/auth/oauth/google/callback`.
+2. **GitHub** — [github.com/settings/developers](https://github.com/settings/developers) →
+   New OAuth App. Authorization callback URL:
+   `{CCARF_PUBLIC_BASE_URL}/api/v1/auth/oauth/github/callback`.
+3. Put the resulting client ID/secret pairs, plus `CCARF_PUBLIC_BASE_URL`
+   (where the backend itself is reachable) and `CCARF_FRONTEND_BASE_URL`
+   (where the browser should land afterwards), in `backend/.env` — see
+   `backend/.env.example`. Locally the defaults
+   (`http://127.0.0.1:8000` / `http://localhost:5173`) already match.
+
+Signing in links or creates a `User` by verified email; an account created
+this way has no password (`hashed_password` is null) unless one is set later.
+There's no Alembic migration in this project (see `app/db/session.py`), so an
+existing local `ccarf.db` predating these two columns needs to be deleted and
+recreated with `python -m app.seed`.
+
+## What's New feed (Anthropic YouTube videos)
+
+The "What's New" page shows Anthropic's most recent videos — release
+announcements, engineering talks, livestreams — pulled from their official
+YouTube channel via the **YouTube Data API v3** (there's no separate
+"Anthropic video API"; YouTube's is the actual public surface for this).
+
+1. Get an API key with the YouTube Data API v3 enabled: [Google Cloud
+   Console → Credentials](https://console.cloud.google.com/apis/credentials).
+2. Set `CCARF_YOUTUBE_API_KEY` in `backend/.env`. `CCARF_YOUTUBE_CHANNEL_HANDLE`
+   defaults to `@anthropic-ai` and rarely needs changing.
+3. The page is hidden behind a clear "not set up yet" message until the key
+   is present — nothing breaks if you skip this.
+
+There's no scheduler in this app (no cron, no Celery), so "refresh when
+Anthropic posts something new" is done lazily: the backend caches the last
+fetch for `CCARF_UPDATES_CACHE_TTL_MINUTES` (default 6 hours), and the first
+request past that window pays for one real API call on everyone's behalf.
+An admin can also force an immediate re-fetch from the page itself, which
+calls `POST /api/v1/admin/updates/refresh`.
 
 ## Security notes
 

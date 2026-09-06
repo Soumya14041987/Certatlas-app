@@ -7,7 +7,7 @@
  */
 import type {
   AdminQuestion, AdminQuestionList, Analytics, Attempt, AttemptSummary, Blueprint,
-  CheatSheetPayload, Curriculum, Heuristics, ReviewItem, Scorecard, SetSummary, User,
+  CheatSheetPayload, Curriculum, Heuristics, ReviewItem, Scorecard, SetSummary, UpdatesFeed, User,
 } from "./types";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
@@ -24,6 +24,8 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
+
+export const oauthStartUrl = (provider: "google" | "github") => `${PREFIX}/auth/oauth/${provider}/start`;
 
 export const auth = {
   get access() { return accessToken; },
@@ -175,6 +177,9 @@ export const api = {
     get<{ attempt_id: number; label: string; pass_mark: number; count: number; items: ReviewItem[] }>(
       `/attempts/${id}/review?only_incorrect=${onlyIncorrect}`),
 
+  // --- updates --------------------------------------------------------------
+  updates: () => get<UpdatesFeed>("/updates/videos"),
+
   // --- analytics + admin --------------------------------------------------
   analytics: () => get<Analytics>("/analytics/overview"),
   adminStats: () => get<Record<string, unknown>>("/admin/stats"),
@@ -200,6 +205,7 @@ export const api = {
     }),
   adminDeleteQuestion: (id: string) =>
     request<void>(`/admin/content/questions/${id}`, { method: "DELETE" }),
+  adminRefreshUpdates: () => post<UpdatesFeed>("/admin/updates/refresh"),
   adminMarkReviewed: (verified_by: string, version?: string) =>
     post<{ last_verified: string; verified_by: string; version: string }>(
       "/admin/content/mark-reviewed", { verified_by, version }),

@@ -56,6 +56,25 @@ class Settings(BaseSettings):
     first_admin_email: str | None = None
     first_admin_password: str | None = None
 
+    # --- OAuth sign-in (Google / GitHub) ---------------------------------
+    # A provider is only offered when both its id and secret are set.
+    google_client_id: str | None = None
+    google_client_secret: str | None = None
+    github_client_id: str | None = None
+    github_client_secret: str | None = None
+    # Where the backend's own OAuth callback is reachable — must match the
+    # redirect URI registered with each provider exactly.
+    public_base_url: str = "http://127.0.0.1:8000"
+    # Where the browser is sent after a successful/failed OAuth round trip.
+    frontend_base_url: str = "http://localhost:5173"
+
+    # --- "What's new" feed: Anthropic/Claude release videos from YouTube ----
+    # Feature is hidden (not just empty) until this is set.
+    youtube_api_key: str | None = None
+    youtube_channel_handle: str = "@anthropic-ai"
+    updates_cache_ttl_minutes: int = 360
+    updates_max_results: int = 24
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:

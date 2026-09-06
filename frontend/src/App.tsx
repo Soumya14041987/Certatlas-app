@@ -6,6 +6,7 @@ import { Spinner } from "./components/ui";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
+import OAuthCallback from "./pages/OAuthCallback";
 import Dashboard from "./pages/Dashboard";
 import PracticeSets from "./pages/PracticeSets";
 import ExamLobby from "./pages/ExamLobby";
@@ -17,6 +18,7 @@ import CheatSheets from "./pages/CheatSheets";
 import HeuristicsPage from "./pages/Heuristics";
 import Curriculum from "./pages/Curriculum";
 import History from "./pages/History";
+import Updates from "./pages/Updates";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 
@@ -37,6 +39,7 @@ export default function App() {
       <Route path="/" element={loading ? <Spinner /> : user ? <Navigate to="/dashboard" replace /> : <Landing />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Login initialMode="register" />} />
+      <Route path="/oauth/callback" element={<OAuthCallback />} />
 
       {/* The runner is full-bleed: no shell chrome competing with the paper. */}
       <Route path="/attempt/:id" element={<Protected><Runner /></Protected>} />
@@ -52,6 +55,7 @@ export default function App() {
         <Route path="/cheatsheets/:slug" element={<CheatSheets />} />
         <Route path="/instincts" element={<HeuristicsPage />} />
         <Route path="/curriculum" element={<Curriculum />} />
+        <Route path="/updates" element={<Updates />} />
         <Route path="/history" element={<History />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<Protected adminOnly><Admin /></Protected>} />

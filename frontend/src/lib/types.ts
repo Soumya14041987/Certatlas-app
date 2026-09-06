@@ -190,6 +190,24 @@ export interface Curriculum {
   };
 }
 
+export interface VideoItem {
+  video_id: string;
+  title: string;
+  description: string;
+  published_at: string;
+  thumbnail_url: string;
+  channel_title: string;
+  url: string;
+}
+
+export interface UpdatesFeed {
+  configured: boolean;
+  videos: VideoItem[];
+  fetched_at: string | null;
+  source: string;
+  error?: string;
+}
+
 export interface Analytics {
   attempts_submitted: number;
   practice_submitted: number;

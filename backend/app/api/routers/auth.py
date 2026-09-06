@@ -13,8 +13,6 @@ from app.core.ratelimit import auth_rate_limit
 from app.core.security import (
     REFRESH_TOKEN,
     TokenError,
-    create_access_token,
-    create_refresh_token,
     decode_token,
     hash_password,
     verify_password,
@@ -22,6 +20,7 @@ from app.core.security import (
 from app.db.session import get_db
 from app.models import RefreshToken, User, UserRole
 from app.schemas import LoginIn, ProfileUpdate, RefreshIn, RegisterIn, TokenPair, UserOut
+from app.services.auth_tokens import issue_token_pair
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -31,27 +30,7 @@ _BAD_CREDENTIALS = HTTPException(
     headers={"WWW-Authenticate": "Bearer"},
 )
 
-
-def _issue(db: Session, user: User, request: Request) -> TokenPair:
-    """Mint an access/refresh pair and record the refresh jti for revocation."""
-    refresh = create_refresh_token(user.id)
-    payload = decode_token(refresh, REFRESH_TOKEN)
-    db.add(
-        RefreshToken(
-            jti=payload["jti"],
-            user_id=user.id,
-            expires_at=datetime.fromtimestamp(payload["exp"], tz=timezone.utc).replace(
-                tzinfo=None
-            ),
-            user_agent=(request.headers.get("user-agent") or "")[:255] or None,
-        )
-    )
-    db.commit()
-    return TokenPair(
-        access_token=create_access_token(user.id, user.role),
-        refresh_token=refresh,
-        expires_in=settings.access_token_ttl_minutes * 60,
-    )
+_issue = issue_token_pair
 
 
 @router.post(
@@ -89,7 +68,8 @@ def login(payload: LoginIn, request: Request, db: Session = Depends(get_db)) -> 
     # Verify unconditionally so a missing account and a wrong password take a
     # comparable amount of time.
     placeholder = "$2b$12$" + "." * 53
-    if not verify_password(payload.password, user.hashed_password if user else placeholder):
+    hashed = user.hashed_password if user and user.hashed_password else placeholder
+    if not verify_password(payload.password, hashed):
         raise _BAD_CREDENTIALS
     if user is None:
         raise _BAD_CREDENTIALS

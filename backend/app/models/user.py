@@ -22,10 +22,17 @@ class UserRole(StrEnum):
 class User(Base):
     __tablename__ = "users"
 
+    __table_args__ = (
+        Index("ix_user_oauth_identity", "oauth_provider", "oauth_subject", unique=True),
+    )
+
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     full_name: Mapped[str] = mapped_column(String(160))
-    hashed_password: Mapped[str] = mapped_column(String(255))
+    # Null for an account that only ever signed in via an OAuth provider.
+    hashed_password: Mapped[str | None] = mapped_column(String(255), default=None)
+    oauth_provider: Mapped[str | None] = mapped_column(String(20), default=None)
+    oauth_subject: Mapped[str | None] = mapped_column(String(255), default=None)
     role: Mapped[str] = mapped_column(String(16), default=UserRole.USER)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     target_exam_date: Mapped[datetime | None] = mapped_column(DateTime, default=None)

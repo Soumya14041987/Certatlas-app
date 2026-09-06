@@ -18,6 +18,7 @@ from app.db.session import get_db
 from app.models import Attempt, AttemptStatus, RefreshToken, User, UserRole
 from app.schemas import UserOut
 from app.services import content
+from app.services import updates as updates_service
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 
@@ -299,3 +300,9 @@ def mark_content_reviewed(
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     content.get_blueprint.cache_clear()
     return data["freshness"] | {"version": data["version"]}
+
+
+@router.post("/updates/refresh")
+def refresh_updates() -> dict:
+    """Bypass the TTL cache and re-fetch Anthropic's latest videos right now."""
+    return updates_service.get_latest_videos(force=True)

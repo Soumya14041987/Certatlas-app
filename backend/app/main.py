@@ -89,9 +89,12 @@ def create_app() -> FastAPI:
         )
 
     # Routers are imported here so the module stays importable without a DB.
-    from app.api.routers import admin, analytics, attempts, auth, catalog
+    from app.api.routers import admin, analytics, attempts, auth, catalog, oauth, updates
 
-    for router in (auth.router, catalog.router, attempts.router, analytics.router, admin.router):
+    for router in (
+        auth.router, oauth.router, catalog.router, attempts.router, analytics.router,
+        admin.router, updates.router,
+    ):
         app.include_router(router, prefix=settings.api_prefix)
 
     @app.get("/health", tags=["meta"])
