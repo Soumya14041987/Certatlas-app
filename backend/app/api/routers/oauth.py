@@ -66,10 +66,16 @@ def _to_frontend(path: str) -> str:
     return f"{settings.frontend_base_url}{path}"
 
 
-def _not_configured(provider: _Provider) -> HTTPException:
-    return HTTPException(
-        status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail=f"Sign in with {provider.name.capitalize()} is not configured on this server",
+def _not_configured(provider: _Provider) -> RedirectResponse:
+    # This is reached by a real top-level browser navigation (the sign-in
+    # button is a plain <a href>, which it must be so the browser can follow
+    # the redirect chain to the provider and back). A raw HTTPException here
+    # would render as a bare JSON/error page instead of bouncing back into the
+    # app, so failure has to be a redirect too — same as the callback route.
+    message = f"Sign in with {provider.name.capitalize()} is not configured on this server"
+    return RedirectResponse(
+        _to_frontend(f"/login?{urlencode({'oauth_error': message})}"),
+        status_code=status.HTTP_302_FOUND,
     )
 
 
@@ -77,7 +83,7 @@ def _not_configured(provider: _Provider) -> HTTPException:
 def start(provider: str) -> RedirectResponse:
     config = _provider(provider)
     if not (config.client_id and config.client_secret):
-        raise _not_configured(config)
+        return _not_configured(config)
 
     state = create_oauth_state_token(config.name)
     params = {
