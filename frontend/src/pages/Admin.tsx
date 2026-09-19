@@ -21,7 +21,7 @@ export default function Admin() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<number | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([api.adminStats(), api.adminUsers()])
@@ -32,7 +32,7 @@ export default function Admin() {
   if (error) return <Alert>{error}</Alert>;
   if (!stats || !users) return <Spinner label="Loading the admin console" />;
 
-  async function update(id: number, body: { is_active?: boolean; role?: string }) {
+  async function update(id: string, body: { is_active?: boolean; role?: string }) {
     setPending(id);
     setError(null);
     try {

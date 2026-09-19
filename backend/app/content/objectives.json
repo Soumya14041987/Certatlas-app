@@ -1,0 +1,33 @@
+{
+  "objectives": [
+    {"id": "A1", "domain": "AAO", "title": "Orchestration-layer safeguards: every session ends resolved or escalated"},
+    {"id": "A2", "domain": "AAO", "title": "Structured handoff packages"},
+    {"id": "A3", "domain": "AAO", "title": "Session resumption and targeted re-analysis"},
+    {"id": "A4", "domain": "AAO", "title": "Dynamic task decomposition"},
+    {"id": "A5", "domain": "AAO", "title": "PreToolUse / PostToolUse policy hooks"},
+    {"id": "A6", "domain": "AAO", "title": "Agentic loop and stop_reason"},
+    {"id": "T1", "domain": "TDM", "title": "MCP tool error handling"},
+    {"id": "T2", "domain": "TDM", "title": "Tool descriptions and disambiguation"},
+    {"id": "T3", "domain": "TDM", "title": "MCP configuration scope"},
+    {"id": "T4", "domain": "TDM", "title": "MCP integration and verification"},
+    {"id": "T5", "domain": "TDM", "title": "tool_choice and multi-tool sequencing"},
+    {"id": "C1", "domain": "CCW", "title": "Custom slash commands"},
+    {"id": "C2", "domain": "CCW", "title": "Iterative refinement"},
+    {"id": "C3", "domain": "CCW", "title": "Plan mode vs direct execution"},
+    {"id": "C4", "domain": "CCW", "title": "Enforce vs advise: settings and hooks vs CLAUDE.md"},
+    {"id": "C5", "domain": "CCW", "title": "Choosing the configuration mechanism"},
+    {"id": "C6", "domain": "CCW", "title": "PostToolUse quality hooks"},
+    {"id": "P1", "domain": "PES", "title": "Synchronous vs batch API"},
+    {"id": "P2", "domain": "PES", "title": "Structured output method"},
+    {"id": "P3", "domain": "PES", "title": "Nullable and optional schema fields"},
+    {"id": "P4", "domain": "PES", "title": "Tool-use schemas and tool_choice for guaranteed output"},
+    {"id": "P5", "domain": "PES", "title": "Extraction accuracy patterns"},
+    {"id": "P6", "domain": "PES", "title": "Feedback loops on model errors"},
+    {"id": "M1", "domain": "CMR", "title": "Codebase exploration with Grep, Glob and Read"},
+    {"id": "M2", "domain": "CMR", "title": "Context management strategies"},
+    {"id": "M3", "domain": "CMR", "title": "Providing project context (@, CLAUDE.md, inline)"},
+    {"id": "M4", "domain": "CMR", "title": "Stateless API and conversation history"},
+    {"id": "M5", "domain": "CMR", "title": "Escalation decision criteria"},
+    {"id": "M6", "domain": "CMR", "title": "Human review routing"}
+  ]
+}

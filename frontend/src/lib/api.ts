@@ -1,22 +1,19 @@
 /**
  * Thin API client.
  *
- * Access tokens are short-lived and held in memory; the refresh token is the
- * only thing that touches storage, and a 401 triggers exactly one refresh
- * attempt which every concurrent caller shares.
+ * Identity, credentials and session storage/refresh are Supabase Auth's job
+ * now (see lib/supabaseClient.ts, lib/auth.tsx) — this client's only auth
+ * responsibility is attaching whatever access token Supabase currently
+ * holds to each request.
  */
+import { supabase } from "./supabaseClient";
 import type {
   AdminQuestion, AdminQuestionList, Analytics, Attempt, AttemptSummary, Blueprint,
-  CheatSheetPayload, Curriculum, Heuristics, ReviewItem, Scorecard, SetSummary, UpdatesFeed, User,
+  CheatSheetPayload, Curriculum, DrillSummary, Heuristics, ReviewItem, Scorecard, SetSummary, UpdatesFeed, User,
 } from "./types";
 
 const BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 const PREFIX = `${BASE}/api/v1`;
-const REFRESH_KEY = "ccarf.refresh";
-
-let accessToken: string | null = null;
-let refreshInFlight: Promise<boolean> | null = null;
-const listeners = new Set<() => void>();
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -24,29 +21,6 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
-
-export const oauthStartUrl = (provider: "google" | "github") => `${PREFIX}/auth/oauth/${provider}/start`;
-
-export const auth = {
-  get access() { return accessToken; },
-  get refresh() {
-    try { return localStorage.getItem(REFRESH_KEY); } catch { return null; }
-  },
-  set(access: string, refresh: string) {
-    accessToken = access;
-    try { localStorage.setItem(REFRESH_KEY, refresh); } catch { /* private mode */ }
-    listeners.forEach((fn) => fn());
-  },
-  clear() {
-    accessToken = null;
-    try { localStorage.removeItem(REFRESH_KEY); } catch { /* ignore */ }
-    listeners.forEach((fn) => fn());
-  },
-  onChange(fn: () => void) {
-    listeners.add(fn);
-    return () => listeners.delete(fn);
-  },
-};
 
 function detailOf(payload: unknown, fallback: string): string {
   if (typeof payload === "string" && payload) return payload;
@@ -67,45 +41,17 @@ function detailOf(payload: unknown, fallback: string): string {
 async function raw(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.access_token) headers.set("Authorization", `Bearer ${session.access_token}`);
   return fetch(`${PREFIX}${path}`, { ...init, headers });
 }
 
-async function tryRefresh(): Promise<boolean> {
-  const token = auth.refresh;
-  if (!token) return false;
-  if (!refreshInFlight) {
-    refreshInFlight = (async () => {
-      try {
-        const response = await fetch(`${PREFIX}/auth/refresh`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ refresh_token: token }),
-        });
-        if (!response.ok) { auth.clear(); return false; }
-        const data = await response.json();
-        auth.set(data.access_token, data.refresh_token);
-        return true;
-      } catch {
-        return false;
-      } finally {
-        refreshInFlight = null;
-      }
-    })();
-  }
-  return refreshInFlight;
-}
-
-async function request<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let response: Response;
   try {
     response = await raw(path, init);
   } catch {
     throw new ApiError(0, "Cannot reach the server. Is the API running?");
-  }
-
-  if (response.status === 401 && retry && auth.refresh) {
-    if (await tryRefresh()) return request<T>(path, init, false);
   }
 
   if (response.status === 204) return undefined as T;
@@ -123,22 +69,10 @@ const post = <T,>(path: string, body?: unknown) =>
   request<T>(path, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) });
 
 export const api = {
-  // --- auth ---------------------------------------------------------------
-  register: (email: string, full_name: string, password: string) =>
-    post<{ access_token: string; refresh_token: string }>("/auth/register", { email, full_name, password }),
-  login: (email: string, password: string) =>
-    post<{ access_token: string; refresh_token: string }>("/auth/login", { email, password }),
-  logout: () => {
-    const token = auth.refresh;
-    const done = token ? post<void>("/auth/logout", { refresh_token: token }).catch(() => undefined) : Promise.resolve();
-    auth.clear();
-    return done;
-  },
+  // --- profile --------------------------------------------------------------
   me: () => get<User>("/auth/me"),
   updateProfile: (body: { full_name?: string; target_exam_date?: string | null }) =>
     request<User>("/auth/me", { method: "PATCH", body: JSON.stringify(body) }),
-  sessions: () => get<{ id: number; issued_at: string; expires_at: string; active: boolean; user_agent: string | null }[]>("/auth/sessions"),
-  logoutEverywhere: () => post<void>("/auth/logout-all"),
 
   // --- catalogue ----------------------------------------------------------
   blueprint: () => get<Blueprint>("/blueprint"),
@@ -153,9 +87,12 @@ export const api = {
     `/practice/sets?page=${page}&per_page=${perPage}`),
   startPractice: (set_number: number, resume_existing = true) =>
     post<Attempt>("/practice/start", { set_number, resume_existing }),
-  startExam: () => post<Attempt>("/exam/start", { acknowledge_timed: true }),
+  startExam: (quick = false) => post<Attempt>("/exam/start", { acknowledge_timed: true, quick }),
+  drillSummary: () => get<DrillSummary>("/drill/summary"),
+  startDrill: () => post<Attempt>("/drill/start", {}),
   startDiagnostic: () => post<Attempt>("/diagnostic/start", {}),
   startFocus: () => post<Attempt>("/focus/start", {}),
+  startWeakArea: () => post<Attempt>("/weakarea/start", {}),
 
   attempts: (params: { mode?: string; status?: string; limit?: number } = {}) => {
     const query = new URLSearchParams();
@@ -184,7 +121,7 @@ export const api = {
   analytics: () => get<Analytics>("/analytics/overview"),
   adminStats: () => get<Record<string, unknown>>("/admin/stats"),
   adminUsers: () => get<User[]>("/admin/users"),
-  adminUpdateUser: (id: number, body: { is_active?: boolean; role?: string }) =>
+  adminUpdateUser: (id: string, body: { is_active?: boolean; role?: string }) =>
     request<User>(`/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
 
   adminQuestionTemplate: () => get<{ template: Record<string, unknown> }>("/admin/content/questions/template"),

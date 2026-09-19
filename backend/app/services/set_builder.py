@@ -17,7 +17,7 @@ import random
 from typing import Iterable
 
 from app.core.config import settings
-from app.services.content import Question, get_blueprint, questions_by_domain
+from app.services.content import Question, get_blueprint, get_questions, questions_by_domain
 
 SALT = "ccarf-2026.1"
 
@@ -84,6 +84,19 @@ def build_practice_set(set_number: int, size: int | None = None) -> list[str]:
 def build_exam_paper(seed: str) -> list[str]:
     """A blueprint-weighted 60-question paper, unique per sitting."""
     return _compose(f"{SALT}:exam:{seed}", settings.exam_question_count)
+
+
+def build_quick_mock(seed: str) -> list[str]:
+    """Random scenarios plus every question tied to them, interleaved, like the real exam's scenario sets."""
+    rng = random.Random(f"{SALT}:quick:{seed}")
+    by_scenario: dict[str, list[str]] = {}
+    for q in get_questions().values():
+        if q.scenario:
+            by_scenario.setdefault(q.scenario, []).append(q.id)
+    chosen = rng.sample(sorted(by_scenario), min(settings.quick_mock_scenarios, len(by_scenario)))
+    ids = sorted(i for s in chosen for i in by_scenario[s])
+    rng.shuffle(ids)
+    return ids
 
 
 def build_diagnostic_paper(seed: str) -> list[str]:

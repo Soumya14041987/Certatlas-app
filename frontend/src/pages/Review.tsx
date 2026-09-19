@@ -129,6 +129,7 @@ function ReviewCard({ item, open, onToggle }: { item: ReviewItem; open: boolean;
               Q{item.position} · {item.domain}
             </span>
             <span className="chip-neutral">{DIFFICULTY_LABEL[item.difficulty]}</span>
+            {item.scenario && <span className="chip-neutral" title={item.scenario.body}>{item.scenario.title}</span>}
             {!item.answered && <span className="chip-amber">Skipped</span>}
             {item.flagged && <span className="chip-amber">Flagged</span>}
           </span>

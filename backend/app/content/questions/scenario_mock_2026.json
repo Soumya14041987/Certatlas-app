@@ -1,0 +1,1812 @@
+{
+  "questions": [
+    {
+      "id": "SC-001",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "agentic loop and stop_reason",
+      "task": "A6",
+      "scenario": "s1-support-agent",
+      "stem": "How should the agent's loop decide whether to keep calling tools?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Always run exactly three iterations"
+        },
+        {
+          "key": "B",
+          "text": "Stop when the reply text contains the word \"resolved\""
+        },
+        {
+          "key": "C",
+          "text": "Stop as soon as a response has no text block"
+        },
+        {
+          "key": "D",
+          "text": "Continue while `stop_reason` is `tool_use`, returning tool results each time, and finish when it is `end_turn`"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "`stop_reason` is the model's own signal: `tool_use` means run the tool and continue, `end_turn` means it has finished.",
+      "distractor_notes": {
+        "A": "A fixed count cuts long tasks short and wastes calls on short ones.",
+        "B": "Text matching is brittle; the model may phrase completion differently or mention the word mid-task.",
+        "C": "A tool call can have no text yet still need its result returned."
+      },
+      "cheatsheet": "d5-automation#sdk",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s1"
+      ]
+    },
+    {
+      "id": "SC-002",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "orchestration-layer safeguards",
+      "task": "A1",
+      "scenario": "s1-support-agent",
+      "stem": "The loop can end unexpectedly (timeout, iteration cap, repeated tool failure). Which design best guarantees every conversation still ends in a resolution or a documented handoff?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A system-prompt instruction to always resolve or escalate before stopping"
+        },
+        {
+          "key": "B",
+          "text": "Retry the loop indefinitely until the model resolves the case"
+        },
+        {
+          "key": "C",
+          "text": "Log the failure and close the conversation"
+        },
+        {
+          "key": "D",
+          "text": "A guard in the orchestration code that checks for a terminal state on every exit path and, if none exists, escalates to a human with a summary of what happened"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Guarantees belong in code that runs regardless of how the loop terminates, not in model behaviour.",
+      "distractor_notes": {
+        "A": "It is advisory and cannot help when the loop exits abnormally.",
+        "B": "Unbounded retries hang the customer and hide the failure.",
+        "C": "The customer is left without a resolution or handoff."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s1"
+      ]
+    },
+    {
+      "id": "SC-003",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp error handling",
+      "task": "T1",
+      "scenario": "s1-support-agent",
+      "stem": "`get_order` currently returns the text \"Error\" for both a missing order and a backend outage, and the agent tells customers their order does not exist during outages. What should the tool return?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The raw stack trace as text"
+        },
+        {
+          "key": "B",
+          "text": "A longer generic message such as \"Something went wrong\""
+        },
+        {
+          "key": "C",
+          "text": "An error flagged `isError` with a category (not_found vs transient), whether it is retryable and a suggested next action"
+        },
+        {
+          "key": "D",
+          "text": "An empty result for both cases"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Typed errors let the agent retry transient failures and report genuine not-found cases correctly.",
+      "distractor_notes": {
+        "A": "It is noisy and gives no explicit recoverability.",
+        "B": "Still no category, so the agent cannot choose between retrying and reporting.",
+        "D": "It makes an outage look like a legitimate \"no such order\"."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s1"
+      ]
+    },
+    {
+      "id": "SC-004",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "custom slash commands",
+      "task": "C1",
+      "scenario": "s1-support-agent",
+      "stem": "The team wants a reusable `/triage-ticket` command that every developer on the repository can invoke on demand. Where should it live?",
+      "options": [
+        {
+          "key": "A",
+          "text": "In each developer's `~/.claude/commands/`"
+        },
+        {
+          "key": "B",
+          "text": "As a Markdown file in the project's `.claude/commands/` directory, committed to the repository"
+        },
+        {
+          "key": "C",
+          "text": "In `.claude/settings.json` under `permissions`"
+        },
+        {
+          "key": "D",
+          "text": "In CLAUDE.md as a paragraph of instructions"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Project commands in `.claude/commands/` are shared through version control; user commands in `~/.claude/commands/` are personal.",
+      "distractor_notes": {
+        "A": "That is personal to one machine and would not reach teammates.",
+        "C": "Permissions gate tools; they do not define commands.",
+        "D": "CLAUDE.md is always-loaded context, not an on-demand command."
+      },
+      "cheatsheet": "d1-fundamentals#slash-commands",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s1"
+      ]
+    },
+    {
+      "id": "SC-005",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "plan mode vs direct",
+      "task": "C3",
+      "scenario": "s1-support-agent",
+      "stem": "The team must add a new escalation policy engine touching about twelve modules, with the compliance group reviewing the approach first. How should they use Claude Code?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Use `bypassPermissions` so the change finishes faster"
+        },
+        {
+          "key": "B",
+          "text": "Execute directly and review the resulting diff afterwards"
+        },
+        {
+          "key": "C",
+          "text": "Ask for the code changes in small steps with no plan"
+        },
+        {
+          "key": "D",
+          "text": "Start in plan mode to explore read-only and produce a plan for review, then implement after approval"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Large scope, uncertainty and stakeholder review call for plan mode; small reversible edits suit direct execution.",
+      "distractor_notes": {
+        "A": "It removes safeguards on a broad, sensitive change.",
+        "B": "The compliance review is needed before implementation, and a large change is costly to unwind.",
+        "C": "The architectural approach still needs sign-off first."
+      },
+      "cheatsheet": "d3-agentic#plan-mode",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s1"
+      ]
+    },
+    {
+      "id": "SC-006",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool_choice for guaranteed output",
+      "task": "P4",
+      "scenario": "s1-support-agent",
+      "stem": "Every incoming message must be classified into an intent object that downstream code reads from a tool call. Which configuration guarantees that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Leave `tool_choice` as `auto` and add a reminder to use the tool"
+        },
+        {
+          "key": "B",
+          "text": "Ask for JSON in the system prompt"
+        },
+        {
+          "key": "C",
+          "text": "Set `tool_choice` to `none` and parse the reply"
+        },
+        {
+          "key": "D",
+          "text": "Define a classification tool with a JSON schema and set `tool_choice` to force that tool"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Forcing a schema-backed tool guarantees a tool call whose input matches the schema.",
+      "distractor_notes": {
+        "A": "Auto lets the model answer in text, which would break the parser.",
+        "B": "Prompt-based formatting has no guarantee.",
+        "C": "That prevents tool calls entirely."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s1"
+      ]
+    },
+    {
+      "id": "SC-007",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "escalation decision criteria",
+      "task": "M5",
+      "scenario": "s1-support-agent",
+      "stem": "A customer writes, \"I want to speak to a person now.\" The agent could resolve the refund itself in one step. What should it do?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Complete the refund first to show it can help"
+        },
+        {
+          "key": "B",
+          "text": "Offer to keep trying twice before escalating"
+        },
+        {
+          "key": "C",
+          "text": "Ask the customer to explain why they want a human"
+        },
+        {
+          "key": "D",
+          "text": "Honor the request immediately: escalate with a summary of the conversation so far"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "An explicit human-escalation request is honored at once; autonomous resolution is for cases without such a request.",
+      "distractor_notes": {
+        "A": "It overrides an explicit request from the customer.",
+        "B": "An explicit request should not be bargained down.",
+        "C": "It delays and frustrates a clear request."
+      },
+      "cheatsheet": "d3-agentic#human-in-the-loop",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s1"
+      ]
+    },
+    {
+      "id": "SC-008",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "nullable and optional fields",
+      "task": "P3",
+      "scenario": "s2-extraction",
+      "stem": "Some invoices carry no purchase-order number, yet `po_number` is a required string and the model sometimes invents one. What is the best schema change?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Drop the field and have staff enter it"
+        },
+        {
+          "key": "B",
+          "text": "Keep it required and add \"do not guess\" to the prompt"
+        },
+        {
+          "key": "C",
+          "text": "Use the placeholder `\"UNKNOWN\"` when missing"
+        },
+        {
+          "key": "D",
+          "text": "Make `po_number` nullable and tell the model to return null when the document has none"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Allow the model to report absence truthfully with null or an optional field.",
+      "distractor_notes": {
+        "A": "It discards the value for the invoices that do have one.",
+        "B": "The schema still demands a value, so guessing remains the easiest way to comply.",
+        "C": "A placeholder is indistinguishable from data downstream."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s2"
+      ]
+    },
+    {
+      "id": "SC-009",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "multi",
+      "objective": "structured handoff packages",
+      "task": "A2",
+      "scenario": "s2-extraction",
+      "stem": "When a low-confidence extraction goes to an analyst, which TWO items belong in the handoff package? (Select 2)",
+      "options": [
+        {
+          "key": "A",
+          "text": "A reference to the source document and page, plus which automated checks already ran"
+        },
+        {
+          "key": "B",
+          "text": "The model's complete raw reasoning transcript"
+        },
+        {
+          "key": "C",
+          "text": "A one-line note saying \"please review\""
+        },
+        {
+          "key": "D",
+          "text": "The extracted values with per-field confidence and the reason each uncertain field is uncertain"
+        }
+      ],
+      "correct": [
+        "A",
+        "D"
+      ],
+      "explanation": "A good handoff is structured and complete enough that the receiver need not redo the work.",
+      "distractor_notes": {
+        "B": "It buries the useful facts in noise.",
+        "C": "It drops the context the analyst needs to act quickly."
+      },
+      "cheatsheet": "d3-agentic#human-in-the-loop",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s2"
+      ],
+      "select_count": 2
+    },
+    {
+      "id": "SC-010",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "dynamic decomposition",
+      "task": "A4",
+      "scenario": "s2-extraction",
+      "stem": "Some contract bundles include amendments that refer to other contracts not yet retrieved. The current fixed extraction sequence misses those references. What design fits best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Ask analysts to add referenced contracts by hand"
+        },
+        {
+          "key": "B",
+          "text": "An orchestrator that plans subtasks from what it finds and adds retrieval and extraction steps for referenced contracts as they appear"
+        },
+        {
+          "key": "C",
+          "text": "Add more fixed steps for every kind of reference, run on every document"
+        },
+        {
+          "key": "D",
+          "text": "Merge all steps into one long prompt"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "When the next step depends on findings, generate subtasks dynamically.",
+      "distractor_notes": {
+        "A": "It moves the adaptive planning to people.",
+        "C": "It wastes work on most documents and still misses unknown patterns.",
+        "D": "It cannot adapt to what each step discovers."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s2"
+      ]
+    },
+    {
+      "id": "SC-011",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool_choice and sequencing",
+      "task": "T5",
+      "scenario": "s2-extraction",
+      "stem": "`get_vendor_profile` needs a `vendor_id` returned by `match_vendor`. The model sometimes calls it with a guessed id. What is the most reliable fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Set `tool_choice` to `any` on every turn"
+        },
+        {
+          "key": "B",
+          "text": "Make the dependency explicit in code (the profile tool only accepts an id issued by `match_vendor`) and describe it in the tool descriptions"
+        },
+        {
+          "key": "C",
+          "text": "Rename `get_vendor_profile` to `get_vendor_profile_second`"
+        },
+        {
+          "key": "D",
+          "text": "Add \"call match_vendor first\" to the system prompt only"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Prerequisite data is best enforced programmatically, with the dependency documented for the model.",
+      "distractor_notes": {
+        "A": "It forces a tool call each turn but does not order them, and prevents a final answer.",
+        "C": "A name is a hint, not enforcement.",
+        "D": "Advice alone can still be ignored."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s2"
+      ]
+    },
+    {
+      "id": "SC-012",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool descriptions",
+      "task": "T2",
+      "scenario": "s2-extraction",
+      "stem": "The agent confuses `extract_invoice` and `extract_contract`, whose descriptions both read \"Extract fields from a document.\" How should the tools be improved?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Delete one tool and use a single generic extractor"
+        },
+        {
+          "key": "B",
+          "text": "Rename them `tool1` and `tool2`"
+        },
+        {
+          "key": "C",
+          "text": "Tell the model in the system prompt to choose carefully"
+        },
+        {
+          "key": "D",
+          "text": "Rewrite each description to say what document type it handles, give example inputs, and state when not to use it"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Selection depends on descriptions that state purpose, inputs and disambiguation.",
+      "distractor_notes": {
+        "A": "It loses the type-specific behaviour.",
+        "B": "Names without meaning make selection worse.",
+        "C": "It gives no criteria to choose by."
+      },
+      "cheatsheet": "d4-mcp#naming",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s2"
+      ]
+    },
+    {
+      "id": "SC-013",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "iterative refinement",
+      "task": "C2",
+      "scenario": "s2-extraction",
+      "stem": "A developer asks Claude Code to improve date normalisation, but it still fails on several formats. Which follow-up is most effective?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Repeat the original request more forcefully"
+        },
+        {
+          "key": "B",
+          "text": "Clear the session and start over each time"
+        },
+        {
+          "key": "C",
+          "text": "Say \"try harder\""
+        },
+        {
+          "key": "D",
+          "text": "Provide concrete input/expected-output examples for the failing formats, ideally as tests, and send them together"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Concrete examples and batched feedback let the model converge.",
+      "distractor_notes": {
+        "A": "It adds no information about what is wrong.",
+        "B": "It discards the feedback gathered so far.",
+        "C": "Effort words do not describe the failure."
+      },
+      "cheatsheet": "d5-automation#prompting",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s2"
+      ]
+    },
+    {
+      "id": "SC-014",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "human review routing",
+      "task": "M6",
+      "scenario": "s2-extraction",
+      "stem": "Analysts spend most of their time on records that turn out correct. How should records be routed to review?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A random 5% of all records"
+        },
+        {
+          "key": "B",
+          "text": "By per-field confidence and document characteristics, with thresholds calibrated on a labelled sample"
+        },
+        {
+          "key": "C",
+          "text": "Everything from newly onboarded vendors"
+        },
+        {
+          "key": "D",
+          "text": "The longest documents first"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Route scarce review effort to where errors are likely, validated on labelled data.",
+      "distractor_notes": {
+        "A": "Most reviewed records would still be fine.",
+        "C": "A crude proxy that ignores which fields are risky.",
+        "D": "Length is a weak signal."
+      },
+      "cheatsheet": "d3-agentic#human-in-the-loop",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s2"
+      ]
+    },
+    {
+      "id": "SC-015",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "session resumption",
+      "task": "A3",
+      "scenario": "s3-monolith",
+      "stem": "An engineer resumes yesterday's session, but a teammate changed several analysed files overnight. What is the best way to continue?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Delete the earlier analysis and restart the migration plan"
+        },
+        {
+          "key": "B",
+          "text": "Continue as if nothing changed"
+        },
+        {
+          "key": "C",
+          "text": "Start a brand-new session and re-read the whole repository"
+        },
+        {
+          "key": "D",
+          "text": "Resume the session, tell Claude which files changed, and have it re-analyse just those files before continuing"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Session resumption works best with targeted re-analysis of what changed.",
+      "distractor_notes": {
+        "A": "It discards valid findings about unchanged files.",
+        "B": "Earlier conclusions about those files may now be wrong.",
+        "C": "It repeats work already done."
+      },
+      "cheatsheet": "d2-context#agent-state",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s3"
+      ]
+    },
+    {
+      "id": "SC-016",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp integration and verification",
+      "task": "T4",
+      "scenario": "s3-monolith",
+      "stem": "A `dependency-graph` server was added to the project's `.mcp.json`. How can the developer confirm it is connected and its tools are available?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Edit CLAUDE.md to mention the server"
+        },
+        {
+          "key": "B",
+          "text": "Ask the model whether it thinks the tools exist"
+        },
+        {
+          "key": "C",
+          "text": "Check `/mcp` in Claude Code to see the server's status and discovered tools"
+        },
+        {
+          "key": "D",
+          "text": "Restart the machine and see if it works"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "`/mcp` shows connection status and the tools discovered.",
+      "distractor_notes": {
+        "A": "CLAUDE.md does not register servers.",
+        "B": "The model may guess; `/mcp` reports the actual state.",
+        "D": "It does not tell you whether the server connected."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s3"
+      ]
+    },
+    {
+      "id": "SC-017",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "plan mode vs direct",
+      "task": "C3",
+      "scenario": "s3-monolith",
+      "stem": "Which of these tasks is best done directly rather than in plan mode?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Splitting the billing module into a new service"
+        },
+        {
+          "key": "B",
+          "text": "Replacing the persistence framework across all modules"
+        },
+        {
+          "key": "C",
+          "text": "Choosing service boundaries for the whole monolith"
+        },
+        {
+          "key": "D",
+          "text": "Renaming one private method and its two call sites, with tests passing before and after"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Small, reversible, well-scoped work suits direct execution.",
+      "distractor_notes": {
+        "A": "Large, uncertain and hard to reverse; plan first.",
+        "B": "Broad scope needing review before implementation.",
+        "C": "Architectural uncertainty is high."
+      },
+      "cheatsheet": "d3-agentic#plan-mode",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s3"
+      ]
+    },
+    {
+      "id": "SC-018",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "enforce vs advise",
+      "task": "C4",
+      "scenario": "s3-monolith",
+      "stem": "The team must guarantee Claude never runs `git push --force`. Which mechanism is right?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A `permissions.deny` rule for `Bash(git push --force:*)` in the project's `.claude/settings.json`"
+        },
+        {
+          "key": "B",
+          "text": "A rule in `.claude/rules/` scoped to `**/*.java`"
+        },
+        {
+          "key": "C",
+          "text": "A Skill describing safe git usage"
+        },
+        {
+          "key": "D",
+          "text": "A sentence in CLAUDE.md saying never to force-push"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Guarantees come from enforced settings or hooks, not from context.",
+      "distractor_notes": {
+        "B": "Rules are context and this action is not tied to Java files.",
+        "C": "Skills load at the model's discretion.",
+        "D": "CLAUDE.md is advisory and can be ignored."
+      },
+      "cheatsheet": "d1-fundamentals#permission-rules",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s3"
+      ]
+    },
+    {
+      "id": "SC-019",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "structured output method",
+      "task": "P2",
+      "scenario": "s3-monolith",
+      "stem": "A script classifies 4,000 stored procedures into migration categories and loads the result into a tracker that rejects malformed JSON. Which method is most reliable?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Prefill the reply with `{`"
+        },
+        {
+          "key": "B",
+          "text": "A tool with a JSON schema for the classification, with `tool_choice` forcing it"
+        },
+        {
+          "key": "C",
+          "text": "Post-process replies with regexes"
+        },
+        {
+          "key": "D",
+          "text": "Prompt the model to return only JSON"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Schema-backed tool use gives the strongest structural guarantee.",
+      "distractor_notes": {
+        "A": "It starts the output but does not enforce the schema.",
+        "C": "It is brittle and misses missing keys.",
+        "D": "No schema guarantee."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s3"
+      ]
+    },
+    {
+      "id": "SC-020",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "feedback loops",
+      "task": "P6",
+      "scenario": "s3-monolith",
+      "stem": "The classifier keeps mislabelling some procedures. How should the team use the errors to improve results?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Retrain the underlying model on the errors"
+        },
+        {
+          "key": "B",
+          "text": "Record structured metadata for each error (predicted category, correct category, reason) and use the patterns to refine the prompt, schema or few-shot examples"
+        },
+        {
+          "key": "C",
+          "text": "Ignore errors below 5%"
+        },
+        {
+          "key": "D",
+          "text": "Add one special-case sentence per error"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Structured error capture turns failures into targeted prompt and example improvements.",
+      "distractor_notes": {
+        "A": "Users of the API cannot retrain the model; they improve prompts and examples.",
+        "C": "Patterns in errors are the input for improvement.",
+        "D": "Accumulated special cases cause regressions."
+      },
+      "cheatsheet": "d5-automation#evaluation",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s3"
+      ]
+    },
+    {
+      "id": "SC-021",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "codebase exploration",
+      "task": "M1",
+      "scenario": "s3-monolith",
+      "stem": "You must find every place the `ORDERS` table is written to, in a repository with vendored and generated code. What is the best approach?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Glob everything and read whatever looks important"
+        },
+        {
+          "key": "B",
+          "text": "Grep for the table name and write-related patterns with path filters that exclude vendored and generated code, then Read only the relevant ranges"
+        },
+        {
+          "key": "C",
+          "text": "Read every file in the data-access package in full"
+        },
+        {
+          "key": "D",
+          "text": "Grep the whole repository unfiltered and read every hit"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Search narrowly, then read targeted ranges.",
+      "distractor_notes": {
+        "A": "Names are a poor guide to content.",
+        "C": "It consumes context on irrelevant code.",
+        "D": "Vendored and generated matches flood the context."
+      },
+      "cheatsheet": "d2-context#budgeting",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s3"
+      ]
+    },
+    {
+      "id": "SC-022",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "pre/posttooluse hooks",
+      "task": "A5",
+      "scenario": "s4-mcp-platform",
+      "stem": "The `deploy` MCP tool must never run against production without an approved change ticket, a rule set by the business, not left to the model. What should enforce it?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A PreToolUse hook that checks the ticket and blocks the call (exit code 2) when it is missing"
+        },
+        {
+          "key": "B",
+          "text": "A PostToolUse hook that rolls back a deployment when no ticket exists"
+        },
+        {
+          "key": "C",
+          "text": "A note in the tool description asking the model to check for a ticket"
+        },
+        {
+          "key": "D",
+          "text": "A line in CLAUDE.md about change tickets"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Business rules that must always hold are enforced in a PreToolUse hook that runs before the tool.",
+      "distractor_notes": {
+        "B": "The deployment has already happened.",
+        "C": "The model could still call it.",
+        "D": "It is advisory."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s4"
+      ]
+    },
+    {
+      "id": "SC-023",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp configuration scope",
+      "task": "T3",
+      "scenario": "s4-mcp-platform",
+      "stem": "The team wants the ticketing server shared by everyone who clones the repo, while one engineer wants a personal experimental server across all their projects. Which scopes?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Both at local scope"
+        },
+        {
+          "key": "B",
+          "text": "Ticketing at user scope and the experiment at project scope"
+        },
+        {
+          "key": "C",
+          "text": "Both at project scope"
+        },
+        {
+          "key": "D",
+          "text": "Ticketing at project scope in `.mcp.json`; the experimental server at user scope"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Shared tooling is project scope; personal or experimental servers are user scope.",
+      "distractor_notes": {
+        "A": "Local is private to one developer in one project, so nothing is shared.",
+        "B": "The scopes are reversed.",
+        "C": "A personal experiment would be imposed on the whole team."
+      },
+      "cheatsheet": "d4-mcp#scope",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s4"
+      ]
+    },
+    {
+      "id": "SC-024",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp error handling",
+      "task": "T1",
+      "scenario": "s4-mcp-platform",
+      "stem": "The feature-flag server is rate limited. What should its tool return so the agent waits and retries once?",
+      "options": [
+        {
+          "key": "A",
+          "text": "HTTP status 429 only"
+        },
+        {
+          "key": "B",
+          "text": "An error with category `rate_limit`, `retryable: true`, a retry-after value and a suggested action"
+        },
+        {
+          "key": "C",
+          "text": "An empty list"
+        },
+        {
+          "key": "D",
+          "text": "The text \"failed\""
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Actionable error metadata drives correct recovery.",
+      "distractor_notes": {
+        "A": "The agent must infer policy and timing.",
+        "C": "It looks like a valid empty result.",
+        "D": "It carries no cause or recoverability."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s4"
+      ]
+    },
+    {
+      "id": "SC-025",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool descriptions",
+      "task": "T2",
+      "scenario": "s4-mcp-platform",
+      "stem": "`set_flag` takes an `environment` argument, and the model passes \"production\" or \"prod\" or \"PROD\" inconsistently, failing validation. What is the best fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Accept any string and lowercase it server-side without documenting it"
+        },
+        {
+          "key": "B",
+          "text": "Add \"be consistent\" to the system prompt"
+        },
+        {
+          "key": "C",
+          "text": "Rename the parameter to `env_name`"
+        },
+        {
+          "key": "D",
+          "text": "Document the accepted values in the parameter description and constrain the parameter with an enum"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Explicit formats and enums in the tool definition steer argument values.",
+      "distractor_notes": {
+        "A": "It hides the contract and the model still guesses.",
+        "B": "It gives no concrete values.",
+        "C": "A rename does not say which values are valid."
+      },
+      "cheatsheet": "d4-mcp#naming",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s4"
+      ]
+    },
+    {
+      "id": "SC-026",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "config mechanism selection",
+      "task": "C5",
+      "scenario": "s4-mcp-platform",
+      "stem": "Guidance to prefer the flag MCP tools over shell commands matters only when files under `services/flags/` are involved. Which mechanism fits?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The root CLAUDE.md for every session"
+        },
+        {
+          "key": "B",
+          "text": "A `permissions.allow` entry"
+        },
+        {
+          "key": "C",
+          "text": "A PostToolUse hook that prints the guidance after each edit"
+        },
+        {
+          "key": "D",
+          "text": "A `.claude/rules/` file with a `paths` glob for `services/flags/**`"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Path-specific guidance belongs in path-scoped rules.",
+      "distractor_notes": {
+        "A": "It would load the guidance where it is irrelevant.",
+        "B": "Permissions do not carry guidance.",
+        "C": "Hooks react to tool events, not to a topic."
+      },
+      "cheatsheet": "d2-context#progressive-disclosure",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s4"
+      ]
+    },
+    {
+      "id": "SC-027",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool_choice for guaranteed output",
+      "task": "P4",
+      "scenario": "s4-mcp-platform",
+      "stem": "The chat assistant usually converses, but when the user asks for a deployment plan it must produce a schema-valid plan object. What is the best design?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Use `none` and ask for JSON text"
+        },
+        {
+          "key": "B",
+          "text": "Force `submit_plan` on every request"
+        },
+        {
+          "key": "C",
+          "text": "Always use `any` and read whichever tool is called"
+        },
+        {
+          "key": "D",
+          "text": "Use `auto` for normal chat and, for plan requests, force a `submit_plan` tool with a JSON schema"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Force the schema tool only for the step that needs guaranteed structure.",
+      "distractor_notes": {
+        "A": "No schema guarantee and no tool call.",
+        "B": "The assistant could no longer chat.",
+        "C": "It would force a tool call even for casual chat."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s4"
+      ]
+    },
+    {
+      "id": "SC-028",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "providing project context",
+      "task": "M3",
+      "scenario": "s4-mcp-platform",
+      "stem": "The API conventions document is needed in nearly every session, while a one-off migration spec is needed only for a single task. How should each be provided?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Both in CLAUDE.md permanently"
+        },
+        {
+          "key": "B",
+          "text": "Conventions inline each time; the spec in CLAUDE.md"
+        },
+        {
+          "key": "C",
+          "text": "Both by asking Claude to remember them"
+        },
+        {
+          "key": "D",
+          "text": "Conventions via CLAUDE.md (or an import from it); the one-off spec via an `@` file reference in that task's prompt"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Use persistent memory for recurring context and explicit references for task-specific context.",
+      "distractor_notes": {
+        "A": "The transient spec would clutter every session.",
+        "B": "The roles are reversed, wasting effort and context.",
+        "C": "Nothing persists across sessions on its own."
+      },
+      "cheatsheet": "d2-context#what-belongs",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s4"
+      ]
+    },
+    {
+      "id": "SC-029",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "multi",
+      "objective": "structured handoff packages",
+      "task": "A2",
+      "scenario": "s5-research",
+      "stem": "When the coordinator invokes the analysis subagent, which TWO things must it pass explicitly? (Select 2)",
+      "options": [
+        {
+          "key": "A",
+          "text": "The coordinator's entire raw history, automatically attached"
+        },
+        {
+          "key": "B",
+          "text": "Nothing beyond the task title, because the subagent inherits the coordinator's context"
+        },
+        {
+          "key": "C",
+          "text": "The task, plus the relevant findings gathered so far"
+        },
+        {
+          "key": "D",
+          "text": "Constraints and the expected output format"
+        }
+      ],
+      "correct": [
+        "C",
+        "D"
+      ],
+      "explanation": "A subagent knows only what is placed in its prompt, so hand it what it needs in a structured form.",
+      "distractor_notes": {
+        "A": "Nothing is attached automatically, and dumping everything wastes context.",
+        "B": "Subagents run in their own context and do not inherit it."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s5"
+      ],
+      "select_count": 2
+    },
+    {
+      "id": "SC-030",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "dynamic decomposition",
+      "task": "A4",
+      "scenario": "s5-research",
+      "stem": "After the first round of searches shows the question is really about two different market segments, the plan should change. What design supports that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A fixed three-step pipeline"
+        },
+        {
+          "key": "B",
+          "text": "Repeat the same search with different wording until it works"
+        },
+        {
+          "key": "C",
+          "text": "The coordinator generates and revises subtasks from intermediate findings and delegates them"
+        },
+        {
+          "key": "D",
+          "text": "One long prompt covering all possibilities"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Open-ended research needs dynamic decomposition.",
+      "distractor_notes": {
+        "A": "It cannot adapt to findings.",
+        "B": "It does not restructure the work.",
+        "D": "It removes checkpoints and adaptability."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s5"
+      ]
+    },
+    {
+      "id": "SC-031",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "agentic loop and stop_reason",
+      "task": "A6",
+      "scenario": "s5-research",
+      "stem": "The coordinator's response has three `tool_use` blocks for three subagent calls. How should the results be returned?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Run all three and send all three `tool_result` blocks back together in one user message"
+        },
+        {
+          "key": "B",
+          "text": "Ignore the calls and continue the conversation"
+        },
+        {
+          "key": "C",
+          "text": "Send each result in its own user message"
+        },
+        {
+          "key": "D",
+          "text": "Return only the first result"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Return every result for the assistant turn together.",
+      "distractor_notes": {
+        "B": "The model is waiting for the results.",
+        "C": "Results for one assistant turn belong in one message.",
+        "D": "The other calls would be left without results and the API rejects that."
+      },
+      "cheatsheet": "d5-automation#sdk",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s5"
+      ]
+    },
+    {
+      "id": "SC-032",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool_choice and sequencing",
+      "task": "T5",
+      "scenario": "s5-research",
+      "stem": "`analyse_document` needs a `doc_id` from `search_documents`, and the model sometimes calls both in parallel with a guessed id. What helps most?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Retry the analysis until it succeeds"
+        },
+        {
+          "key": "B",
+          "text": "Set `tool_choice` to `any`"
+        },
+        {
+          "key": "C",
+          "text": "Disable parallel tool use and document the dependency so the search result is available before the analysis call"
+        },
+        {
+          "key": "D",
+          "text": "Shorten the tool names"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Dependent calls must wait for the earlier result.",
+      "distractor_notes": {
+        "A": "It hides a design flaw and wastes calls.",
+        "B": "It does not order the calls.",
+        "D": "It has no effect on ordering."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s5"
+      ]
+    },
+    {
+      "id": "SC-033",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "custom slash commands",
+      "task": "C1",
+      "scenario": "s5-research",
+      "stem": "An analyst wants a personal `/summarise-sources` command available in all of their projects but not shared with the team. Where does it belong?",
+      "options": [
+        {
+          "key": "A",
+          "text": "In the project's `.claude/commands/`"
+        },
+        {
+          "key": "B",
+          "text": "In `.mcp.json`"
+        },
+        {
+          "key": "C",
+          "text": "In CLAUDE.md"
+        },
+        {
+          "key": "D",
+          "text": "In `~/.claude/commands/` as a Markdown file"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "User-level commands are personal and follow you across projects.",
+      "distractor_notes": {
+        "A": "It would be shared with everyone who clones the repository.",
+        "B": "That file configures MCP servers.",
+        "C": "That is context, not a command."
+      },
+      "cheatsheet": "d1-fundamentals#slash-commands",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s5"
+      ]
+    },
+    {
+      "id": "SC-034",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "context management strategies",
+      "task": "M2",
+      "scenario": "s5-research",
+      "stem": "The coordinator's context fills with raw pages from twenty sources. What is the best way to keep it usable?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Have subagents read the sources in their own contexts and return concise findings, and record key findings in a notes file"
+        },
+        {
+          "key": "B",
+          "text": "Rely on `/compact` alone"
+        },
+        {
+          "key": "C",
+          "text": "Paste every source into the coordinator so nothing is lost"
+        },
+        {
+          "key": "D",
+          "text": "Read only the first source and assume the rest agree"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Isolate noisy reading in subagents and persist durable findings.",
+      "distractor_notes": {
+        "B": "Summaries are lossy and the bulk keeps returning.",
+        "C": "It exhausts the window.",
+        "D": "It ignores the evidence."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s5"
+      ]
+    },
+    {
+      "id": "SC-035",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "context management strategies",
+      "task": "M2",
+      "scenario": "s5-research",
+      "stem": "Two sources report different growth rates and readers must be able to trace claims. How should findings be carried into the report?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Average the two numbers and cite neither"
+        },
+        {
+          "key": "B",
+          "text": "Keep the higher figure only"
+        },
+        {
+          "key": "C",
+          "text": "Drop both claims to avoid disagreement"
+        },
+        {
+          "key": "D",
+          "text": "Keep each claim linked to its source, and present both values with their sources rather than silently choosing one"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Reliable reports preserve provenance and surface conflicts.",
+      "distractor_notes": {
+        "A": "It fabricates a figure and loses provenance.",
+        "B": "It hides the conflict.",
+        "C": "It throws away evidence readers need."
+      },
+      "cheatsheet": "d3-agentic#verification",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s5"
+      ]
+    },
+    {
+      "id": "SC-036",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "pre/posttooluse hooks",
+      "task": "A5",
+      "scenario": "s6-ci-review",
+      "stem": "In the review job Claude must never write outside `tests/`. That is a policy, not something to leave to the model. What enforces it?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A Skill explaining the restriction"
+        },
+        {
+          "key": "B",
+          "text": "A CLAUDE.md line limiting edits to `tests/`"
+        },
+        {
+          "key": "C",
+          "text": "A PreToolUse hook on edit and write tools that blocks paths outside `tests/` with exit code 2"
+        },
+        {
+          "key": "D",
+          "text": "A PostToolUse hook that deletes stray files afterwards"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Pre-execution hooks enforce business rules deterministically.",
+      "distractor_notes": {
+        "A": "Skills load at the model's discretion.",
+        "B": "Advisory only.",
+        "D": "The write has already happened."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s6"
+      ]
+    },
+    {
+      "id": "SC-037",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "orchestration-layer safeguards",
+      "task": "A1",
+      "scenario": "s6-ci-review",
+      "stem": "If the CI job crashes midway, the PR must not look silently approved. What design ensures a sensible end state?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A wrapper that always posts a final status and, if no complete review exists, posts \"review incomplete: human review required\""
+        },
+        {
+          "key": "B",
+          "text": "Re-run the job forever until it passes"
+        },
+        {
+          "key": "C",
+          "text": "Leave the PR without a comment"
+        },
+        {
+          "key": "D",
+          "text": "A prompt telling the model to always finish"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Guarantee an end state in the orchestration layer.",
+      "distractor_notes": {
+        "B": "It can block the pipeline and hide the problem.",
+        "C": "It reads as no findings.",
+        "D": "It cannot help if the process crashes."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s6"
+      ]
+    },
+    {
+      "id": "SC-038",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "posttooluse quality gates",
+      "task": "C6",
+      "scenario": "s6-ci-review",
+      "stem": "Generated tests must always be linted and formatted, independent of whether the model remembers. What implements that?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A PostToolUse hook on `Edit|Write` that runs the formatter and linter and exits with code 2 with errors on stderr"
+        },
+        {
+          "key": "B",
+          "text": "A `/lint` command developers should remember to run"
+        },
+        {
+          "key": "C",
+          "text": "A CLAUDE.md checklist"
+        },
+        {
+          "key": "D",
+          "text": "A PreToolUse hook that lints the file before it is written"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "PostToolUse runs after the edit; exit code 2 returns failures to Claude.",
+      "distractor_notes": {
+        "B": "It depends on people remembering.",
+        "C": "It is advisory.",
+        "D": "The new content does not exist yet."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s6"
+      ]
+    },
+    {
+      "id": "SC-039",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "iterative refinement",
+      "task": "C2",
+      "scenario": "s6-ci-review",
+      "stem": "The generated tests miss null-input edge cases. What is the most effective way to steer the next attempt?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Start a new session without the earlier output"
+        },
+        {
+          "key": "B",
+          "text": "Ask for more tests without details"
+        },
+        {
+          "key": "C",
+          "text": "Tell Claude the tests are bad"
+        },
+        {
+          "key": "D",
+          "text": "Give one or two concrete example tests showing the desired edge-case style and name the specific cases missing"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Concrete examples and targeted feedback drive refinement.",
+      "distractor_notes": {
+        "A": "It loses the context of what was tried.",
+        "B": "It may produce more of the same.",
+        "C": "It gives no direction."
+      },
+      "cheatsheet": "d5-automation#prompting",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s6"
+      ]
+    },
+    {
+      "id": "SC-040",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "sync vs batch API",
+      "task": "P1",
+      "scenario": "s6-ci-review",
+      "stem": "Besides the blocking PR check, the team wants a nightly review of 5,000 old PRs with no deadline. Which processing mode fits each?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Batches for the PR check, synchronous for the backlog"
+        },
+        {
+          "key": "B",
+          "text": "Synchronous for both"
+        },
+        {
+          "key": "C",
+          "text": "Synchronous Messages API for the blocking PR check; the asynchronous Message Batches API for the nightly backlog"
+        },
+        {
+          "key": "D",
+          "text": "Batches for both"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Choose by latency need: blocking workflows are synchronous; latency-tolerant bulk work suits batches.",
+      "distractor_notes": {
+        "A": "The modes are reversed.",
+        "B": "It costs more than needed for work with no deadline.",
+        "D": "The PR check blocks a developer and needs a prompt answer."
+      },
+      "cheatsheet": "d5-automation#cost",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s6"
+      ]
+    },
+    {
+      "id": "SC-041",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "structured output method",
+      "task": "P2",
+      "scenario": "s6-ci-review",
+      "stem": "A script parses the review output as an array of findings and fails on any malformed reply. Which is most reliable?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Prefill the reply with `[`"
+        },
+        {
+          "key": "B",
+          "text": "A tool whose input schema is the findings array, forced with `tool_choice`"
+        },
+        {
+          "key": "C",
+          "text": "Repair broken output with regexes"
+        },
+        {
+          "key": "D",
+          "text": "Ask for \"valid JSON only\" in the prompt"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Schema-backed tool use is the most reliable structured output method.",
+      "distractor_notes": {
+        "A": "It does not enforce the item schema.",
+        "C": "Brittle.",
+        "D": "No schema guarantee."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s6"
+      ]
+    },
+    {
+      "id": "SC-042",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "feedback loops",
+      "task": "P6",
+      "scenario": "s6-ci-review",
+      "stem": "Reviewers keep flagging false positives about `TODO` comments. How should the team use that feedback?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Tell reviewers to ignore those comments"
+        },
+        {
+          "key": "B",
+          "text": "Remove the review step"
+        },
+        {
+          "key": "C",
+          "text": "Capture each false positive in a structured record (finding type, reviewer verdict, reason) and use the pattern to adjust instructions or add few-shot examples"
+        },
+        {
+          "key": "D",
+          "text": "Raise the temperature to vary findings"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Structured feedback capture feeds prompt and example improvements.",
+      "distractor_notes": {
+        "A": "It leaves the cause unaddressed.",
+        "B": "It discards the value.",
+        "D": "It does not target the recurring error."
+      },
+      "cheatsheet": "d5-automation#evaluation",
+      "sources": [],
+      "tags": [
+        "scenario-mock-2026",
+        "s6"
+      ]
+    }
+  ]
+}

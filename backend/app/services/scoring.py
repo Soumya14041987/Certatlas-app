@@ -1,6 +1,7 @@
 """Grading and scorecard construction, shared by both modes."""
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import select
@@ -8,7 +9,9 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models import Attempt, AttemptAnswer, AttemptMode, AttemptStatus
-from app.services.content import Question, domain_names, get_blueprint, get_question, resolve_cheatsheet
+from app.services.content import (
+    Question, domain_names, get_blueprint, get_objectives, get_question, resolve_cheatsheet,
+)
 
 
 def is_correct(question: Question, selected: list[str]) -> bool:
@@ -66,6 +69,33 @@ def grade(attempt: Attempt) -> dict:
     return attempt.domain_breakdown
 
 
+def objective_breakdown(attempt: Attempt) -> list[dict]:
+    """Percent correct per exam objective (weakest first), like the official score report.
+
+    Only questions tagged with an objective count; untagged legacy items are skipped.
+    """
+    objectives = get_objectives()
+    answers = {a.question_id: a for a in attempt.answers}
+    tally: dict[str, list[int]] = {}
+    for qid in attempt.question_ids:
+        question = get_question(qid)
+        if question is None or question.task not in objectives:
+            continue
+        counts = tally.setdefault(question.task, [0, 0])
+        counts[1] += 1
+        answer = answers.get(qid)
+        if answer is not None and answer.is_correct:
+            counts[0] += 1
+    rows = [
+        {
+            "id": oid, "title": objectives[oid]["title"], "domain": objectives[oid]["domain"],
+            "correct": right, "total": total, "percent": round(100.0 * right / total, 1),
+        }
+        for oid, (right, total) in tally.items()
+    ]
+    return sorted(rows, key=lambda r: (r["percent"], r["id"]))
+
+
 def scorecard(attempt: Attempt) -> dict:
     """The published result: headline figures plus where to study next."""
     breakdown = attempt.domain_breakdown or {}
@@ -89,6 +119,7 @@ def scorecard(attempt: Attempt) -> dict:
         "seconds_per_question": round(elapsed / total, 1) if total else 0.0,
         "submitted_at": attempt.submitted_at.isoformat() if attempt.submitted_at else None,
         "domain_breakdown": breakdown,
+        "objective_breakdown": objective_breakdown(attempt),
         "focus_areas": [
             {"code": code, "name": stats["name"], "percent": stats["percent"]}
             for code, stats in weak
@@ -134,7 +165,7 @@ def time_limit_for(mode: str) -> int | None:
     return settings.exam_duration_minutes * 60 if mode == AttemptMode.EXAM else None
 
 
-def domain_accuracy_map(user_id: int, db: Session) -> dict[str, float | None]:
+def domain_accuracy_map(user_id: uuid.UUID, db: Session) -> dict[str, float | None]:
     """Per-domain accuracy across every attempt the user has submitted so far.
 
     ``None`` for a domain the user has never been scored on — kept distinct

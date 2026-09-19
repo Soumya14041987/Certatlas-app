@@ -1,5 +1,5 @@
 from app.models.attempt import Attempt, AttemptAnswer, AttemptMode, AttemptStatus
-from app.models.user import Bookmark, RefreshToken, User, UserRole
+from app.models.user import Bookmark, Profile, UserRole
 
 __all__ = [
     "Attempt",
@@ -7,7 +7,6 @@ __all__ = [
     "AttemptMode",
     "AttemptStatus",
     "Bookmark",
-    "RefreshToken",
-    "User",
+    "Profile",
     "UserRole",
 ]

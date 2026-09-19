@@ -1,12 +1,12 @@
 """Application configuration, loaded from environment / .env."""
 from __future__ import annotations
 
-import secrets
 from functools import lru_cache
 from pathlib import Path
+from typing import Annotated
 
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent  # .../backend/app
 CONTENT_DIR = BASE_DIR / "content"
@@ -23,21 +23,37 @@ class Settings(BaseSettings):
     debug: bool = True
     api_prefix: str = "/api/v1"
 
-    # --- Security -------------------------------------------------------
-    # Generated per-process when unset. Production MUST set CCARF_SECRET_KEY,
-    # otherwise every restart invalidates all issued tokens.
-    secret_key: str = Field(default_factory=lambda: secrets.token_urlsafe(64))
-    jwt_algorithm: str = "HS256"
-    access_token_ttl_minutes: int = 30
-    refresh_token_ttl_days: int = 14
-    bcrypt_rounds: int = 12
-    password_min_length: int = 10
-
     # --- CORS -----------------------------------------------------------
-    cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    cors_origins: Annotated[list[str], NoDecode] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
-    # --- Persistence ----------------------------------------------------
+    # --- Persistence ------------------------------------------------------
+    # Supabase's Postgres connection string (session pooler). SQLite is kept
+    # as the fallback default only so a bare checkout with no .env still
+    # imports cleanly; the app is not meant to run against it any more.
     database_url: str = "sqlite:///./ccarf.db"
+
+    # --- Supabase Auth ----------------------------------------------------
+    # Identity, credentials and sessions are Supabase's job now. This app
+    # only ever verifies a bearer token the frontend already obtained,
+    # against the JWKS endpoint this URL derives — see
+    # core/supabase_auth.py. Nothing here can issue or refresh a token.
+    supabase_url: str | None = None
+
+    # Root-equivalent (bypasses RLS and Auth) — never read outside tests/.
+    # Used only to create/delete throwaway auth users as pytest fixtures via
+    # Supabase's Admin API, since a real profiles/attempts row is now
+    # FK-constrained to a real auth.users row. Must never reach the
+    # frontend or any VITE_-prefixed variable.
+    supabase_service_role_key: str | None = None
+
+    @property
+    def supabase_jwks_url(self) -> str | None:
+        if not self.supabase_url:
+            return None
+        return f"{self.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
 
     # --- Rate limiting (fixed window, per client+route) ------------------
     rate_limit_enabled: bool = True
@@ -46,27 +62,13 @@ class Settings(BaseSettings):
 
     # --- Exam engine ----------------------------------------------------
     exam_question_count: int = 60
-    exam_duration_minutes: int = 90
+    exam_duration_minutes: int = 120
+    quick_mock_minutes: int = 56
+    quick_mock_scenarios: int = 4
     exam_pass_percent: int = 72
     practice_set_count: int = 300
     practice_set_size: int = 60
     diagnostic_question_count: int = 25
-
-    # --- Bootstrap admin (created by seed.py only when both are set) -----
-    first_admin_email: str | None = None
-    first_admin_password: str | None = None
-
-    # --- OAuth sign-in (Google / GitHub) ---------------------------------
-    # A provider is only offered when both its id and secret are set.
-    google_client_id: str | None = None
-    google_client_secret: str | None = None
-    github_client_id: str | None = None
-    github_client_secret: str | None = None
-    # Where the backend's own OAuth callback is reachable — must match the
-    # redirect URI registered with each provider exactly.
-    public_base_url: str = "http://127.0.0.1:8000"
-    # Where the browser is sent after a successful/failed OAuth round trip.
-    frontend_base_url: str = "http://localhost:5173"
 
     # --- "What's new" feed: Anthropic/Claude release videos from YouTube ----
     # Feature is hidden (not just empty) until this is set.

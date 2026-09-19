@@ -1,0 +1,34 @@
+{
+  "scenarios": [
+    {
+      "id": "s1-support-agent",
+      "title": "Customer support resolution agent",
+      "body": "A retailer runs a Claude-based support agent on the Messages API with the tools `lookup_customer`, `get_order`, `issue_refund` and `escalate_to_human`. Refunds above $200 require a human. The agent's code is maintained by a team using Claude Code in a shared repository with a CLAUDE.md. Leadership wants every conversation to end in either a resolution or a documented handoff."
+    },
+    {
+      "id": "s2-extraction",
+      "title": "Invoice and contract extraction pipeline",
+      "body": "A finance operations team extracts vendor, dates, amounts and payment terms from thousands of invoices and contracts each night. Records feed an ERP that rejects malformed payloads. Documents arrive in many layouts, including poor scans. Analysts review part of the output before posting, and nothing is needed until the next morning."
+    },
+    {
+      "id": "s3-monolith",
+      "title": "Legacy monolith migration with Claude Code",
+      "body": "A team is migrating a 900k-line Java monolith into services using Claude Code. The repository has many modules, generated code and vendored libraries. The work spans weeks, several engineers and many sessions, and the team wants conventions applied consistently and Claude to work safely."
+    },
+    {
+      "id": "s4-mcp-platform",
+      "title": "Internal developer platform with MCP servers",
+      "body": "A platform team exposes ticketing, deployment and feature-flag systems to Claude through MCP servers, used both from Claude Code and from a chat assistant built on the API. Some servers are shared team infrastructure and some are personal experiments. Credentials differ per developer."
+    },
+    {
+      "id": "s5-research",
+      "title": "Multi-agent research assistant",
+      "body": "A coordinator agent answers open-ended market research questions by delegating to subagents: web search, document analysis and synthesis. Each subagent runs in its own context window. Sources sometimes conflict, tools fail intermittently, and readers must be able to trace every claim in the final report to its source."
+    },
+    {
+      "id": "s6-ci-review",
+      "title": "CI code-review and test-generation pipeline",
+      "body": "A company runs Claude Code headlessly in CI on every pull request to review changes and generate missing unit tests, posting results as PR comments. Reviews of large PRs are inconsistent, formatting must be enforced regardless of model behaviour, and scripts parse the output."
+    }
+  ]
+}

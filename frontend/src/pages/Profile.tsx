@@ -1,21 +1,16 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Alert, Card, SectionHeading, Spinner } from "../components/ui";
 import { formatDate, formatDateTime } from "../lib/format";
 
-type Session = { id: number; issued_at: string; expires_at: string; active: boolean; user_agent: string | null };
-
 export default function Profile() {
-  const { user, setUser, logout } = useAuth();
+  const { user, setUser, logoutEverywhere } = useAuth();
   const [fullName, setFullName] = useState(user?.full_name ?? "");
   const [targetDate, setTargetDate] = useState(user?.target_exam_date?.slice(0, 10) ?? "");
-  const [sessions, setSessions] = useState<Session[] | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => { api.sessions().then(setSessions).catch(() => setSessions([])); }, []);
 
   if (!user) return <Spinner />;
 
@@ -76,37 +71,14 @@ export default function Profile() {
       </Card>
 
       <Card className="p-6">
-        <SectionHeading title="Active sessions"
-                        hint="Each sign-in issues a refresh token you can revoke"
+        <SectionHeading title="Sessions"
+                        hint="Sign out of this app everywhere you're currently signed in"
                         action={
                           <button type="button" className="btn-danger btn-sm"
-                                  onClick={async () => { await api.logoutEverywhere().catch(() => undefined); await logout(); }}>
+                                  onClick={() => logoutEverywhere()}>
                             Sign out everywhere
                           </button>
                         } />
-        {sessions === null ? (
-          <Spinner label="Loading sessions" />
-        ) : sessions.length === 0 ? (
-          <p className="text-sm text-ink-400">No recorded sessions.</p>
-        ) : (
-          <div className="divide-y divide-white/[0.05]">
-            {sessions.map((session) => (
-              <div key={session.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div className="min-w-0">
-                  <div className="truncate text-[13px] text-ink-200">
-                    {session.user_agent ?? "Unknown client"}
-                  </div>
-                  <div className="text-xs text-ink-500">
-                    Started {formatDateTime(session.issued_at)} · expires {formatDate(session.expires_at)}
-                  </div>
-                </div>
-                <span className={session.active ? "chip-mint" : "chip-neutral"}>
-                  {session.active ? "Active" : "Revoked"}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
       </Card>
 
       <Card className="p-6">

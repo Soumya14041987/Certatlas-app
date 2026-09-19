@@ -2,15 +2,18 @@ import {
   createContext, useCallback, useContext, useEffect, useMemo, useState,
   type ReactNode,
 } from "react";
-import { api, auth as tokens } from "./api";
+import { api } from "./api";
+import { supabase } from "./supabaseClient";
 import type { User } from "./types";
 
 interface AuthState {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, fullName: string, password: string) => Promise<void>;
+  register: (email: string, fullName: string, password: string) => Promise<{ needsEmailConfirmation: boolean }>;
+  loginWithProvider: (provider: "google" | "github") => Promise<void>;
   logout: () => Promise<void>;
+  logoutEverywhere: () => Promise<void>;
   refreshUser: () => Promise<void>;
   setUser: (user: User) => void;
 }
@@ -21,6 +24,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // role/full_name/target_exam_date live in public.profiles, not on
+  // Supabase's own auth user object, so a Supabase session alone isn't
+  // enough — this app's own /auth/me is still the source of truth for them.
   const refreshUser = useCallback(async () => {
     try {
       setUser(await api.me());
@@ -29,19 +35,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // A stored refresh token is enough to re-establish a session on reload; the
-  // API client exchanges it transparently on the first 401.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      if (!tokens.refresh) {
-        if (!cancelled) setLoading(false);
-        return;
-      }
-      await refreshUser();
-      if (!cancelled) setLoading(false);
-    })();
-    return () => { cancelled = true; };
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (cancelled) return;
+      if (session) await refreshUser();
+      setLoading(false);
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (cancelled) return;
+      if (session) await refreshUser();
+      else setUser(null);
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.subscription.unsubscribe();
+    };
   }, [refreshUser]);
 
   const value = useMemo<AuthState>(() => ({
@@ -50,17 +62,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser,
     refreshUser,
     login: async (email, password) => {
-      const pair = await api.login(email, password);
-      tokens.set(pair.access_token, pair.refresh_token);
-      setUser(await api.me());
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw new Error(error.message);
+      await refreshUser();
     },
     register: async (email, fullName, password) => {
-      const pair = await api.register(email, fullName, password);
-      tokens.set(pair.access_token, pair.refresh_token);
-      setUser(await api.me());
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      });
+      if (error) throw new Error(error.message);
+      // If the project requires email confirmation, signUp returns no
+      // session yet — there's nothing to load /auth/me with until the
+      // learner clicks the link Supabase just emailed them.
+      if (!data.session) return { needsEmailConfirmation: true };
+      await refreshUser();
+      return { needsEmailConfirmation: false };
+    },
+    loginWithProvider: async (provider) => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin },
+      });
+      if (error) throw new Error(error.message);
     },
     logout: async () => {
-      await api.logout();
+      await supabase.auth.signOut();
+      setUser(null);
+    },
+    logoutEverywhere: async () => {
+      await supabase.auth.signOut({ scope: "global" });
       setUser(null);
     },
   }), [user, loading, refreshUser]);

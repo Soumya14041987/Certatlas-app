@@ -1,11 +1,14 @@
 """Administrator endpoints: user management and content import.
 
-Every route here is gated by ``require_admin``; the role is stamped into the
-access token and re-checked against the database on each request.
+Every route here is gated by ``require_admin``, which re-checks the role
+against ``public.profiles`` on each request — never trusted from the token
+alone (the Supabase JWT's own ``role`` claim is a Postgres role for RLS,
+not this app's admin/user distinction).
 """
 from __future__ import annotations
 
 import json
+import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Body, Depends, HTTPException, status
@@ -15,7 +18,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_admin
 from app.core.config import CONTENT_DIR
 from app.db.session import get_db
-from app.models import Attempt, AttemptStatus, RefreshToken, User, UserRole
+from app.models import Attempt, AttemptStatus, Profile, UserRole
 from app.schemas import UserOut
 from app.services import content
 from app.services import updates as updates_service
@@ -24,19 +27,19 @@ router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(requir
 
 
 @router.get("/users", response_model=list[UserOut])
-def list_users(db: Session = Depends(get_db), limit: int = 200) -> list[User]:
-    return list(db.scalars(select(User).order_by(User.created_at.desc()).limit(limit)))
+def list_users(db: Session = Depends(get_db), limit: int = 200) -> list[Profile]:
+    return list(db.scalars(select(Profile).order_by(Profile.created_at.desc()).limit(limit)))
 
 
 @router.patch("/users/{user_id}", response_model=UserOut)
 def update_user(
-    user_id: int,
+    user_id: uuid.UUID,
     is_active: bool | None = Body(default=None),
     role: str | None = Body(default=None),
-    admin: User = Depends(require_admin),
+    admin: Profile = Depends(require_admin),
     db: Session = Depends(get_db),
-) -> User:
-    target = db.get(User, user_id)
+) -> Profile:
+    target = db.get(Profile, user_id)
     if target is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such user")
     if target.id == admin.id and (is_active is False or role == UserRole.USER):
@@ -50,15 +53,6 @@ def update_user(
         target.role = role
     if is_active is not None:
         target.is_active = is_active
-        if not is_active:
-            # Disabling an account must also cut its live sessions.
-            now = datetime.now(timezone.utc)
-            for record in db.scalars(
-                select(RefreshToken).where(
-                    RefreshToken.user_id == target.id, RefreshToken.revoked_at.is_(None)
-                )
-            ):
-                record.revoked_at = now
     db.commit()
     db.refresh(target)
     return target
@@ -75,8 +69,10 @@ def platform_stats(db: Session = Depends(get_db)) -> dict:
         )
     )
     return {
-        "users": db.scalar(select(func.count(User.id))),
-        "active_users": db.scalar(select(func.count(User.id)).where(User.is_active.is_(True))),
+        "users": db.scalar(select(func.count(Profile.id))),
+        "active_users": db.scalar(
+            select(func.count(Profile.id)).where(Profile.is_active.is_(True))
+        ),
         "attempts_total": db.scalar(select(func.count(Attempt.id))),
         "attempts_submitted": submitted,
         "attempts_open": db.scalar(
@@ -279,7 +275,7 @@ def delete_question(question_id: str) -> None:
 def mark_content_reviewed(
     verified_by: str = Body(embed=True),
     version: str | None = Body(default=None, embed=True),
-    admin: User = Depends(require_admin),
+    admin: Profile = Depends(require_admin),
 ) -> dict:
     """Record that an admin manually checked the blueprint against Anthropic's page.
 

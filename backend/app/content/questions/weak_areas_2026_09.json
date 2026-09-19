@@ -1,0 +1,2821 @@
+{
+  "questions": [
+    {
+      "id": "WA-001",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "enforce vs advise",
+      "stem": "A fintech platform team keeps this in the repo's CLAUDE.md: \"NEVER edit anything under db/migrations/ and NEVER run `terraform apply`; infrastructure changes go through the release pipeline.\" A quarterly audit of session transcripts shows three separate sessions in which Claude edited an existing migration file and one in which it ran `terraform apply` against staging after a long, context-heavy session. The instruction text was unambiguous each time, and the team's security lead now says this must be a guarantee, not a strong suggestion. Which restructuring satisfies that requirement?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Create a Skill named `safe-infra` describing the forbidden actions so Claude loads it whenever infrastructure work is detected"
+        },
+        {
+          "key": "B",
+          "text": "Move the rules into a `.claude/rules/` file scoped with a `paths` glob for `db/migrations/**` so they load whenever those files are touched"
+        },
+        {
+          "key": "C",
+          "text": "Add `permissions.deny` rules for `Edit(./db/migrations/**)` and `Bash(terraform apply:*)` to the project's committed `.claude/settings.json`, and keep only the rationale and the correct workflow in CLAUDE.md"
+        },
+        {
+          "key": "D",
+          "text": "Keep the rules in CLAUDE.md but rewrite them in capitals with an IMPORTANT header and move them to the top of the file"
+        },
+        {
+          "key": "E",
+          "text": "Put the same text in the user-level `~/.claude/CLAUDE.md` of every engineer so it is loaded in every project"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Anything that must hold regardless of what the model decides belongs in a mechanism the harness enforces: settings `permissions` (deny rules are evaluated by Claude Code before the tool runs) or a PreToolUse hook. CLAUDE.md, rules files and Skills are all context the model reads and may weigh imperfectly, especially deep into a long session. The right split is enforcement in settings/hooks, explanation and preferred workflow in CLAUDE.md.",
+      "distractor_notes": {
+        "A": "Skills are on-demand procedures selected by the model from their description; whether one loads at all is a model decision, so it cannot be a guarantee.",
+        "B": "Path-scoped rules still deliver advice into context. They improve relevance and reduce noise, but they are not enforcement, and `terraform apply` has no file path to match.",
+        "D": "CLAUDE.md content is loaded as context the model weighs against everything else; emphasis raises the odds of compliance but can never make it a guarantee.",
+        "E": "Moving advisory text to a different scope changes who receives it, not whether the model must obey it."
+      },
+      "cheatsheet": "d1-fundamentals#permission-rules",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "settings-vs-claude-md"
+      ],
+      "task": "C4"
+    },
+    {
+      "id": "WA-002",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "multi",
+      "objective": "enforce vs advise",
+      "stem": "During a configuration review, a team lists five lines currently sitting in CLAUDE.md. (1) \"Run Prettier on every file after you edit it.\" (2) \"Prefer small pure functions and avoid deep inheritance.\" (3) \"Never read `.env` or anything under `secrets/`.\" (4) \"When you propose a design, state the main trade-off in two sentences.\" (5) \"Follow the repository's existing error-handling pattern when adding new endpoints.\" The team wants to move to enforcement exactly those lines whose violation would be a policy or consistency failure that must not depend on the model remembering, and leave genuine guidance where it is. Which TWO lines should be moved out of CLAUDE.md?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Line 5: enforce with a hook that diffs every new endpoint against a template"
+        },
+        {
+          "key": "B",
+          "text": "Line 3: enforce with `permissions.deny` rules for `Read(./.env)` and `Read(./secrets/**)`"
+        },
+        {
+          "key": "C",
+          "text": "Line 2: enforce with a hook that rejects any function longer than 20 lines"
+        },
+        {
+          "key": "D",
+          "text": "Line 1: enforce formatting with a PostToolUse hook on file-editing tools"
+        },
+        {
+          "key": "E",
+          "text": "Line 4: enforce with a Stop hook that rejects replies lacking a trade-off paragraph"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "Enforce what is deterministic and consequential: formatting must run every time (PostToolUse hook) and secrets must be unreadable (deny rule). Style preferences, design communication and 'follow the existing pattern' guidance need judgment, so they remain in CLAUDE.md or path-scoped rules.",
+      "distractor_notes": {
+        "A": "The pattern needs interpretation across contexts; a rules file or CLAUDE.md conveys it better than brittle diffing.",
+        "C": "Design taste is judgment guidance; it suits CLAUDE.md, and a mechanical proxy would block legitimate code.",
+        "E": "Communication style is advice with no policy consequence when it slips."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "settings-vs-claude-md"
+      ],
+      "task": "C4",
+      "select_count": 2
+    },
+    {
+      "id": "WA-003",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "config mechanism selection",
+      "stem": "A platform team wants to encode three pieces of guidance. (a) Across the whole repository: use TypeScript strict mode, prefer named exports, and open PRs with the standard template. (b) Only when Claude touches files under `packages/billing/**`: all monetary arithmetic must use `decimal.js`, never floating point. (c) A multi-step release-notes procedure with a template file and a helper script, needed only when someone asks for release notes, roughly twice a month. Which mapping of guidance to mechanism is most appropriate?",
+      "options": [
+        {
+          "key": "A",
+          "text": "(a) root CLAUDE.md; (b) a `.claude/rules/` file with `paths: [\"packages/billing/**\"]`; (c) a Skill bundling the procedure, template and script"
+        },
+        {
+          "key": "B",
+          "text": "(a) a Skill; (b) a hook; (c) `.claude/rules/` with a glob"
+        },
+        {
+          "key": "C",
+          "text": "(a) root CLAUDE.md; (b) root CLAUDE.md; (c) root CLAUDE.md, since one file is easier to maintain"
+        },
+        {
+          "key": "D",
+          "text": "(a) `.claude/rules/` with `paths: [\"**/*\"]`; (b) settings `permissions`; (c) CLAUDE.md"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Match the mechanism to when the guidance should apply: universal, always-relevant conventions go in CLAUDE.md; guidance relevant only when specific paths are touched goes in path-scoped `.claude/rules/`; a rarely needed, multi-step task procedure with supporting files is a Skill loaded on demand. Hooks and permissions are for enforcement, not for teaching conventions.",
+      "distractor_notes": {
+        "B": "Universal conventions should be always-on; a Skill may never load. A hook cannot express 'use this library'; and a rules glob cannot match a task rather than a path.",
+        "C": "Loading billing rules and a twice-monthly procedure into every session wastes context and dilutes the rules that always apply.",
+        "D": "Permissions allow or deny tool calls; they cannot say 'use decimal.js'. A procedure needed rarely does not belong in always-loaded memory."
+      },
+      "cheatsheet": "d2-context#what-belongs",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mechanism-selection"
+      ],
+      "task": "C5"
+    },
+    {
+      "id": "WA-004",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "config mechanism selection",
+      "stem": "A monorepo's root CLAUDE.md has grown to about 1,800 lines covering the frontend, three backend services, the data pipeline and mobile clients. Engineers report that Claude follows the rules for the area they are working in only about half the time, and sessions start with a large fixed context cost. A proposal to add `@` imports for each area's document keeps every rule in the root file's reach. Which change best fixes both the adherence and the context cost?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add an `@` import for each area's document so the root file stays short and everything is still available"
+        },
+        {
+          "key": "B",
+          "text": "Add stronger wording to the rules Claude follows least often"
+        },
+        {
+          "key": "C",
+          "text": "Run `/compact` at the start of every session so the memory file is summarised"
+        },
+        {
+          "key": "D",
+          "text": "Convert the whole document into one Skill so it loads only on demand"
+        },
+        {
+          "key": "E",
+          "text": "Split area-specific rules into `.claude/rules/*.md` files with `paths` globs so they load only when matching files are involved, and keep the root CLAUDE.md short and universal"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Adherence drops when relevant rules are buried in mostly irrelevant text, and every always-loaded token costs context. Path-scoped rules deliver each area's guidance only when files in that area are in play, and a short universal CLAUDE.md keeps the always-on cost small. @-imports and compaction do not change what is eagerly loaded.",
+      "distractor_notes": {
+        "A": "Imports are expanded into context when the file loads, so the same 1,800 lines are still paid for in every session.",
+        "B": "Emphasis does not address an oversized, mostly irrelevant context; less relevant text is the cause, not weak phrasing.",
+        "C": "Compaction summarises conversation history; it does not reduce or restructure what memory files inject, and it may drop detail.",
+        "D": "A single all-areas Skill either never loads or loads all areas at once; it has the same relevance problem and adds model-decided loading."
+      },
+      "cheatsheet": "d2-context#progressive-disclosure",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mechanism-selection"
+      ],
+      "task": "C5"
+    },
+    {
+      "id": "WA-005",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "posttooluse quality gates",
+      "stem": "A team requires that every file Claude edits is formatted with Prettier and that the unit tests for the touched module run afterwards, with failures visible to Claude so it can fix them in the same turn. Their CLAUDE.md already asks for this, but compliance is inconsistent late in long sessions. The requirement is that it must not depend on the model remembering. What is the correct implementation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A Stop hook that runs the formatter and tests once when Claude finishes its turn"
+        },
+        {
+          "key": "B",
+          "text": "A `/format-and-test` slash command that engineers are told to run after each change"
+        },
+        {
+          "key": "C",
+          "text": "A PreToolUse hook on the same matcher that runs Prettier and the tests before each edit is applied"
+        },
+        {
+          "key": "D",
+          "text": "A PostToolUse hook in `.claude/settings.json` with matcher `Edit|Write|MultiEdit` running a script that formats the file and runs the module's tests, exiting with code 2 and the failures on stderr when tests fail"
+        },
+        {
+          "key": "E",
+          "text": "Strengthen CLAUDE.md with a checklist Claude must tick before ending each turn"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Hooks are executed by the harness, independent of model instruction-following. PostToolUse runs after a matching tool succeeds, which is exactly when formatting and tests are meaningful, and exit code 2 sends stderr back to Claude so it can correct the failure. Pre-edit and end-of-turn hooks fire at the wrong time, and slash commands or CLAUDE.md text are not enforcement.",
+      "distractor_notes": {
+        "A": "That runs once at the end, not after every edit, so intermediate edits go unchecked and feedback arrives too late to guide the edits.",
+        "B": "It relies on a human or the model remembering to invoke it, which is the failure being fixed.",
+        "C": "PreToolUse fires before the edit, so the file has not changed yet: it would format and test the old content.",
+        "E": "It is still advisory context; nothing forces the steps to run."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "posttooluse-hooks"
+      ],
+      "task": "C6"
+    },
+    {
+      "id": "WA-006",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "posttooluse quality gates",
+      "stem": "A PostToolUse hook runs `eslint --fix` after every edit and exits with status 1 when unfixable lint errors remain, printing the errors to stderr. Engineers see errors in their terminal transcript, yet Claude keeps moving on and never repairs the lint failures. The team wants Claude itself to receive the errors and correct them in the same turn. Which change is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Keep exit code 1 but print the errors to stdout instead of stderr"
+        },
+        {
+          "key": "B",
+          "text": "Exit with code 2 (instead of 1) when lint errors remain, with the error text on stderr, so Claude Code feeds it back to Claude"
+        },
+        {
+          "key": "C",
+          "text": "Raise the hook's timeout so Claude waits longer for the linter to finish"
+        },
+        {
+          "key": "D",
+          "text": "Add a CLAUDE.md line asking Claude to re-read the terminal output after each edit"
+        },
+        {
+          "key": "E",
+          "text": "Replace the hook with a PreToolUse hook so that bad edits are blocked before they are applied"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "For PostToolUse hooks, exit code 2 is the signal that feeds stderr back to Claude as feedback to act on (the tool has already run, so it cannot be undone). Other non-zero codes are shown to the user but do not reach the model, which matches the symptom exactly.",
+      "distractor_notes": {
+        "A": "A non-2 non-zero exit is a non-blocking error surfaced to the user; changing the stream does not send it to the model.",
+        "C": "Timing is not the problem; the output is being produced, just not routed to the model.",
+        "D": "Claude cannot read the user's terminal; and relying on the model is what the hook is meant to avoid.",
+        "E": "A PreToolUse hook sees only the proposed tool input, not the lint result of the written file, and this changes when the check happens rather than how failures reach Claude."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "posttooluse-hooks"
+      ],
+      "task": "C6"
+    },
+    {
+      "id": "WA-007",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "codebase exploration",
+      "stem": "You join a project with a 1.2M-line monorepo, including vendored dependencies and generated code, and must find every place a `PaymentIntent` is constructed without an idempotency key. The session has a large but finite context window. Which exploration strategy is best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Grep for the constructor with a glob or path filter that excludes vendored and generated directories, starting with file-list output, then Read only the relevant line ranges around each hit to check for the idempotency argument"
+        },
+        {
+          "key": "B",
+          "text": "Grep the symbol across the whole repository in content mode and paste every match into the conversation"
+        },
+        {
+          "key": "C",
+          "text": "Run Glob for `**/*` and then Read the files that look important"
+        },
+        {
+          "key": "D",
+          "text": "Read every file under `services/payments/` in full so nothing is missed"
+        },
+        {
+          "key": "E",
+          "text": "Ask Claude to first read the README and every top-level directory in full to build a complete mental map"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Effective exploration is incremental and context-frugal: use Grep to locate exact symbols (narrowing by path or glob and preferring file lists before content), then Read targeted ranges around the hits. Broad reads and unfiltered searches consume the window without adding evidence.",
+      "distractor_notes": {
+        "B": "Unfiltered content matches from vendored and generated code flood the window with irrelevant hits.",
+        "C": "A full-tree listing is noisy, and choosing by name guesses at content instead of searching for it.",
+        "D": "Whole-file reads of an entire subtree burn context on irrelevant code and will not scale in a repo this size.",
+        "E": "That front-loads context cost with material the specific question does not need, and a big map is not evidence about constructor call sites."
+      },
+      "cheatsheet": "d2-context#budgeting",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "exploration"
+      ],
+      "task": "M1"
+    },
+    {
+      "id": "WA-008",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "codebase exploration",
+      "stem": "You must understand how an unfamiliar service authenticates requests before changing it. There is no documentation and the tests are sparse. Which sequence of tool use builds understanding most incrementally while protecting the context window?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Read the largest source file first because it probably contains the most logic"
+        },
+        {
+          "key": "B",
+          "text": "Grep case-insensitively for `auth` across the entire repository including dependency directories and read every matching file"
+        },
+        {
+          "key": "C",
+          "text": "Read `package.json` and every configuration file in full, then start on the source"
+        },
+        {
+          "key": "D",
+          "text": "Read all the test files first and infer the implementation from them"
+        },
+        {
+          "key": "E",
+          "text": "Glob for likely auth/middleware files, Grep for where the middleware is registered on the app, Read the middleware file, then Grep the callers of its verification function and Read only those regions"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Start from cheap, high-signal steps (find candidate files, find the registration point) and follow references outward (callers, callees) by reading only the needed regions. Each step uses the previous result to decide the next, which is how understanding accumulates without exhausting context.",
+      "distractor_notes": {
+        "A": "File size is a poor signal for where the auth flow lives; it spends context on the least targeted material.",
+        "B": "The term is too broad; matches in vendored code and comments would swamp the useful ones.",
+        "C": "Configuration rarely reveals the request-time flow, and reading it all first is untargeted.",
+        "D": "Sparse tests give a partial and possibly stale picture, and reading them all is not targeted."
+      },
+      "cheatsheet": "d2-context#budgeting",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "exploration"
+      ],
+      "task": "M1"
+    },
+    {
+      "id": "WA-009",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp scope",
+      "stem": "A team wants every developer who clones the repository to get a read-only PostgreSQL MCP server pointed at the shared staging database, with no manual setup beyond exporting their own credentials. Separately, one engineer wants an experimental Notion MCP server, using a personal integration token, available in all of their own projects but invisible to teammates. Which scope choice is correct for the two servers?",
+      "options": [
+        {
+          "key": "A",
+          "text": "PostgreSQL server at project scope in the committed `.mcp.json` with credentials referenced through environment variables; Notion server at user scope"
+        },
+        {
+          "key": "B",
+          "text": "PostgreSQL at user scope and Notion at project scope"
+        },
+        {
+          "key": "C",
+          "text": "Both servers at local scope so each developer configures them privately"
+        },
+        {
+          "key": "D",
+          "text": "Both servers at user scope so they follow each developer everywhere"
+        },
+        {
+          "key": "E",
+          "text": "PostgreSQL at project scope with the real connection string written into `.mcp.json`, Notion at project scope too"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Project scope (`.mcp.json` in the repository) is for shared team tooling that should be reproduced on clone; user scope is for personal or experimental servers available across your own projects; local scope is private to you in one project. Credentials should be supplied through environment-variable expansion rather than committed.",
+      "distractor_notes": {
+        "B": "The scopes are reversed: the team-shared tool is personal and the personal tool is shared.",
+        "C": "Local scope is private to one developer in one project, so the shared database server would not reproduce for teammates.",
+        "D": "User scope is personal configuration; nothing reaches teammates who clone the repository.",
+        "E": "Committing a real credential leaks it, and putting a personal experimental server in shared config imposes it on the whole team."
+      },
+      "cheatsheet": "d4-mcp#scope",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mcp-scope"
+      ],
+      "task": "T3"
+    },
+    {
+      "id": "WA-010",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp scope",
+      "stem": "A security review finds a GitHub personal access token pasted directly into the `env` block of the committed `.mcp.json`. The team still wants the GitHub MCP server shared by all developers. After rotating the leaked token, what is the correct way to restructure the configuration?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Keep the server in project-scope `.mcp.json`, reference the token as `${GITHUB_TOKEN}` via environment-variable expansion, have each developer set the variable in their own environment, and verify tool discovery with `/mcp`"
+        },
+        {
+          "key": "B",
+          "text": "Move the token to a comment at the top of the file"
+        },
+        {
+          "key": "C",
+          "text": "Add `.mcp.json` to `.gitignore` so the token is no longer tracked"
+        },
+        {
+          "key": "D",
+          "text": "Move the server to local scope so the file is no longer committed"
+        },
+        {
+          "key": "E",
+          "text": "Base64-encode the token inside `.mcp.json`"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Shared MCP configuration stays in the project-scoped `.mcp.json`, but secrets must not: `${VAR}` expansion lets each developer inject their own credential from the environment. Confirming with `/mcp` that the server connects and its tools are discovered verifies the setup.",
+      "distractor_notes": {
+        "B": "A comment is still a committed secret.",
+        "C": "Teammates lose the shared server definition, and the secret is still hard-coded in a file on disk.",
+        "D": "That removes sharing entirely, and the token would still be stored in plaintext in a config file.",
+        "E": "Encoding is not protection; anyone can decode it."
+      },
+      "cheatsheet": "d4-mcp#secrets",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mcp-scope"
+      ],
+      "task": "T3"
+    },
+    {
+      "id": "WA-011",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "stateless api history",
+      "stem": "A support chatbot is built directly on the Messages API. Users complain that it forgets what they said one message earlier. The code sends each request with a system prompt saying \"You are continuing an ongoing conversation\" and a `messages` array containing only the user's newest message. What is the correct fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Rely on the system prompt sentence telling the model it is continuing a conversation"
+        },
+        {
+          "key": "B",
+          "text": "Increase `max_tokens` so the model has room to remember earlier turns"
+        },
+        {
+          "key": "C",
+          "text": "Pass a `session_id` parameter so the API attaches the earlier turns automatically"
+        },
+        {
+          "key": "D",
+          "text": "Enable prompt caching so the earlier turns are remembered between requests"
+        },
+        {
+          "key": "E",
+          "text": "Keep the conversation history in your application and send the full ordered `messages` array (previous user and assistant turns plus the new user message) on every request"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "The Messages API keeps no state between calls. Continuity is created by the client resending the full conversation, alternating user and assistant messages, each time. Prompt caching only makes resending cheaper; it does not remove the need.",
+      "distractor_notes": {
+        "A": "A sentence cannot supply the missing content; the model has no access to turns you did not include.",
+        "B": "`max_tokens` limits the size of the reply; it does not create memory.",
+        "C": "The Messages API is stateless and has no server-side conversation store keyed by a session id.",
+        "D": "Caching reduces cost and latency for repeated prefixes you resend; you must still send them."
+      },
+      "cheatsheet": "d2-context#agent-state",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "stateless-history"
+      ],
+      "task": "M4"
+    },
+    {
+      "id": "WA-012",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "stateless api history",
+      "stem": "A developer implements a tool-using loop. On the first call the model returns a `tool_use` block for `get_weather`. The developer executes it, then makes the second request with `messages` containing only one new user message that holds the `tool_result` block. The API rejects the call with an error about a `tool_result` block that has no corresponding `tool_use` block in the previous message. Which fix is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Retry the same request with a longer timeout in case the first call had not finished"
+        },
+        {
+          "key": "B",
+          "text": "Start a new conversation for each tool result and summarise the earlier turn in the first message"
+        },
+        {
+          "key": "C",
+          "text": "Drop the `tool_use_id` field from the result so it stops being matched"
+        },
+        {
+          "key": "D",
+          "text": "Send the `tool_result` inside the system prompt instead of a user message"
+        },
+        {
+          "key": "E",
+          "text": "Append the assistant message containing the `tool_use` block to the history, then append the user message with the matching `tool_result`, and send the entire history"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Because the API is stateless, the assistant's `tool_use` turn must be present in the history you resend so the following user `tool_result` can reference it by id. Losing that turn breaks the pairing.",
+      "distractor_notes": {
+        "A": "The failure is structural, not a timing issue; retrying yields the same rejection.",
+        "B": "That discards the structured pairing and is the opposite of maintaining the conversation state the API requires.",
+        "C": "The id is how the API pairs a result with its call; removing it makes the request invalid.",
+        "D": "Tool results must be returned as `tool_result` content in a user turn that follows the assistant's `tool_use`."
+      },
+      "cheatsheet": "d2-context#agent-state",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "stateless-history"
+      ],
+      "task": "M4"
+    },
+    {
+      "id": "WA-013",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "structured output method",
+      "stem": "An invoice-extraction service asks Claude in the prompt to \"return only valid JSON matching this schema.\" The ledger loader hard-fails on any schema violation, and about 2% of responses fail: a conversational preface, trailing commas, or a missing required key. The team wants the most reliable improvement to schema compliance. What should they do?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Prefill the assistant turn with `{` so the reply begins as JSON"
+        },
+        {
+          "key": "B",
+          "text": "Define a tool whose `input_schema` is the invoice schema and force it with `tool_choice: {\"type\": \"tool\", \"name\": \"record_invoice\"}`, then read the arguments from the `tool_use` block"
+        },
+        {
+          "key": "C",
+          "text": "Set temperature to 0 to eliminate variation"
+        },
+        {
+          "key": "D",
+          "text": "Add a regex post-processor that strips text before the first brace and fixes trailing commas"
+        },
+        {
+          "key": "E",
+          "text": "Strengthen the prompt with \"ONLY output JSON, no other text\" repeated in the system and user prompts"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Tool use with a JSON schema is the most reliable way to obtain structured output: the model emits arguments to the tool in the schema's shape, and forcing the tool with `tool_choice` guarantees that a tool call (and no conversational preface) is produced. Prompt instructions, prefill and post-hoc repair are progressively weaker.",
+      "distractor_notes": {
+        "A": "Prefilling steers the start of the output but does not validate keys or types against a schema.",
+        "C": "Lower temperature reduces variability but does not enforce a schema; malformed outputs can still occur.",
+        "D": "Repairing outputs is brittle and does not catch missing keys or wrong types.",
+        "E": "Prompt-based formatting improves compliance but still offers no schema guarantee; that is why 2% fail now."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "structured-output-method"
+      ],
+      "task": "P2"
+    },
+    {
+      "id": "WA-014",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "structured output method",
+      "stem": "After migrating extraction to forced tool use with a JSON schema, a team declares the problem solved: \"the schema guarantees correctness.\" Two weeks later the loader accepts every payload, but audits find invoices where the vendor name was copied from the wrong section and a required `po_number` was filled with a plausible but invented value on documents that had none. Which analysis is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Lower the temperature and the problem will disappear"
+        },
+        {
+          "key": "B",
+          "text": "Schema-enforced tool use removes malformed-output failures but not semantic errors; make uncertain fields nullable, add validation and review of values, and do not treat conformance as correctness"
+        },
+        {
+          "key": "C",
+          "text": "Revert to prompt-based JSON formatting because the schema causes the model to fabricate"
+        },
+        {
+          "key": "D",
+          "text": "Switch to prefilled responses, which are stricter than tool use for schema compliance"
+        },
+        {
+          "key": "E",
+          "text": "Tool use guarantees factual correctness, so the audit findings must be data-entry mistakes in the source documents"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A schema constrains structure. It cannot know whether a value is grounded in the document, and a required field on an input that lacks it invites fabrication. Reliable systems combine schema-backed output with nullable fields, validation checks and review of the values.",
+      "distractor_notes": {
+        "A": "Determinism does not prevent an invented value when the schema requires one.",
+        "C": "The fabrication arises from a required field forcing a value; reverting to weaker formatting does not solve that.",
+        "D": "Prefill offers less structural assurance than a schema-backed tool, and it still says nothing about semantic accuracy.",
+        "E": "Schema conformance concerns shape and types, not whether values are truthful."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "structured-output-method"
+      ],
+      "task": "P2"
+    },
+    {
+      "id": "WA-015",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "nullable and optional fields",
+      "stem": "A contract-analysis pipeline extracts `termination_date` from vendor agreements. The schema marks it as a required string in ISO format. About a fifth of the agreements are evergreen contracts with no termination date, and reviewers find the model inventing dates like 2030-01-01 for them. What schema change best addresses the problem?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Delete the field from the schema and have staff fill it manually"
+        },
+        {
+          "key": "B",
+          "text": "Make `termination_date` nullable (or optional), instruct the model to return null when the contract states none, and add a related field (such as a term type) that can represent evergreen or unspecified terms"
+        },
+        {
+          "key": "C",
+          "text": "Keep the field required and add a prompt sentence \"do not guess\""
+        },
+        {
+          "key": "D",
+          "text": "Have the model use the sentinel date `1970-01-01` when the date is absent"
+        },
+        {
+          "key": "E",
+          "text": "Keep it required and add a `confidence` field so reviewers can spot fabricated dates"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "When a source may legitimately lack a value, the schema must give the model a truthful way to say so: nullable or optional fields, with an explicit instruction to use them. Forcing a value manufactures fabrication.",
+      "distractor_notes": {
+        "A": "This discards a valuable extraction for the four-fifths of contracts that do state a date.",
+        "C": "A required string field still forces a value when none exists; the instruction competes with the schema's demand.",
+        "D": "A sentinel looks like real data downstream and silently corrupts reports.",
+        "E": "Confidence on a fabricated value is unreliable, and the fabrication is still created."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "extraction-schema"
+      ],
+      "task": "P3"
+    },
+    {
+      "id": "WA-016",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "nullable and optional fields",
+      "stem": "An extraction schema defines `payment_terms` as an enum: `net_30`, `net_60`, `due_on_receipt`. Real documents include \"net 45\", \"50% deposit, balance on delivery\" and, in some cases, no payment terms at all. The model maps all of these onto the nearest enum value, and analysts cannot tell correct values from coerced ones. Which redesign is best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Keep the enum and instruct the model to \"choose the closest value\""
+        },
+        {
+          "key": "B",
+          "text": "Add an `other` enum value with a companion free-text `payment_terms_detail`, and make the field nullable for documents with no terms"
+        },
+        {
+          "key": "C",
+          "text": "Add `net_45` and each newly discovered variant to the enum as analysts find them"
+        },
+        {
+          "key": "D",
+          "text": "Add a `confidence` score and discard any record below 0.9"
+        },
+        {
+          "key": "E",
+          "text": "Change the field to an unconstrained string and normalise it downstream"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Enums should include an escape hatch (`other`, with detail text) and allow null for absence, so that novel or missing values are represented honestly instead of being forced into the closest listed category.",
+      "distractor_notes": {
+        "A": "That instructs exactly the coercion the analysts are complaining about.",
+        "C": "That is endless whack-a-mole and still coerces any variant not yet listed.",
+        "D": "Discarding hides the real problem: the schema cannot represent the truth.",
+        "E": "Dropping the enum loses the consistency the downstream systems rely on."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "extraction-schema"
+      ],
+      "task": "P3"
+    },
+    {
+      "id": "WA-017",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "extraction accuracy patterns",
+      "stem": "A pipeline extracts dates and amounts from invoices from hundreds of vendors. Dates appear as `3/4/26`, `4 March 2026` and `2026-03-04`; amounts as `1.234,50 €` and `$1,234.50`. The model returns inconsistent formats and sometimes invents a value when a field is absent. Which combination most directly reduces hallucination and improves consistency?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A schema with nullable fields, explicit normalisation instructions (ISO 8601 dates; decimal amounts with a separate ISO currency code), and few-shot examples that cover the varied formats, including one where a field is absent and the output is null"
+        },
+        {
+          "key": "B",
+          "text": "Raise the temperature so the model explores more possible readings of ambiguous values"
+        },
+        {
+          "key": "C",
+          "text": "Add \"be extremely careful and accurate\" to the system prompt"
+        },
+        {
+          "key": "D",
+          "text": "One few-shot example taken from the most common vendor format"
+        },
+        {
+          "key": "E",
+          "text": "Extract everything as free text and normalise with regular expressions afterwards"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Extraction accuracy comes from constraining the output (schema with optional fields), stating the canonical formats (normalisation instructions), and demonstrating the behaviour on varied and edge cases with few-shot examples, including null for absent data.",
+      "distractor_notes": {
+        "B": "Higher temperature increases variability, which is the opposite of what is needed.",
+        "C": "Generic exhortation gives the model no concrete target format or rule for missing data.",
+        "D": "A single example teaches one layout; the variety and the absent-field behaviour are exactly what is untaught.",
+        "E": "Post-hoc regexes cannot resolve ambiguity like `3/4/26` and give up the chance to constrain the output."
+      },
+      "cheatsheet": "d7-prompting#few-shot",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "extraction-accuracy"
+      ],
+      "task": "P5"
+    },
+    {
+      "id": "WA-018",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "extraction accuracy patterns",
+      "stem": "A team supplied eight few-shot examples, all clean digital invoices, and got excellent results on clean inputs. On scanned invoices with smudged rows and missing line items the model invents plausible line items, and totals stop matching. Adding forty more clean examples changed nothing. What is the right next step?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Lower `max_tokens` so the model cannot generate extra line items"
+        },
+        {
+          "key": "B",
+          "text": "Tell the model in the prompt that scans are always imperfect and it should try its best"
+        },
+        {
+          "key": "C",
+          "text": "Switch to a larger context window so the model sees more of each scan"
+        },
+        {
+          "key": "D",
+          "text": "Add a hundred more clean digital invoices to strengthen the pattern"
+        },
+        {
+          "key": "E",
+          "text": "Add examples that mirror the hard cases (missing or unreadable rows returning null or flagged), and add a validation step that checks that line items sum to the stated total and flags mismatches"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Few-shot examples teach by demonstration, so they must include the difficult and ambiguous cases with the desired behaviour (leave it null, flag it). Cross-checks such as summed line items against the stated total catch fabrication that examples alone miss.",
+      "distractor_notes": {
+        "A": "Truncation would clip real content and does not teach the model to leave gaps rather than invent.",
+        "B": "It gives no concrete behaviour for a missing row and encourages guessing.",
+        "C": "The problem is behaviour on unclear content, not the amount of it.",
+        "D": "More of the same easy examples does not teach behaviour for the harder inputs."
+      },
+      "cheatsheet": "d7-prompting#few-shot",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "extraction-accuracy"
+      ],
+      "task": "P5"
+    },
+    {
+      "id": "WA-019",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool choice and sequencing",
+      "stem": "A refunds agent has three tools: `lookup_customer`, `get_order` and `issue_refund`. In roughly 3% of runs the model calls `issue_refund` with a customer id it guessed from the conversation before any lookup has happened. Policy says a refund must never be issued without a verified customer. Which design best guarantees the ordering?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Set `tool_choice` to `any` on every request"
+        },
+        {
+          "key": "B",
+          "text": "Set `tool_choice` to `none` until the model has produced a plan in text"
+        },
+        {
+          "key": "C",
+          "text": "Add \"always call lookup_customer first\" to the system prompt in bold"
+        },
+        {
+          "key": "D",
+          "text": "Enforce the prerequisite in code: require a verification token returned by `lookup_customer` as input to `issue_refund` (rejecting calls without it), and force the first call with `tool_choice` on `lookup_customer` before switching back to `auto`"
+        },
+        {
+          "key": "E",
+          "text": "Merge all three tools into one `handle_refund` tool that takes free text"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "When prerequisite data must exist before a dependent tool is used, enforce the dependency programmatically (data dependency such as a verification token, plus `tool_choice` to force the first step), rather than relying on prompts. `any` on every turn prevents termination.",
+      "distractor_notes": {
+        "A": "It forces some tool call on every turn, so the model can never produce a final text answer and the loop cannot end.",
+        "B": "Without tools the model cannot call the lookup at all, and text planning does not verify anything.",
+        "C": "It is still a probabilistic instruction, and the observed failure is the model not following it.",
+        "E": "It hides the ordering inside an opaque tool and removes the explicit dependency the policy needs enforced."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "tool-choice"
+      ],
+      "task": "T5"
+    },
+    {
+      "id": "WA-020",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool choice and sequencing",
+      "stem": "A ticket router expects each model turn to be a call to either `classify_intent` or `escalate_to_human`; downstream code reads `tool_use` blocks only. When users send greetings like \"hi\", the model answers conversationally and the router crashes on a response with no tool call. Either tool is a valid outcome depending on the message. Which `tool_choice` setting is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Leave the default and wrap the router in a try/except that treats a text reply as `classify_intent`"
+        },
+        {
+          "key": "B",
+          "text": "`{\"type\": \"any\"}`, which requires the model to call one of the available tools without dictating which"
+        },
+        {
+          "key": "C",
+          "text": "`{\"type\": \"none\"}`"
+        },
+        {
+          "key": "D",
+          "text": "`{\"type\": \"auto\"}` with a system prompt reminding the model to always call a tool"
+        },
+        {
+          "key": "E",
+          "text": "`{\"type\": \"tool\", \"name\": \"classify_intent\"}`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "`any` guarantees that some tool is invoked while leaving the choice to the model, which is exactly right when several tools are valid. Forcing a named tool removes the other valid path; `auto` and prompts cannot guarantee a tool call.",
+      "distractor_notes": {
+        "A": "It hides the failure and silently misclassifies messages.",
+        "C": "That prevents any tool call, the opposite of the requirement.",
+        "D": "Auto lets the model decide to reply with text; the prompt is advisory, so the crash can recur.",
+        "E": "That forces one specific tool every time, so escalations could never be chosen."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "tool-choice"
+      ],
+      "task": "T5"
+    },
+    {
+      "id": "WA-021",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp error handling",
+      "stem": "An MCP server's `search_tickets` tool returns the string \"Error\" for every failure. In production the agent retried a permission failure six times, and in another case treated a backend timeout as \"no matching tickets\" and told the customer nothing was found. Which redesign of the server's error behaviour is best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Return the raw stack trace text so the model can figure it out"
+        },
+        {
+          "key": "B",
+          "text": "Add blanket retry-with-backoff to the agent for every tool error"
+        },
+        {
+          "key": "C",
+          "text": "Return tool results flagged `isError: true` with structured content: an error category (for example transient, permission, validation, not_found), whether it is retryable, a message, and a suggested next action; and distinguish real empty results from failures"
+        },
+        {
+          "key": "D",
+          "text": "Keep the generic string but raise a protocol-level exception for every failure"
+        },
+        {
+          "key": "E",
+          "text": "Return an empty list on any error so the agent loop keeps moving"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Agents recover intelligently only when errors say what kind they are and what to do. Structured, type-specific errors with retryability and suggested actions, clearly separated from legitimate empty results, let the agent retry transient faults, fix bad input, or escalate permission failures.",
+      "distractor_notes": {
+        "A": "Unstructured internals are noisy, may leak details, and give no explicit recoverability.",
+        "B": "Retrying a permission failure is futile; the agent needs the category to choose retry, correct input, or escalate.",
+        "D": "Protocol exceptions do not convey category or recoverability, and the agent still cannot tell a permission problem from a timeout.",
+        "E": "This is precisely how a timeout became \"no tickets\"; it conflates failure with a valid empty result."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mcp-errors"
+      ],
+      "task": "T1"
+    },
+    {
+      "id": "WA-022",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp error handling",
+      "stem": "An MCP tool calls an external API that sometimes rate-limits. The team wants the agent to wait and retry once, and if it still fails, report a partial result rather than looping. Which error payload from the tool best supports that behaviour?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`isError: true` with `{\"error\": \"Request failed\"}`"
+        },
+        {
+          "key": "B",
+          "text": "`isError: true` with `{\"category\": \"rate_limit\", \"retryable\": true, \"retry_after_seconds\": 30, \"suggested_action\": \"wait then retry once; if still limited, report partial results\"}`"
+        },
+        {
+          "key": "C",
+          "text": "`isError: true` with the full HTTP response headers and body pasted as text"
+        },
+        {
+          "key": "D",
+          "text": "A normal (non-error) result with the text \"Something went wrong, please try again later\""
+        },
+        {
+          "key": "E",
+          "text": "`isError: true` with `{\"error\": \"HTTP 429\"}`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A useful error is specific and actionable: it names the category, declares retryability, gives timing where known and suggests a bounded next step. This lets the agent apply the intended recovery policy instead of guessing.",
+      "distractor_notes": {
+        "A": "It says nothing about cause or recoverability.",
+        "C": "Raw dumps are noisy and leave the agent to work out what matters.",
+        "D": "An unflagged failure looks like valid content, and the wording gives no retry guidance.",
+        "E": "A status code alone forces the model to infer policy, and the retry timing and next step are missing."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mcp-errors"
+      ],
+      "task": "T1"
+    },
+    {
+      "id": "WA-023",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "iterative refinement",
+      "stem": "A developer asks Claude Code to rewrite a date-parsing function. It fails on three inputs the developer knows about. The developer replies \"still wrong, try again\" four times, each time rephrasing the original request more forcefully, and the result oscillates between different wrong behaviours. Which approach will most efficiently converge on a correct implementation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Restate the original request in stronger language each time"
+        },
+        {
+          "key": "B",
+          "text": "Report only one failing case per message to avoid overwhelming Claude"
+        },
+        {
+          "key": "C",
+          "text": "Provide concrete input/expected-output pairs for the failing cases (ideally as tests), describe specifically what is wrong with the current output, and batch all known failures in one message"
+        },
+        {
+          "key": "D",
+          "text": "Run `/clear` after each failed attempt and start over with the original prompt"
+        },
+        {
+          "key": "E",
+          "text": "Ask Claude to \"think harder\" and try again"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Iterative refinement works when feedback is concrete and specific: input/output examples or failing tests, a description of the exact discrepancy, and all known issues presented together so the fix can be consolidated.",
+      "distractor_notes": {
+        "A": "It adds no new information about what is wrong, so the model keeps guessing.",
+        "B": "Fixing cases one at a time can undo earlier fixes; batching the known failures lets Claude find a solution that satisfies them all.",
+        "D": "Clearing discards the accumulated feedback that would guide the fix.",
+        "E": "Effort words do not communicate the failing behaviour."
+      },
+      "cheatsheet": "d5-automation#prompting",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "iterative-refinement"
+      ],
+      "task": "C2"
+    },
+    {
+      "id": "WA-024",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "iterative refinement",
+      "stem": "A team is refining a classification prompt. An evaluation run shows 12 misclassified samples. They fix each one by adding a special-case sentence to the prompt, and after ten patches new failures appear on samples that used to pass. What is a better refinement workflow?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Delete the evaluation set and rely on spot checks by the team"
+        },
+        {
+          "key": "B",
+          "text": "Only test the prompt on the 12 failing samples after each change"
+        },
+        {
+          "key": "C",
+          "text": "Replace the prompt with a much longer one containing all 12 failing samples verbatim as rules"
+        },
+        {
+          "key": "D",
+          "text": "Group the failures by pattern, give the model each input with the actual output, expected output and reason, revise the prompt once for the batch, and re-run the whole evaluation set to check for regressions"
+        },
+        {
+          "key": "E",
+          "text": "Continue adding one special-case sentence per failing sample as they are discovered"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Batching and categorising failures reveals the underlying pattern, a single consolidated revision addresses it, and re-running the full evaluation set catches regressions that one-at-a-time patching hides.",
+      "distractor_notes": {
+        "A": "Without the set, regressions go unseen.",
+        "B": "That checks the fixes but not the samples that previously passed.",
+        "C": "Copying samples in as rules overfits the prompt and still does not show whether other cases regress.",
+        "E": "Accumulated special cases conflict with each other and cause regressions."
+      },
+      "cheatsheet": "d5-automation#evaluation",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "iterative-refinement"
+      ],
+      "task": "C2"
+    },
+    {
+      "id": "WA-025",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "dynamic decomposition",
+      "stem": "A vendor-risk agent runs a fixed pipeline: search news, summarise, score. For a vendor called Northwind, the first search reveals it is a subsidiary of a parent under sanctions, but the pipeline still summarises and scores Northwind alone. Which architectural change best handles this class of discovery?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Have a human read the first search and decide the next steps manually"
+        },
+        {
+          "key": "B",
+          "text": "Run the same three steps in parallel for the vendor and its parent"
+        },
+        {
+          "key": "C",
+          "text": "Use an orchestrator that generates and revises subtasks from what each step finds (for example adding an ownership-chain investigation and a sanctions check), delegating them to workers"
+        },
+        {
+          "key": "D",
+          "text": "Merge the three steps into a single large prompt"
+        },
+        {
+          "key": "E",
+          "text": "Add more fixed steps covering every conceivable branch, run for every vendor"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "When the required subtasks depend on what is discovered along the way, use dynamic decomposition (orchestrator-workers): plan, execute, inspect findings, then generate the next subtasks. Fixed sequences are appropriate only when the steps are known ahead of time.",
+      "distractor_notes": {
+        "A": "This is manual re-planning, which is exactly what the orchestrator should perform.",
+        "B": "That presumes the parent is known in advance; the discovery is the point.",
+        "D": "A single prompt does not adapt to intermediate findings any better; it removes the structure and the checkpoints.",
+        "E": "Enumerating all branches up front wastes work on most vendors and still misses the branches nobody thought of."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "dynamic-decomposition"
+      ],
+      "task": "A4"
+    },
+    {
+      "id": "WA-026",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "dynamic decomposition",
+      "stem": "An engineering lead is deciding which of two workflows should be built as a fixed prompt chain and which as a dynamically decomposed agent. Workflow X: turn each uploaded invoice into a structured record through the same four steps every time. Workflow Y: investigate an intermittent production failure whose cause could lie in any of dozens of services. Which assignment is right?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Neither; use one single prompt for both"
+        },
+        {
+          "key": "B",
+          "text": "X as a fixed prompt chain; Y as a dynamic orchestrator that generates subtasks from its findings"
+        },
+        {
+          "key": "C",
+          "text": "X dynamic, Y fixed chain"
+        },
+        {
+          "key": "D",
+          "text": "Both as fixed chains, because chains are easier to test"
+        },
+        {
+          "key": "E",
+          "text": "Both dynamic, because dynamic is more capable"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Choose decomposition style by how predictable the steps are. Known, stable steps favour a fixed chain (cheaper, testable). Open-ended problems where the next step depends on the last finding favour dynamically generated subtasks.",
+      "distractor_notes": {
+        "A": "A single prompt loses structure for X and adaptability for Y.",
+        "C": "The known, repeatable workflow gains nothing from dynamism, and the open-ended investigation cannot be scripted in advance.",
+        "D": "Testability does not help if the chain cannot express the investigation.",
+        "E": "Dynamism adds cost and unpredictability where the steps are known and stable."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "dynamic-decomposition"
+      ],
+      "task": "A4"
+    },
+    {
+      "id": "WA-027",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "stop_reason loop",
+      "stem": "A developer's agent loop ends when the response text contains \"Task complete\" or after five iterations. In testing, some runs stop halfway through a task at iteration five, and others keep calling tools after the work is done because the phrase never appears. Which loop control is correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Continue while `stop_reason` is `tool_use` (execute the tools, append the `tool_result` messages, call again); finish on `end_turn`; handle `max_tokens` as a truncation case"
+        },
+        {
+          "key": "B",
+          "text": "Raise the iteration limit to 50 and keep the phrase check"
+        },
+        {
+          "key": "C",
+          "text": "Stop as soon as any response contains no text block"
+        },
+        {
+          "key": "D",
+          "text": "Keep the phrase check but add more variants such as \"Done\" and \"Finished\""
+        },
+        {
+          "key": "E",
+          "text": "Loop until the model returns an empty message"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "The response's `stop_reason` states whether the model wants to use a tool (`tool_use`, so run it and continue) or has finished (`end_turn`). Iteration caps are a guard against runaway loops, and `max_tokens` needs explicit handling rather than being treated as completion.",
+      "distractor_notes": {
+        "B": "It hides the design flaw; iteration caps are a safety net, not the primary signal.",
+        "C": "A `tool_use` response can carry no text yet still require its tool to be executed.",
+        "D": "Text matching stays brittle and the model's phrasing is unbounded.",
+        "E": "A model that has finished returns a final message, not an empty one, and empty responses are not the termination signal."
+      },
+      "cheatsheet": "d5-automation#sdk",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "stop-reason"
+      ],
+      "task": "A6"
+    },
+    {
+      "id": "WA-028",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "stop_reason loop",
+      "stem": "In an agent loop, a response arrives with `stop_reason: \"max_tokens\"` and its final content block is a `tool_use` whose JSON input is cut off mid-object. The loop's current logic treats any response containing a `tool_use` block as ready to execute. What should the loop do?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Append the partial response and continue the loop as though the tool had been executed"
+        },
+        {
+          "key": "B",
+          "text": "Execute the tool with the partial input and hope the missing fields are optional"
+        },
+        {
+          "key": "C",
+          "text": "Do not execute the incomplete call; treat it as truncation and retry the request with a higher `max_tokens`"
+        },
+        {
+          "key": "D",
+          "text": "Treat the response as a final answer and return it to the user"
+        },
+        {
+          "key": "E",
+          "text": "Ignore `stop_reason` and rely on whether the JSON parses"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "`max_tokens` means the model was cut off. A tool call whose input was truncated is unreliable and must not be run; the correct response is to retry with a larger output limit rather than either executing or finalising it.",
+      "distractor_notes": {
+        "A": "That fabricates a result for a call that never ran.",
+        "B": "A truncated input is not a valid call and may act on wrong or incomplete parameters.",
+        "D": "The turn was cut off rather than completed; `end_turn` is what signals completion.",
+        "E": "Parse success on truncated content is not guaranteed to indicate a complete call, and the reason field states the cause directly."
+      },
+      "cheatsheet": "d5-automation#sdk",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "stop-reason"
+      ],
+      "task": "A6"
+    },
+    {
+      "id": "WA-029",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "context management strategies",
+      "stem": "During a three-hour investigation of a large legacy system, an engineer's Claude Code session keeps hitting context limits. After automatic compaction Claude re-reads files it had already analysed and sometimes contradicts findings it stated earlier. Which combination of practices best sustains coherent work across the session and future ones?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Paste the entire codebase into the first message so everything is always in context"
+        },
+        {
+          "key": "B",
+          "text": "Delegate verbose exploration to subagents that return concise summaries, record decisions and findings in a scratchpad or notes file that later sessions read first, and use targeted reads instead of whole files"
+        },
+        {
+          "key": "C",
+          "text": "Start a new session every hour with no notes so context is always fresh"
+        },
+        {
+          "key": "D",
+          "text": "Disable compaction so nothing is ever summarised"
+        },
+        {
+          "key": "E",
+          "text": "Rely on `/compact` alone and re-ask Claude whenever it forgets"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Context is best managed by isolating noisy exploration in subagents, persisting durable findings outside the conversation (scratchpad files that survive compaction and new sessions) and reading only what is needed. That keeps the main window for reasoning and preserves continuity.",
+      "distractor_notes": {
+        "A": "It exhausts the window immediately and worsens the problem.",
+        "C": "Discovered facts are lost each time, forcing repeated exploration.",
+        "D": "Without compaction the session hits the limit and fails.",
+        "E": "Summaries are lossy, and re-asking repeats the cost and the risk of contradiction."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "context-management"
+      ],
+      "task": "M2"
+    },
+    {
+      "id": "WA-030",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "plan mode vs direct",
+      "stem": "Two tasks are on the board. Task 1: migrate authentication across 40 services from a homegrown session library to a central identity provider, with unknown coupling and an architecture board that must approve the approach. Task 2: rename a local variable in one function and update its two references. Which use of Claude Code is best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Execute Task 1 directly with the `bypassPermissions` mode for speed and use plan mode for Task 2"
+        },
+        {
+          "key": "B",
+          "text": "Execute both directly and rely on `git revert` if something goes wrong"
+        },
+        {
+          "key": "C",
+          "text": "Use plan mode for Task 1 to explore read-only, produce a plan for review and approval before any change; execute Task 2 directly"
+        },
+        {
+          "key": "D",
+          "text": "Ask for a plan in Task 1 but forbid Claude from reading the code until the board approves it"
+        },
+        {
+          "key": "E",
+          "text": "Use plan mode for both so nothing is ever changed without a plan"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Plan mode suits work with large scope, architectural uncertainty, difficult reversibility or a need for stakeholder sign-off: explore read-only, propose, get approval, then implement. Small, well-scoped, reversible changes are better executed directly.",
+      "distractor_notes": {
+        "A": "The modes are reversed relative to scope, risk and need for review, and bypassing permissions on a broad migration is dangerous.",
+        "B": "A cross-service migration is costly and hard to unwind, and it needs stakeholder review before implementation.",
+        "D": "A plan for unknown coupling requires exploring the codebase; plan mode permits read-only exploration.",
+        "E": "For a trivial, easily reversible edit, a plan is pure overhead."
+      },
+      "cheatsheet": "d3-agentic#plan-mode",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "plan-mode"
+      ],
+      "task": "C3"
+    },
+    {
+      "id": "WA-031",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "human review routing",
+      "stem": "A document-extraction system sends a random 5% of records to human reviewers. Audits show that errors concentrate in handwritten fields, low-quality scans and unfamiliar vendor templates, and that most reviewed records were fine. Which routing strategy improves reviewer effectiveness most?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Review nothing, but raise the model's temperature to increase diversity"
+        },
+        {
+          "key": "B",
+          "text": "Route by document length, longest first"
+        },
+        {
+          "key": "C",
+          "text": "Route by field-level confidence and ambiguity signals plus document characteristics (scan quality, unfamiliar template), with thresholds calibrated on a labelled sample, while keeping a small random audit sample to measure accuracy"
+        },
+        {
+          "key": "D",
+          "text": "Keep random sampling but raise it to 20%"
+        },
+        {
+          "key": "E",
+          "text": "Route every document from new customers to review and none from established customers"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Target scarce reviewer time where errors are likely: field-level confidence, ambiguity flags and document characteristics, with thresholds validated against labelled data. A small random audit sample remains useful for measuring overall accuracy and detecting drift.",
+      "distractor_notes": {
+        "A": "This removes the safety net and temperature does not improve accuracy.",
+        "B": "Length correlates weakly with error risk compared with confidence and quality signals.",
+        "D": "More random review catches more errors only in proportion to the extra volume, and it still spends most effort on records that are fine.",
+        "E": "Customer age is a crude proxy that ignores which documents and fields are actually risky."
+      },
+      "cheatsheet": "d3-agentic#human-in-the-loop",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "review-routing"
+      ],
+      "task": "M6"
+    },
+    {
+      "id": "WA-032",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool descriptions",
+      "stem": "An agent has two tools: `search_orders` (\"Search orders\") and `lookup_order` (\"Look up an order\"). It frequently calls `search_orders` when the customer has quoted an order number like ORD-48213, and `lookup_order` for vague requests like \"my recent shoe order\". What is the best fix to improve tool selection reliability?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add \"choose carefully\" to the system prompt"
+        },
+        {
+          "key": "B",
+          "text": "Remove `lookup_order` and always use `search_orders` with the order number as the query"
+        },
+        {
+          "key": "C",
+          "text": "Expand each description with when to use it, the expected input format with an example, and explicit disambiguation (`lookup_order` for a known order id such as ORD-48213; `search_orders` for fuzzy criteria like date range or product)"
+        },
+        {
+          "key": "D",
+          "text": "Rename the tools to `tool_a` and `tool_b` so names do not bias the model"
+        },
+        {
+          "key": "E",
+          "text": "Merge the two tools into one tool with an optional `order_id` and optional `query`"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Models choose tools from their descriptions. Rich descriptions covering purpose, input formats with examples, and explicit guidance for distinguishing similar tools are the primary lever for selection reliability.",
+      "distractor_notes": {
+        "A": "It gives no criteria for choosing between the tools.",
+        "B": "That reduces precision when an exact id is known and does not fix vague-request handling.",
+        "D": "Meaningless names remove useful signal and make selection worse.",
+        "E": "Merging can work, but it is a redesign that does not address the description problem, and overloaded tools tend to be misused."
+      },
+      "cheatsheet": "d4-mcp#naming",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "tool-descriptions"
+      ],
+      "task": "T2"
+    },
+    {
+      "id": "WA-033",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "enforce vs advise",
+      "stem": "A company generates API client code with a tool that writes `// @generated` on the first line of every output file. Engineers keep asking Claude Code to 'fix' these files, and each fix is overwritten on the next generation run. The policy is that Claude must never edit any file whose first line contains `@generated`, wherever it lives in the repository. Which mechanism enforces this?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A `permissions.deny` rule such as `Edit(./generated/**)`"
+        },
+        {
+          "key": "B",
+          "text": "A CLAUDE.md rule telling Claude to check the first line of every file before editing"
+        },
+        {
+          "key": "C",
+          "text": "A Skill called `generated-files` that explains which files are generated"
+        },
+        {
+          "key": "D",
+          "text": "A PreToolUse hook on `Edit|Write|MultiEdit` that reads the target file's first line and exits with code 2 with an explanatory stderr message when it contains `@generated`"
+        },
+        {
+          "key": "E",
+          "text": "A PostToolUse hook that reverts the file with `git checkout` after Claude edits it"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "A conditional policy that depends on file content needs code, and it must run before the edit so it can block it. A PreToolUse hook receives the tool input, can inspect the target, and exit code 2 blocks the call and returns stderr to Claude. Static deny rules cannot read content, and CLAUDE.md or Skills are advisory.",
+      "distractor_notes": {
+        "A": "Deny rules match tool names and path patterns; they cannot inspect file content, and generated files are not confined to one directory.",
+        "B": "It is advisory and depends on the model remembering to check on every edit.",
+        "C": "A Skill is loaded at the model's discretion and cannot block anything.",
+        "E": "It permits the edit and then patches over it; the tool call has already happened and the model may act on the edited result in between."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "settings-vs-claude-md"
+      ],
+      "task": "C4"
+    },
+    {
+      "id": "WA-034",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "enforce vs advise",
+      "stem": "A security team must ensure that no developer's Claude Code session can read `~/.aws/credentials`, even if a developer edits their own `.claude/settings.local.json` or the project's `.claude/settings.json`. The organisation manages every laptop with an MDM tool. Which configuration best guarantees this?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add a line to the shared CLAUDE.md saying credentials must never be read"
+        },
+        {
+          "key": "B",
+          "text": "Deploy managed (enterprise policy) settings via MDM containing a `permissions.deny` rule for `Read(~/.aws/credentials)`, since managed settings sit at the highest precedence and cannot be overridden by user, project or local settings"
+        },
+        {
+          "key": "C",
+          "text": "Add the deny rule to each developer's `~/.claude/settings.json`"
+        },
+        {
+          "key": "D",
+          "text": "Ask each developer to add the rule to `.claude/settings.local.json` and review it quarterly"
+        },
+        {
+          "key": "E",
+          "text": "Add the deny rule to the project's committed `.claude/settings.json`"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "When a restriction must survive the developer's own configuration, use managed settings deployed by the organisation. They take precedence over every other scope and cannot be overridden by users, unlike user, project and local files.",
+      "distractor_notes": {
+        "A": "Advisory context is not a control.",
+        "C": "That is a user-level file the developer owns and can edit at will.",
+        "D": "Local settings are the developer's own and voluntary; a review cycle is detection at best.",
+        "E": "Any developer can change the project file in their working tree or add conflicting local settings; it is not a tamper-resistant control."
+      },
+      "cheatsheet": "d6-security#managed-settings",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "settings-vs-claude-md"
+      ],
+      "task": "C4"
+    },
+    {
+      "id": "WA-035",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "config mechanism selection",
+      "stem": "A team's CLAUDE.md contains a 300-line database migration runbook: twelve numbered steps, two helper scripts and a rollback checklist. It is relevant only when an engineer says something like \"run the migration for the orders table\", which can involve files anywhere in the repo. Every session pays for those 300 lines. Which change is best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Package the runbook, scripts and checklist as a Skill with a clear description so it loads on demand when a migration task is requested, and remove it from CLAUDE.md"
+        },
+        {
+          "key": "B",
+          "text": "Move it to `permissions.ask` entries so Claude asks before each step"
+        },
+        {
+          "key": "C",
+          "text": "Move it to a `.claude/rules/` file with `paths: [\"db/**\"]`"
+        },
+        {
+          "key": "D",
+          "text": "Keep it in CLAUDE.md but shorten the wording of each step"
+        },
+        {
+          "key": "E",
+          "text": "Replace it with a PostToolUse hook that prints the runbook after each edit"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Task-specific, multi-step procedures with supporting files, needed only when that task is requested, are the use case for Skills: only the short description is always visible, and the body loads when relevant. Path-scoped rules key on files; hooks and permissions enforce, they don't teach.",
+      "distractor_notes": {
+        "B": "Permissions gate tool calls; they do not carry procedural knowledge.",
+        "C": "Path globs trigger on files touched, not on the task requested; migrations involve files across the repo and the rule would load whenever anything under `db/` is read.",
+        "D": "It still loads in every session and loses the scripts and checklist.",
+        "E": "A hook fires on tool events, not on a task type, and would spam the context after every edit."
+      },
+      "cheatsheet": "d3-agentic#skills",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mechanism-selection"
+      ],
+      "task": "C5"
+    },
+    {
+      "id": "WA-036",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "config mechanism selection",
+      "stem": "Two pieces of guidance are being discussed. (a) \"Run `pnpm test:unit` before committing; integration tests need Docker and run in CI only.\" This applies to everyone on the team. (b) \"Explain things briefly, and never use emoji.\" This is one engineer's personal style. Where should each live?",
+      "options": [
+        {
+          "key": "A",
+          "text": "(a) a hook, (b) a Skill"
+        },
+        {
+          "key": "B",
+          "text": "(a) the project's committed CLAUDE.md; (b) the engineer's user-level `~/.claude/CLAUDE.md`"
+        },
+        {
+          "key": "C",
+          "text": "(a) and (b) both in the project's committed CLAUDE.md"
+        },
+        {
+          "key": "D",
+          "text": "(a) the engineer's user-level file; (b) the project's committed CLAUDE.md"
+        },
+        {
+          "key": "E",
+          "text": "(a) and (b) both in the user-level file"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Scope guidance by audience: shared, project-specific conventions in the committed project CLAUDE.md; personal preferences that follow one person across projects in the user-level memory file.",
+      "distractor_notes": {
+        "A": "The test-before-commit note is guidance any session needs, and a personal style preference does not warrant a Skill.",
+        "C": "Personal style preferences do not belong in a shared file.",
+        "D": "The scopes are reversed: team-wide commands would reach only one person and one person's style would be imposed on all.",
+        "E": "Teammates cloning the repo would not get the team's test workflow."
+      },
+      "cheatsheet": "d2-context#hierarchy",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mechanism-selection"
+      ],
+      "task": "C5"
+    },
+    {
+      "id": "WA-037",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "multi",
+      "objective": "posttooluse quality gates",
+      "stem": "Reviewing a design doc, an engineer writes down claims about PostToolUse hooks. Which TWO claims are correct?",
+      "options": [
+        {
+          "key": "A",
+          "text": "It only runs if Claude decides to invoke it, so it behaves like an optional tool"
+        },
+        {
+          "key": "B",
+          "text": "Exiting with code 2 sends the hook's stderr back to Claude as feedback it can act on"
+        },
+        {
+          "key": "C",
+          "text": "It fires after the matching tool call has completed, so it cannot prevent that particular call from happening"
+        },
+        {
+          "key": "D",
+          "text": "It can veto an edit before the file is written if it exits with a non-zero code"
+        },
+        {
+          "key": "E",
+          "text": "It runs only while the session is in plan mode"
+        }
+      ],
+      "correct": [
+        "B",
+        "C"
+      ],
+      "explanation": "PostToolUse is for reacting to what a tool just did (format, lint, test) and returning feedback with exit code 2. Blocking a call beforehand is PreToolUse. Hooks execute deterministically in the harness and do not depend on the model choosing to run them.",
+      "distractor_notes": {
+        "A": "Hooks are run by the harness on the event; the model does not choose to invoke them.",
+        "D": "Vetoing before execution is what PreToolUse does; by PostToolUse the tool has already run.",
+        "E": "Hooks are not tied to plan mode; they fire on matching tool events in normal operation."
+      },
+      "cheatsheet": "d3-agentic#hooks",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "posttooluse-hooks"
+      ],
+      "task": "C6",
+      "select_count": 2
+    },
+    {
+      "id": "WA-038",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "codebase exploration",
+      "stem": "A production log export is 40 MB. You need the lines around the first `TimeoutError` for request id `req-7f3a`, and reading the file in full would overwhelm your context window. Which approach is best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Grep the file for `req-7f3a` and `TimeoutError` with a few lines of context, then Read only the reported line range using an offset and limit"
+        },
+        {
+          "key": "B",
+          "text": "Read the whole file in one call and search it mentally"
+        },
+        {
+          "key": "C",
+          "text": "Split the file into 400 pieces and Read each one in turn"
+        },
+        {
+          "key": "D",
+          "text": "Read the first 5,000 lines and assume the failure appears there"
+        },
+        {
+          "key": "E",
+          "text": "Ask Claude to summarise the log without reading it"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Search tools find the relevant location cheaply; ranged reads (offset and limit) then fetch just the surrounding lines. Together they keep the window for reasoning instead of raw data.",
+      "distractor_notes": {
+        "B": "A 40 MB read will not fit and would consume the context regardless.",
+        "C": "It reads everything anyway, only more slowly.",
+        "D": "The relevant lines could be anywhere in the file.",
+        "E": "Without reading the file it can only guess."
+      },
+      "cheatsheet": "d2-context#budgeting",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "exploration"
+      ],
+      "task": "M1"
+    },
+    {
+      "id": "WA-039",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "codebase exploration",
+      "stem": "You need to know every module that calls a deprecated `legacyAuth()` API and how each one uses it: with a token, without, inside a try/catch. There may be 150 call sites, and you want to plan the migration in your main session without filling its context with raw search output. What is the best way to gather this?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Grep for `legacyAuth` in the main session and read all 150 hits in full"
+        },
+        {
+          "key": "B",
+          "text": "Delegate the survey to a subagent (for example an Explore agent) with its own context window, asking for a concise structured summary of call-site patterns and counts to return to the main session"
+        },
+        {
+          "key": "C",
+          "text": "Run `/compact` before starting so there is more room"
+        },
+        {
+          "key": "D",
+          "text": "Ask Claude to migrate all call sites immediately and review the diff afterwards"
+        },
+        {
+          "key": "E",
+          "text": "Read the deprecation notice and infer the usage patterns from it"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Subagents run in an isolated context, so noisy exploration stays out of the main conversation and only the distilled findings come back. That is the standard way to survey a large surface while preserving the main window.",
+      "distractor_notes": {
+        "A": "The raw results and file reads occupy the main context for the rest of the session.",
+        "C": "Compaction summarises earlier history; it does not stop new bulk output from filling the window.",
+        "D": "That skips the analysis needed to plan and risks inconsistent rewrites.",
+        "E": "A notice describes intent, not how 150 call sites actually behave."
+      },
+      "cheatsheet": "d3-agentic#subagents",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "exploration"
+      ],
+      "task": "M1"
+    },
+    {
+      "id": "WA-040",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp scope",
+      "stem": "A developer runs `claude mcp add sentry -- npx sentry-mcp` with no scope flag, expecting the whole team to get the Sentry tools. Teammates pull the repo and see nothing new, and `git status` shows no changed files. What explains this, and what is the fix?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The default scope is local (private to that developer in that project); re-add it with `--scope project` so it is written to the committed `.mcp.json`"
+        },
+        {
+          "key": "B",
+          "text": "Teammates must restart their machines for a new server to appear"
+        },
+        {
+          "key": "C",
+          "text": "The command needs `--scope user` to share the server with teammates"
+        },
+        {
+          "key": "D",
+          "text": "The server must be added to CLAUDE.md so teammates load it"
+        },
+        {
+          "key": "E",
+          "text": "MCP servers are always personal and can never be shared"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Without a scope flag, `claude mcp add` stores the server at local scope: private to you and this project. Sharing with the team means project scope, which writes `.mcp.json` into the repository. User scope is your personal set across projects.",
+      "distractor_notes": {
+        "B": "Nothing was shared to begin with; a restart cannot fix that.",
+        "C": "User scope is personal across your own projects, not shared with teammates.",
+        "D": "CLAUDE.md holds instructions, not MCP server definitions.",
+        "E": "Project scope exists precisely to share MCP servers through `.mcp.json`."
+      },
+      "cheatsheet": "d4-mcp#cli",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mcp-scope"
+      ],
+      "task": "T3"
+    },
+    {
+      "id": "WA-041",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "stateless api history",
+      "stem": "A tutoring app resends the entire conversation on every request, as required by the stateless Messages API. Sessions now run for 200 turns and the team sees rising latency and cost. A proposal is to send only the latest user message to save tokens. Which approach reduces cost while keeping the model's ability to use the earlier context?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Send only the latest user message on every request"
+        },
+        {
+          "key": "B",
+          "text": "Ask the API to remember the conversation server-side by reusing the same `metadata.user_id`"
+        },
+        {
+          "key": "C",
+          "text": "Cache the responses in the app and skip calling the API when a user asks something similar"
+        },
+        {
+          "key": "D",
+          "text": "Keep sending the conversation, but mark the stable prefix for prompt caching and deliberately summarise or trim older turns that are no longer needed"
+        },
+        {
+          "key": "E",
+          "text": "Switch to a stateful endpoint that keeps the conversation and accepts only deltas"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "Because history must be resent, cost is managed by making resending cheap (prompt caching of the unchanging prefix) and by curating the history (summarising or trimming turns that no longer matter), not by dropping the history.",
+      "distractor_notes": {
+        "A": "The model then has no memory of the earlier turns; history must be supplied by the client.",
+        "B": "Metadata identifies a user for abuse detection; it does not store conversation history.",
+        "C": "Serving cached answers changes behaviour and does not maintain the model's context for new questions.",
+        "E": "The Messages API is stateless; there is no such delta mechanism."
+      },
+      "cheatsheet": "d7-prompting#caching",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "stateless-history"
+      ],
+      "task": "M4"
+    },
+    {
+      "id": "WA-042",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "structured output method",
+      "stem": "A service produces two outputs for each support ticket. Output 1 is a record loaded by a billing system that rejects any payload that violates its schema. Output 2 is a friendly two-sentence summary shown to an agent on screen. Which pairing of methods is appropriate?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Ordinary prompted text for both, with the billing system made more tolerant"
+        },
+        {
+          "key": "B",
+          "text": "Tool use with a JSON schema (forced via `tool_choice`) for the billing record; ordinary prompted text for the on-screen summary"
+        },
+        {
+          "key": "C",
+          "text": "Tool use with a schema for both, with the summary as a single string field"
+        },
+        {
+          "key": "D",
+          "text": "Prefill for both outputs"
+        },
+        {
+          "key": "E",
+          "text": "Prompted JSON for the billing record; tool use for the summary"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Match the method to the consumer: strict machine consumers get schema-backed tool use; human-readable prose does not need a schema.",
+      "distractor_notes": {
+        "A": "Weakening the strict consumer moves the failure downstream instead of preventing it.",
+        "C": "It works but adds needless structure for text a person will simply read; the key point is that only the machine-consumed output needs the schema.",
+        "D": "Prefill gives no schema validation for the billing record and is unnecessary for prose.",
+        "E": "The strict consumer needs the strongest schema guarantee, and free text needs no schema."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "structured-output-method"
+      ],
+      "task": "P2"
+    },
+    {
+      "id": "WA-043",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "structured output method",
+      "stem": "A developer forces a `record_invoice` tool with `tool_choice`. The response returns `stop_reason: \"tool_use\"`, and their code does `json.loads(response.content[0].text)`, which raises an AttributeError. What is the correct way to read the structured result?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Ask the model in the prompt to also repeat the JSON as text"
+        },
+        {
+          "key": "B",
+          "text": "Change `stop_reason` handling so `tool_use` is treated as an error"
+        },
+        {
+          "key": "C",
+          "text": "Add a text prefill so the reply contains a JSON string to parse"
+        },
+        {
+          "key": "D",
+          "text": "Find the content block of type `tool_use` and read its `input`, which is already a parsed object matching the schema"
+        },
+        {
+          "key": "E",
+          "text": "Read `response.content[0].text` after setting `tool_choice` to `auto`"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "With tool use, the arguments arrive as the `input` of a `tool_use` content block, already parsed as an object. There is no JSON string in a text block to parse.",
+      "distractor_notes": {
+        "A": "Duplicating the output adds tokens and reintroduces the parsing risk the tool avoids.",
+        "B": "A `tool_use` stop reason is the expected outcome when a tool call is forced.",
+        "C": "The structured data is in the `tool_use` block's input, not in a text block.",
+        "E": "With `auto` the model may not call the tool at all, which removes the guarantee."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "structured-output-method"
+      ],
+      "task": "P2"
+    },
+    {
+      "id": "WA-044",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "extraction accuracy patterns",
+      "stem": "An extraction pipeline gets phone numbers written as `(415) 555-0134`, `415.555.0134`, `+1 415 555 0134` and `4155550134`. Downstream matching needs one canonical form, and the model currently returns whatever it saw. Which approach gives the most consistent results?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Post-process with a regex only, leaving the extraction prompt unchanged"
+        },
+        {
+          "key": "B",
+          "text": "Ask the model to return the number \"in a standard format\""
+        },
+        {
+          "key": "C",
+          "text": "Raise the temperature so the model tries different formats until one looks right"
+        },
+        {
+          "key": "D",
+          "text": "Extract two candidate numbers per field and let a human choose"
+        },
+        {
+          "key": "E",
+          "text": "State the target format (E.164) in the instructions, include few-shot examples that map each variant to it, and validate the output with a deterministic check in code"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Consistency comes from an explicit target format, demonstrations of the mapping, and a deterministic validator that catches what slips through.",
+      "distractor_notes": {
+        "A": "A regex cannot normalise variants the pattern did not anticipate, and it does nothing about wrongly extracted digits.",
+        "B": "\"Standard\" is ambiguous, so the model picks its own.",
+        "C": "Randomness reduces consistency.",
+        "D": "That multiplies review effort without fixing consistency."
+      },
+      "cheatsheet": "d7-prompting#few-shot",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "extraction-accuracy"
+      ],
+      "task": "P5"
+    },
+    {
+      "id": "WA-045",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "extraction accuracy patterns",
+      "stem": "An extraction system fills `contract_value` even for contracts where the amount is unclear, and reviewers cannot quickly tell whether a value is grounded. The team wants a design that makes fabricated values detectable automatically. Which pattern helps most?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add a `confidence` number between 0 and 1 and trust values above 0.8"
+        },
+        {
+          "key": "B",
+          "text": "Reduce the number of fields extracted so there is less to fabricate"
+        },
+        {
+          "key": "C",
+          "text": "Tell the model to be honest and not to invent values"
+        },
+        {
+          "key": "D",
+          "text": "Run the same extraction three times and take the most common value"
+        },
+        {
+          "key": "E",
+          "text": "Add an `evidence` field per extracted value containing the exact source quote, make the value nullable, and verify programmatically that each quote actually appears in the document"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Requiring a verbatim supporting quote for each value, and checking in code that the quote exists in the source, turns grounding into something testable. Nullable fields give the model an honest alternative to inventing a value.",
+      "distractor_notes": {
+        "A": "A self-reported score is not verification; fabricated values often carry high confidence.",
+        "B": "It sacrifices the requirement rather than solving the grounding problem.",
+        "C": "It is a request, not a check.",
+        "D": "Repeated runs can agree on the same fabrication."
+      },
+      "cheatsheet": "d7-prompting#grounding",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "extraction-accuracy"
+      ],
+      "task": "P5"
+    },
+    {
+      "id": "WA-046",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool choice and sequencing",
+      "stem": "A shipping agent has `get_zip(address)` and `get_shipping_rate(zip, weight)`. Given \"ship 2 kg to 12 Oak Lane, Springfield\", the model emits both tool calls in the same turn, passing a guessed ZIP into `get_shipping_rate`. Which change best ensures the rate call uses the real ZIP?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Lower `max_tokens` so the model can emit only one tool call"
+        },
+        {
+          "key": "B",
+          "text": "Set `tool_choice` to `any` so the model is forced to call tools"
+        },
+        {
+          "key": "C",
+          "text": "Rename `get_shipping_rate` to `get_shipping_rate_after_zip`"
+        },
+        {
+          "key": "D",
+          "text": "Have `get_shipping_rate` silently look up the ZIP itself when given a bad value"
+        },
+        {
+          "key": "E",
+          "text": "Document the dependency in the tool descriptions and set `disable_parallel_tool_use: true` in `tool_choice`, so the model calls `get_zip` first, receives the result, then calls `get_shipping_rate`"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Dependent tools need the earlier result before the later call. Prevent parallel emission (disable parallel tool use) and state the dependency clearly in the descriptions so the model gathers prerequisite data first.",
+      "distractor_notes": {
+        "A": "That may truncate a call mid-argument rather than sequencing correctly.",
+        "B": "`any` forces some tool call but does not order dependent calls, and the model may still emit both together.",
+        "C": "The name is a hint at best; it does not stop the model emitting both calls in one turn.",
+        "D": "It hides the dependency and can make wrong guesses appear valid."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "tool-choice"
+      ],
+      "task": "T5"
+    },
+    {
+      "id": "WA-047",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool choice and sequencing",
+      "stem": "A research agent may call `web_search` and `read_page` any number of times, and must finish by delivering a report that conforms to a strict schema via a `submit_report` tool. The developer wants the agent free to research but guaranteed to end with a valid structured report. Which `tool_choice` strategy fits?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Run the research loop with `auto`, and for the final step make a request with `tool_choice` forcing `submit_report`"
+        },
+        {
+          "key": "B",
+          "text": "Use `any` on every request so tools are always used"
+        },
+        {
+          "key": "C",
+          "text": "Use `auto` throughout and hope the model calls `submit_report` last"
+        },
+        {
+          "key": "D",
+          "text": "Use `none` for the whole run and ask for the report in prose"
+        },
+        {
+          "key": "E",
+          "text": "Force `submit_report` on every request from the start"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Let the model choose tools during open-ended work (`auto`), then force the schema tool at the final step to guarantee a valid structured result. Forcing a tool on every turn removes the ability to do anything else.",
+      "distractor_notes": {
+        "B": "It would prevent the model from ever ending with a final answer and does not ensure the schema tool is the last call.",
+        "C": "Nothing guarantees the final structured call.",
+        "D": "Without tools it cannot search or read pages, and prose is not schema-checked.",
+        "E": "The agent could never research, because every turn must be a `submit_report` call."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "tool-choice"
+      ],
+      "task": "T5"
+    },
+    {
+      "id": "WA-048",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "iterative refinement",
+      "stem": "A developer is fixing a pricing function. Six issues are outstanding, and two interact: fixing rounding for issue 2 changes the totals that issue 5's expected values depend on. The developer sends them one message at a time, and each fix regresses an earlier one. What should they do?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Ask Claude to rewrite the whole function from scratch without further details"
+        },
+        {
+          "key": "B",
+          "text": "Describe the issues in general terms such as \"prices are sometimes off\""
+        },
+        {
+          "key": "C",
+          "text": "Continue one issue per message and accept some regressions"
+        },
+        {
+          "key": "D",
+          "text": "Send all six issues together with input/expected-output examples, noting which interact, so Claude can produce one fix that satisfies them all, then re-run the tests"
+        },
+        {
+          "key": "E",
+          "text": "Only send the two interacting issues and ignore the rest"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "When issues interact, present them together with concrete examples and flag the interactions, so the model reasons about the whole set and the result can be verified in one pass.",
+      "distractor_notes": {
+        "A": "Without examples the rewrite has no concrete target.",
+        "B": "Vague feedback gives nothing specific to correct.",
+        "C": "Sequential fixes on interacting issues are what causes the regressions.",
+        "E": "The other four remain unfixed and may interact too."
+      },
+      "cheatsheet": "d5-automation#prompting",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "iterative-refinement"
+      ],
+      "task": "C2"
+    },
+    {
+      "id": "WA-049",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp error handling",
+      "stem": "A `fetch_invoices` MCP tool retrieves up to 50 invoices in one call. Occasionally it retrieves 40 and then hits a backend timeout. Today it returns an error with the text \"timeout\" and discards the 40, so the agent starts over and hits the same wall. Which behaviour is best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Return an empty result set to signal that the batch failed"
+        },
+        {
+          "key": "B",
+          "text": "Return the 40 invoices as if the call fully succeeded"
+        },
+        {
+          "key": "C",
+          "text": "Retry inside the tool indefinitely until all 50 arrive"
+        },
+        {
+          "key": "D",
+          "text": "Keep returning a bare \"timeout\" error and let the agent retry everything"
+        },
+        {
+          "key": "E",
+          "text": "Return the 40 retrieved invoices with structured metadata: `partial: true`, the failed or missing ids, a `transient` error category, `retryable: true` and a suggested action to retry just those ids"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Structured errors can carry partial results and precisely describe what remains, with recoverability and a next step. The agent can then continue with just the missing work instead of guessing or restarting.",
+      "distractor_notes": {
+        "A": "An empty list is indistinguishable from a legitimate empty answer and loses the 40 records.",
+        "B": "The agent would treat the result as complete and silently miss ten invoices.",
+        "C": "An unbounded loop can hang the agent; bounded retries with reporting are safer.",
+        "D": "It discards useful data and gives no guidance, so the agent repeats the failing full request."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mcp-errors"
+      ],
+      "task": "T1"
+    },
+    {
+      "id": "WA-050",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp error handling",
+      "stem": "A team is defining how an agent should react to structured MCP errors. Which mapping from error category to intended behaviour is the most sensible?",
+      "options": [
+        {
+          "key": "A",
+          "text": "All categories: retry up to five times"
+        },
+        {
+          "key": "B",
+          "text": "transient: retry with backoff a bounded number of times; validation: correct the input and retry once; permission: do not retry, escalate or report; not_found: report that the item does not exist"
+        },
+        {
+          "key": "C",
+          "text": "transient: escalate immediately; permission: retry with backoff"
+        },
+        {
+          "key": "D",
+          "text": "No categories: the model should read the message text and improvise"
+        },
+        {
+          "key": "E",
+          "text": "validation: retry with the same input; not_found: retry with a longer timeout"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The value of typed errors is that each category implies a different recovery: retry transient failures, fix invalid input, stop and escalate permission problems, and report missing resources.",
+      "distractor_notes": {
+        "A": "Retrying permission and validation failures repeats the same mistake.",
+        "C": "The behaviours are swapped: transient faults are the retryable ones.",
+        "D": "Explicit categories make recovery consistent and testable.",
+        "E": "A bad input needs correction, and a missing item will not appear on retry."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mcp-errors"
+      ],
+      "task": "T1"
+    },
+    {
+      "id": "WA-051",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "nullable and optional fields",
+      "stem": "An invoice schema has `discount_percent` as a required number. Many invoices state no discount, and the model returns 0. Finance cannot distinguish \"the invoice explicitly says 0% discount\" from \"the invoice says nothing about discounts\", and the difference matters for auditing. What is the best schema design?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Use the string `\"N/A\"` in the numeric field"
+        },
+        {
+          "key": "B",
+          "text": "Drop the field and infer the discount from totals downstream"
+        },
+        {
+          "key": "C",
+          "text": "Keep it required and use 0 for both cases"
+        },
+        {
+          "key": "D",
+          "text": "Use -1 as a sentinel meaning not stated"
+        },
+        {
+          "key": "E",
+          "text": "Make `discount_percent` nullable: null means not stated on the document, and a number (including 0) means the value stated"
+        }
+      ],
+      "correct": [
+        "E"
+      ],
+      "explanation": "Null distinguishes \"absent\" from any real value. Sentinels and defaults hide missing information as if it were data.",
+      "distractor_notes": {
+        "A": "It breaks the numeric type and the consumers relying on it.",
+        "B": "It removes a directly stated value and invites calculation errors.",
+        "C": "That is exactly the ambiguity being complained about.",
+        "D": "A sentinel can leak into calculations and reports as a real number."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "extraction-schema"
+      ],
+      "task": "P3"
+    },
+    {
+      "id": "WA-052",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "nullable and optional fields",
+      "stem": "A classifier assigns `document_type` from `invoice`, `receipt`, `purchase_order`. Some uploads are combined documents or unreadable scans, and the model picks the nearest type with no sign of doubt. Which schema and instruction change best lets it represent this honestly?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Ask the model to always choose the most common type"
+        },
+        {
+          "key": "B",
+          "text": "Remove `receipt` from the enum to reduce confusion"
+        },
+        {
+          "key": "C",
+          "text": "Add an `unclear` value (or make the field nullable) plus an `ambiguity_notes` text field, and instruct the model to use them instead of guessing"
+        },
+        {
+          "key": "D",
+          "text": "Split combined documents automatically with a regex before classification"
+        },
+        {
+          "key": "E",
+          "text": "Add \"never be unsure\" to the prompt"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Give the model a legitimate way to express uncertainty in the schema, together with an explanation field, so ambiguous or poor-quality input is flagged rather than forced into a category.",
+      "distractor_notes": {
+        "A": "It systematically mislabels uncommon or ambiguous documents.",
+        "B": "It removes a legitimate category and does not address unclear inputs.",
+        "D": "Regexes cannot reliably segment arbitrary documents, and it does not cover unreadable scans.",
+        "E": "It encourages exactly the confident guessing that is the problem."
+      },
+      "cheatsheet": "d7-prompting#structured-output",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "extraction-schema"
+      ],
+      "task": "P3"
+    },
+    {
+      "id": "WA-053",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "dynamic decomposition",
+      "stem": "A team builds an orchestrator that generates subtasks dynamically from findings. In testing it sometimes keeps spawning follow-up investigations for hours, each finding suggesting another. Which safeguard should they add while keeping dynamic decomposition?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Switch to a fixed three-step pipeline for every request"
+        },
+        {
+          "key": "B",
+          "text": "Remove the limit and trust the model to decide when it has done enough"
+        },
+        {
+          "key": "C",
+          "text": "Bound the orchestrator with explicit limits (maximum depth, total subtask or token budget) and completion criteria, and have it stop and report open questions when a limit is reached"
+        },
+        {
+          "key": "D",
+          "text": "Run every generated subtask in parallel to finish faster"
+        },
+        {
+          "key": "E",
+          "text": "Let each worker spawn its own orchestrator with the same settings"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Dynamic planning needs guardrails: budgets, depth limits and explicit definitions of done, with a graceful way to stop and report what remains unresolved.",
+      "distractor_notes": {
+        "A": "It removes the adaptability the workload needs.",
+        "B": "Nothing then bounds cost or runtime.",
+        "D": "Parallelism speeds execution but does not stop runaway generation.",
+        "E": "It makes the runaway growth worse."
+      },
+      "cheatsheet": "d3-agentic#orchestration",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "dynamic-decomposition"
+      ],
+      "task": "A4"
+    },
+    {
+      "id": "WA-054",
+      "domain": "AAO",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "stop_reason loop",
+      "stem": "In one response the model emits a text block (\"I'll check both warehouses.\") followed by two `tool_use` blocks, `check_stock(A)` and `check_stock(B)`, and `stop_reason` is `tool_use`. The current loop treats the presence of a text block as a final answer and returns it to the user. What is the correct handling?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Return the text block to the user because text means the model is finished"
+        },
+        {
+          "key": "B",
+          "text": "Execute only the first tool call and ignore the second"
+        },
+        {
+          "key": "C",
+          "text": "Discard the text block and re-ask the question without tools"
+        },
+        {
+          "key": "D",
+          "text": "Rely on `stop_reason` (`tool_use`): execute both tool calls and send both `tool_result` blocks back together in one user message, then call the model again"
+        },
+        {
+          "key": "E",
+          "text": "Send each `tool_result` in a separate user message"
+        }
+      ],
+      "correct": [
+        "D"
+      ],
+      "explanation": "A response can mix text and multiple tool calls. `stop_reason: tool_use` means to execute every requested tool and return all results in one user message before continuing.",
+      "distractor_notes": {
+        "A": "The text is a preamble to tool calls; `stop_reason` says the model is waiting for results.",
+        "B": "The model requested both, and skipping one leaves an unanswered `tool_use`, which the API rejects.",
+        "C": "It loses the model's plan and abandons the tool workflow.",
+        "E": "The results for one assistant turn belong together in a single user message."
+      },
+      "cheatsheet": "d5-automation#sdk",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "stop-reason"
+      ],
+      "task": "A6"
+    },
+    {
+      "id": "WA-055",
+      "domain": "CMR",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "context management strategies",
+      "stem": "A refactor will take four sessions over two weeks. At the start of each session Claude has no memory of the previous ones and repeats earlier analysis and sometimes reverses decisions. Which practice best preserves continuity?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Rely on the model to remember; start each session with \"continue the refactor\""
+        },
+        {
+          "key": "B",
+          "text": "Keep a progress notes file in the repo (decisions, completed steps, next steps, open questions), update it at the end of each session, and start the next session by referencing it (for example `@PROGRESS.md`)"
+        },
+        {
+          "key": "C",
+          "text": "Use one very long session and never clear it"
+        },
+        {
+          "key": "D",
+          "text": "Copy the entire previous transcript into the first message of each session"
+        },
+        {
+          "key": "E",
+          "text": "Put every intermediate finding into CLAUDE.md permanently"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Durable, curated state belongs in a file that any session can read: concise decisions and next steps, referenced explicitly at the start. That is cheaper and more reliable than replaying history.",
+      "distractor_notes": {
+        "A": "A new session has no access to the earlier conversation.",
+        "C": "Long sessions hit limits and compaction, which is the original problem.",
+        "D": "It consumes a large share of the window and buries the decisions in noise.",
+        "E": "It bloats always-loaded memory with transient, task-specific state."
+      },
+      "cheatsheet": "d2-context#agent-state",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "context-management"
+      ],
+      "task": "M2"
+    },
+    {
+      "id": "WA-056",
+      "domain": "CCW",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "plan mode vs direct",
+      "stem": "Four tasks arrive. Which one is best executed directly, without plan mode?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Redesign the caching layer used by six services, with unknown consistency requirements"
+        },
+        {
+          "key": "B",
+          "text": "Fix a single-function off-by-one bug that a failing unit test already reproduces, in a well-understood module, on a feature branch"
+        },
+        {
+          "key": "C",
+          "text": "Split a monolith into services, choosing the boundaries yourself"
+        },
+        {
+          "key": "D",
+          "text": "Replace the ORM across the codebase"
+        },
+        {
+          "key": "E",
+          "text": "Introduce a new authorisation model requiring sign-off from the security team"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Direct execution suits small, well-scoped, easily reversible work with a clear success check. Plan mode is for large scope, uncertainty, difficult reversal or required review.",
+      "distractor_notes": {
+        "A": "Broad, uncertain and hard to reverse: explore and plan first.",
+        "C": "Architectural uncertainty is high; the approach must be planned and reviewed.",
+        "D": "Large scope and an irreversible-feeling change that needs review before implementation.",
+        "E": "Stakeholder approval is needed before implementation, which plan mode supports."
+      },
+      "cheatsheet": "d3-agentic#plan-mode",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "plan-mode"
+      ],
+      "task": "C3"
+    },
+    {
+      "id": "WA-057",
+      "domain": "PES",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "human review routing",
+      "stem": "A pipeline's model reports 0.95 confidence on most fields and reviewers only check low-confidence ones. A labelled audit shows overall accuracy is 97%, but for handwritten forms it is 82% even at 0.95 confidence. Which change to the routing strategy is best?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Keep a single global threshold because overall accuracy is high"
+        },
+        {
+          "key": "B",
+          "text": "Review a random 1% of everything and stop tracking segments"
+        },
+        {
+          "key": "C",
+          "text": "Measure accuracy per segment (document type and field) on a labelled sample, and set separate thresholds or mandatory review for weaker segments such as handwritten forms"
+        },
+        {
+          "key": "D",
+          "text": "Lower the global threshold to 0.5 so fewer documents are reviewed"
+        },
+        {
+          "key": "E",
+          "text": "Trust the model's confidence and stop the labelled audits"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Confidence scores are useful only if calibrated against labelled data. Segmenting by document characteristics and fields reveals where thresholds should differ, and where human review is worth its cost.",
+      "distractor_notes": {
+        "A": "The aggregate hides a segment where errors are frequent.",
+        "B": "Random sampling dilutes review across mostly accurate segments.",
+        "D": "It reduces review of exactly the risky documents.",
+        "E": "The audit is what revealed that confidence is miscalibrated for some segments."
+      },
+      "cheatsheet": "d3-agentic#human-in-the-loop",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "review-routing"
+      ],
+      "task": "M6"
+    },
+    {
+      "id": "WA-058",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "mcp integration",
+      "stem": "A project's `.mcp.json` defines a `github` server whose `env` uses `\"GITHUB_TOKEN\": \"${GITHUB_TOKEN}\"`. A developer starts Claude Code and the GitHub tools are missing. The token variable was exported in a different terminal window from the one that launched Claude Code. What is the right diagnosis and check?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The server needs `--scope user` to load any tools"
+        },
+        {
+          "key": "B",
+          "text": "MCP servers cannot use environment variable expansion; hard-code the token"
+        },
+        {
+          "key": "C",
+          "text": "The variable was not set in the environment that launched Claude Code, so the server failed to start; export it in that shell, restart, and confirm with `/mcp` that the server is connected and its tools are listed"
+        },
+        {
+          "key": "D",
+          "text": "Claude Code hides tools until the model asks for them by name"
+        },
+        {
+          "key": "E",
+          "text": "Delete `.mcp.json` and let Claude Code regenerate it"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Environment expansion reads the variable from the environment of the process that starts the server. When tools are missing, check that the variable is visible to that process and verify discovery with `/mcp`.",
+      "distractor_notes": {
+        "A": "Scope controls who sees the server, not whether its environment variables resolve.",
+        "B": "Expansion is supported and hard-coding a secret is the mistake to avoid.",
+        "D": "Discovered tools are listed; missing tools indicate a connection problem.",
+        "E": "Regeneration will not supply an unset variable."
+      },
+      "cheatsheet": "d4-mcp#debugging",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "mcp-integration"
+      ],
+      "task": "T4"
+    },
+    {
+      "id": "WA-059",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool descriptions",
+      "stem": "A `get_sales(date)` tool has the description \"Get sales.\" Users say \"sales for last Tuesday\", and the model passes the string \"last Tuesday\", which the backend rejects. Which improvement is most effective?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Specify the input format and an example in the parameter description (`YYYY-MM-DD`, e.g. 2026-03-04), state that relative dates must be resolved to an absolute date before calling, and constrain the parameter with a pattern"
+        },
+        {
+          "key": "B",
+          "text": "Rename the tool to `get_sales_data`"
+        },
+        {
+          "key": "C",
+          "text": "Change the parameter to accept any string and log failures"
+        },
+        {
+          "key": "D",
+          "text": "Make the backend accept natural-language dates by guessing what \"last Tuesday\" means"
+        },
+        {
+          "key": "E",
+          "text": "Add \"be careful with dates\" to the system prompt"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Input format specifications and examples in the description, with a schema constraint, tell the model exactly how to form arguments and prevent avoidable validation failures.",
+      "distractor_notes": {
+        "B": "A longer name says nothing about the input format.",
+        "C": "It removes validation and turns failures into silent errors.",
+        "D": "It hides ambiguity server-side, and the correct reference date is known to the caller, not the tool.",
+        "E": "It gives no concrete format to follow."
+      },
+      "cheatsheet": "d4-mcp#naming",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "tool-descriptions"
+      ],
+      "task": "T2"
+    },
+    {
+      "id": "WA-060",
+      "domain": "TDM",
+      "difficulty": "architect",
+      "type": "single",
+      "objective": "tool descriptions",
+      "stem": "An agent is connected to two MCP servers that each expose a tool called `search`: one searches internal wiki pages, the other searches customer support tickets. The agent picks the wrong one about a third of the time. What is the best remedy?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Keep both named `search` and add \"choose correctly\" to the system prompt"
+        },
+        {
+          "key": "B",
+          "text": "Disable one server and use only the other"
+        },
+        {
+          "key": "C",
+          "text": "Give the tools distinct, descriptive names (for example `search_wiki_pages` and `search_support_tickets`) and descriptions that state what each covers, when to use it, and when not to"
+        },
+        {
+          "key": "D",
+          "text": "Swap the order the servers are listed so the right one comes first"
+        },
+        {
+          "key": "E",
+          "text": "Have both tools run on every request and merge the results"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Selection reliability comes from distinctive names and descriptions that spell out scope, when to use the tool and when not to, especially for tools with overlapping purposes.",
+      "distractor_notes": {
+        "A": "Identical names and vague guidance leave nothing to discriminate on.",
+        "B": "It removes a needed capability.",
+        "D": "Order is not a reliable selection signal.",
+        "E": "It doubles cost and mixes unrelated sources instead of selecting the right one."
+      },
+      "cheatsheet": "d4-mcp#naming",
+      "sources": [],
+      "tags": [
+        "score-report-2026-09",
+        "tool-descriptions"
+      ],
+      "task": "T2"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ export type AttemptStatus = "in_progress" | "paused" | "submitted" | "abandoned"
 export type Difficulty = "foundational" | "applied" | "architect";
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   full_name: string;
   role: Role;
@@ -26,7 +26,21 @@ export interface Question {
   options: Option[];
   tags: string[];
   position?: number;
+  scenario?: Scenario | null;
 }
+
+export interface Scenario { id: string; title: string; body: string }
+
+export interface ObjectiveResult {
+  id: string;
+  title: string;
+  domain: string;
+  correct: number;
+  total: number;
+  percent: number;
+}
+
+export interface DrillSummary { total: number; seen: number; unseen: number; mastered: number; due: number }
 
 export interface Snippet { lang: string; title: string; code: string }
 export interface Analogy { frame: string; text: string }
@@ -106,6 +120,7 @@ export interface Scorecard {
   seconds_per_question: number;
   submitted_at: string | null;
   domain_breakdown: Record<string, DomainResult>;
+  objective_breakdown: ObjectiveResult[];
   focus_areas: { code: string; name: string; percent: number }[];
 }
 

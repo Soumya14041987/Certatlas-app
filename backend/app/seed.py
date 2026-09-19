@@ -1,27 +1,29 @@
-"""Create tables, validate the content bank and optionally bootstrap an admin.
+"""Validate the content bank and confirm practice-set determinism.
 
     python -m app.seed
 
-The admin is only created when both CCARF_FIRST_ADMIN_EMAIL and
-CCARF_FIRST_ADMIN_PASSWORD are set; there is deliberately no default password.
+Table creation and the bootstrap admin are both gone from this script:
+schema lives in ``supabase/migrations/*.sql`` now (owned by the Supabase
+CLI, not this app — see ``db/session.init_db``'s SQLite-only guard), and
+there is no local "first user becomes admin" trick any more. Promote the
+first real account manually after signing up:
+
+    update public.profiles set role = 'admin' where email = '...';
+
+(run in the Supabase project's SQL editor)
 """
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timezone
-
-from sqlalchemy import select
 
 from app.core.config import settings
-from app.core.security import hash_password, password_problems
-from app.db.session import SessionLocal, init_db
-from app.models import User, UserRole
+from app.db.session import init_db
 from app.services.content import ContentError, content_stats
 from app.services.set_builder import build_practice_set
 
 
 def main() -> int:
-    print("Creating tables…")
+    print("Creating tables (SQLite fallback only — Postgres schema is Supabase-managed)…")
     init_db()
 
     print("Validating content bank…")
@@ -42,34 +44,11 @@ def main() -> int:
         assert len(first) == settings.practice_set_size
     print("  deterministic ✓")
 
-    email = settings.first_admin_email
-    password = settings.first_admin_password
-    if email and password:
-        problems = password_problems(password)
-        if problems:
-            print(f"  admin password rejected: needs {', '.join(problems)}", file=sys.stderr)
-            return 1
-        with SessionLocal() as db:
-            if db.scalar(select(User).where(User.email == email.lower())):
-                print(f"Admin {email} already exists; leaving it alone.")
-            else:
-                db.add(
-                    User(
-                        email=email.lower(),
-                        full_name="Platform Administrator",
-                        hashed_password=hash_password(password),
-                        role=UserRole.ADMIN,
-                        created_at=datetime.now(timezone.utc),
-                    )
-                )
-                db.commit()
-                print(f"Created admin account {email}")
-    else:
-        print(
-            "No bootstrap admin configured. The first account registered through "
-            "/auth/register becomes the administrator."
-        )
-
+    print(
+        "No bootstrap admin step here any more — sign up once through the app, then "
+        "promote that account in the Supabase SQL editor:\n"
+        "  update public.profiles set role = 'admin' where email = '...';"
+    )
     print("Seed complete.")
     return 0
 

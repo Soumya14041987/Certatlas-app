@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.deps import get_current_user
 from app.core.config import settings
-from app.models import User
+from app.models import Profile
 from app.services.content import (
     content_stats,
     get_blueprint,
@@ -36,7 +36,7 @@ def courses() -> dict:
 
 
 @router.get("/heuristics")
-def heuristics(_: User = Depends(get_current_user)) -> dict:
+def heuristics(_: Profile = Depends(get_current_user)) -> dict:
     """Exam Instincts: pattern-recognition rules for reading a question fast.
 
     Not exam content on its own — a shortcut for mapping a question's wording
@@ -47,7 +47,7 @@ def heuristics(_: User = Depends(get_current_user)) -> dict:
 
 
 @router.get("/cheatsheets")
-def list_cheatsheets(_: User = Depends(get_current_user)) -> list[dict]:
+def list_cheatsheets(_: Profile = Depends(get_current_user)) -> list[dict]:
     return [
         {
             "slug": s.slug,
@@ -64,7 +64,7 @@ def list_cheatsheets(_: User = Depends(get_current_user)) -> list[dict]:
 def read_cheatsheet(
     slug: str,
     anchor: str | None = Query(None),
-    _: User = Depends(get_current_user),
+    _: Profile = Depends(get_current_user),
 ) -> dict:
     sheet = get_cheatsheets().get(slug)
     if sheet is None:
@@ -73,7 +73,7 @@ def read_cheatsheet(
 
 
 @router.get("/questions/{question_id}")
-def question_detail(question_id: str, _: User = Depends(get_current_user)) -> dict:
+def question_detail(question_id: str, _: Profile = Depends(get_current_user)) -> dict:
     """Full reveal for a single item — used by the bookmark/review views.
 
     Only reachable by authenticated users, and never used to serve a live

@@ -4,7 +4,7 @@
   "version": "2026.1",
   "provenance": "Domain names, weightings and scoring format are taken from Anthropic's own public certification listing (Anthropic Academy / Skilljar). Every question, explanation, analogy and cheat sheet in this app is original, community-authored practice content written against those published domains and the linked course material — it is not sourced from, and does not reproduce, any real exam item. This project is not affiliated with or endorsed by Anthropic.",
   "question_count": 60,
-  "duration_minutes": 90,
+  "duration_minutes": 120,
   "pass_percent": 72,
   "scaled_score": {
     "passing": 720,

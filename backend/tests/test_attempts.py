@@ -1,3 +1,4 @@
+from app.core.config import settings
 from app.services.content import get_question
 
 
@@ -163,7 +164,7 @@ def test_exam_mode_is_timed_and_cannot_be_paused(client, auth):
     assert exam["mode"] == "exam"
     assert exam["total_questions"] == 60
     assert exam["can_pause"] is False
-    assert exam["remaining_seconds"] == 90 * 60
+    assert exam["remaining_seconds"] == settings.exam_duration_minutes * 60
 
     paused = client.post(f"/api/v1/attempts/{exam['id']}/pause", headers=auth)
     assert paused.status_code == 400

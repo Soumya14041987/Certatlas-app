@@ -108,6 +108,24 @@ export default function ScorecardPage() {
         </div>
       </Card>
 
+      {card.objective_breakdown.length > 0 && (
+        <Card className="p-6">
+          <SectionHeading title="By objective" hint="Percent correct per exam objective, weakest first — the same view as the official score report" />
+          <div className="space-y-2">
+            {card.objective_breakdown.map((o) => (
+              <div key={o.id} className="flex items-center gap-3 text-[13px]">
+                <span className="w-8 shrink-0 font-mono text-[11px] text-ink-500">{o.id}</span>
+                <span className="min-w-0 grow truncate text-ink-200">{o.title}</span>
+                <span className="shrink-0 tabular-nums text-ink-400">{o.correct}/{o.total}</span>
+                <span className={`w-12 shrink-0 text-right font-semibold tabular-nums ${
+                  o.percent <= 50 ? "text-rose-500" : o.percent < 100 ? "text-amber-400" : "text-mint-400"
+                }`}>{o.percent}%</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-5">
         <Card className="p-6 lg:col-span-3">
           <SectionHeading title="Domain breakdown" hint="Where the marks were won and lost on this paper" />

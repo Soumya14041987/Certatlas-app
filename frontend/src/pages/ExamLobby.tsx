@@ -11,7 +11,7 @@ export default function ExamLobby() {
   const [history, setHistory] = useState<AttemptSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
-  const [confirming, setConfirming] = useState(false);
+  const [confirming, setConfirming] = useState<"full" | "quick" | null>(null);
 
   useEffect(() => {
     Promise.all([api.blueprint(), api.attempts({ mode: "exam", limit: 20 })])
@@ -24,11 +24,11 @@ export default function ExamLobby() {
   const open = history.find((a) => a.status === "in_progress");
   const submitted = history.filter((a) => a.status === "submitted");
 
-  async function begin() {
+  async function begin(quick: boolean) {
     setStarting(true);
     setError(null);
     try {
-      const attempt = await api.startExam();
+      const attempt = await api.startExam(quick);
       navigate(`/attempt/${attempt.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not start the exam");
@@ -90,16 +90,22 @@ export default function ExamLobby() {
                 <span className="text-sm text-ink-300">
                   The timer starts immediately. Ready?
                 </span>
-                <button type="button" className="btn-primary" onClick={begin} disabled={starting || !!open}>
+                <button type="button" className="btn-primary" onClick={() => begin(confirming === "quick")} disabled={starting || !!open}>
                   {starting ? "Starting…" : "Yes — start the clock"}
                 </button>
-                <button type="button" className="btn-quiet" onClick={() => setConfirming(false)}>Not yet</button>
+                <button type="button" className="btn-quiet" onClick={() => setConfirming(null)}>Not yet</button>
               </div>
             ) : (
-              <button type="button" className="btn-primary px-6 py-3" disabled={!!open}
-                      onClick={() => setConfirming(true)}>
-                Begin mock exam
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button type="button" className="btn-primary px-6 py-3" disabled={!!open}
+                        onClick={() => setConfirming("full")}>
+                  Begin full mock exam
+                </button>
+                <button type="button" className="btn-ghost px-6 py-3" disabled={!!open}
+                        onClick={() => setConfirming("quick")}>
+                  Quick scenario mock · ~28 questions · 56 min
+                </button>
+              </div>
             )}
           </div>
         </Card>

@@ -7,7 +7,7 @@ An exam-preparation web application, currently covering **Claude Certified Archi
 ## What it does
 
 - **Practice mode** — 300 blueprint-weighted sets of 60 questions each. Untimed, pausable (the clock stops and your paper freezes exactly as you left it), with a published scorecard on every submission.
-- **Exam mode** — a single 60-question, 90-minute mock sitting, enforced server-side, no pausing — a faithful rehearsal of the real conditions.
+- **Exam mode** — a 60-question, 120-minute mock sitting, or a quick scenario mock (4 random scenarios, ~28 questions, 56 minutes), enforced server-side, no pausing — a faithful rehearsal of the real conditions.
 - **Wrong-answer review** — every miss comes back with the explanation, a note on why each distractor is wrong, a real-world analogy (SDLC, AWS CodePipeline, IAM, Kubernetes, etc.), a working code snippet, and the exact cheat-sheet section — inlined, so there's nothing to go looking for.
 - **Readiness analytics** — per-domain accuracy weighted by the blueprint, a projected score, and a focus-area list.
 - **What's New** — Anthropic's latest release/engineering videos, pulled from their YouTube channel (see below). Not exam content — a side feed for keeping up while you study.

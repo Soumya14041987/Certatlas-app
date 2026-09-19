@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.config import settings
 from app.db.session import get_db
-from app.models import Attempt, AttemptStatus, User
+from app.models import Attempt, AttemptStatus, Profile
 from app.services.content import domain_names, get_blueprint
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -19,7 +19,7 @@ _READY_MARGIN = 6  # points above the pass mark before we call someone "ready"
 
 
 @router.get("/overview")
-def overview(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+def overview(user: Profile = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
     submitted = db.scalars(
         select(Attempt)
         .where(Attempt.user_id == user.id, Attempt.status == AttemptStatus.SUBMITTED)

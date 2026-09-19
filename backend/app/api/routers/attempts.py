@@ -1,6 +1,7 @@
 """Attempt lifecycle for both modes: start, answer, pause/resume, submit, review."""
 from __future__ import annotations
 
+import random
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -11,27 +12,34 @@ from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.ratelimit import api_rate_limit
 from app.db.session import get_db
-from app.models import Attempt, AttemptAnswer, AttemptMode, AttemptStatus, User
+from app.models import Attempt, AttemptAnswer, AttemptMode, AttemptStatus, Profile
 from app.schemas import AnswerIn, StartExam, StartPractice
-from app.services import scoring
-from app.services.content import get_question
+from app.services import drill, scoring
+from app.services.content import get_question, get_questions
 from app.services.set_builder import (
     build_diagnostic_paper,
     build_exam_paper,
     build_focus_set,
     build_practice_set,
+    build_quick_mock,
     catalogue,
     practice_set_summary,
 )
 
 router = APIRouter(tags=["attempts"], dependencies=[Depends(api_rate_limit)])
 
+WEAK_AREA_TAG = "score-report-2026-09"
+WEAK_AREA_LABEL = "Weak-Area Drill (score report 2026-09)"
+FOCUS_LABEL = "Personalised Focus Set"
+DRILL_LABEL = "Spaced Repetition Drill"
+DRILL_SIZE = 20
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _owned(attempt_id: int, user: User, db: Session) -> Attempt:
+def _owned(attempt_id: int, user: Profile, db: Session) -> Attempt:
     attempt = db.get(Attempt, attempt_id)
     if attempt is None or attempt.user_id != user.id:
         # Same response whether it does not exist or belongs to someone else,
@@ -96,13 +104,13 @@ def _full(attempt: Attempt) -> dict:
 def list_sets(
     page: int = Query(1, ge=1),
     per_page: int = Query(30, ge=6, le=60),
-    _: User = Depends(get_current_user),
+    _: Profile = Depends(get_current_user),
 ) -> dict:
     return catalogue(page=page, per_page=per_page)
 
 
 @router.get("/practice/sets/{set_number}")
-def get_set(set_number: int, _: User = Depends(get_current_user)) -> dict:
+def get_set(set_number: int, _: Profile = Depends(get_current_user)) -> dict:
     try:
         return practice_set_summary(set_number)
     except ValueError as exc:
@@ -115,7 +123,7 @@ def get_set(set_number: int, _: User = Depends(get_current_user)) -> dict:
 @router.post("/practice/start", status_code=status.HTTP_201_CREATED)
 def start_practice(
     payload: StartPractice,
-    user: User = Depends(get_current_user),
+    user: Profile = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
     if payload.resume_existing:
@@ -162,7 +170,7 @@ def start_practice(
 @router.post("/exam/start", status_code=status.HTTP_201_CREATED)
 def start_exam(
     payload: StartExam,
-    user: User = Depends(get_current_user),
+    user: Profile = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
     if not payload.acknowledge_timed:
@@ -197,9 +205,11 @@ def start_exam(
         mode=AttemptMode.EXAM,
         status=AttemptStatus.IN_PROGRESS,
         set_number=None,
-        label="Full mock exam",
-        question_ids=build_exam_paper(seed),
-        time_limit_seconds=scoring.time_limit_for(AttemptMode.EXAM),
+        label="Quick scenario mock" if payload.quick else "Full mock exam",
+        question_ids=build_quick_mock(seed) if payload.quick else build_exam_paper(seed),
+        time_limit_seconds=(
+            settings.quick_mock_minutes * 60 if payload.quick else scoring.time_limit_for(AttemptMode.EXAM)
+        ),
         started_at=_utcnow(),
         resumed_at=_utcnow(),
     )
@@ -211,7 +221,7 @@ def start_exam(
 
 @router.post("/diagnostic/start", status_code=status.HTTP_201_CREATED)
 def start_diagnostic(
-    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> dict:
     """A short, untimed readiness check — recommended once, retakeable any time."""
     existing = db.scalar(
@@ -250,7 +260,7 @@ def start_diagnostic(
 
 @router.post("/focus/start", status_code=status.HTTP_201_CREATED)
 def start_focus(
-    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> dict:
     """A personalised set, weighted toward whatever the user has scored weakest on.
 
@@ -265,6 +275,7 @@ def start_focus(
             Attempt.user_id == user.id,
             Attempt.mode == AttemptMode.PRACTICE,
             Attempt.set_number.is_(None),
+            Attempt.label == FOCUS_LABEL,
             Attempt.status.in_([AttemptStatus.IN_PROGRESS, AttemptStatus.PAUSED]),
         )
         .order_by(Attempt.started_at.desc())
@@ -292,11 +303,116 @@ def start_focus(
         mode=AttemptMode.PRACTICE,
         status=AttemptStatus.IN_PROGRESS,
         set_number=None,
-        label="Personalised Focus Set",
+        label=FOCUS_LABEL,
         question_ids=build_focus_set(accuracy, seed),
         time_limit_seconds=None,
         started_at=_utcnow(),
         resumed_at=_utcnow(),
+    )
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    return _full(attempt)
+
+
+@router.post("/weakarea/start", status_code=status.HTTP_201_CREATED)
+def start_weak_area(
+    user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
+) -> dict:
+    """Every question tagged from the 2026-09 score report, freshly shuffled each run."""
+    existing = db.scalar(
+        select(Attempt).where(
+            Attempt.user_id == user.id,
+            Attempt.label == WEAK_AREA_LABEL,
+            Attempt.status.in_([AttemptStatus.IN_PROGRESS, AttemptStatus.PAUSED]),
+        )
+    )
+    if existing:
+        if existing.status == AttemptStatus.PAUSED:
+            existing.status = AttemptStatus.IN_PROGRESS
+            existing.resumed_at = _utcnow()
+            db.commit()
+        return _full(existing)
+
+    ids = sorted(q.id for q in get_questions().values() if WEAK_AREA_TAG in q.tags)
+    random.Random(f"{user.id}:{_utcnow().timestamp()}").shuffle(ids)
+    attempt = Attempt(
+        user_id=user.id,
+        mode=AttemptMode.PRACTICE,
+        status=AttemptStatus.IN_PROGRESS,
+        set_number=None,
+        label=WEAK_AREA_LABEL,
+        question_ids=ids,
+        time_limit_seconds=None,
+        started_at=_utcnow(),
+        resumed_at=_utcnow(),
+    )
+    db.add(attempt)
+    db.commit()
+    db.refresh(attempt)
+    return _full(attempt)
+
+
+def _drill_state(user: Profile, db: Session) -> tuple[dict, list[str]]:
+    rows = db.execute(
+        select(AttemptAnswer.question_id, AttemptAnswer.is_correct, Attempt.submitted_at)
+        .join(Attempt, Attempt.id == AttemptAnswer.attempt_id)
+        .where(
+            Attempt.user_id == user.id,
+            Attempt.status == AttemptStatus.SUBMITTED,
+            Attempt.submitted_at.is_not(None),
+            AttemptAnswer.is_correct.is_not(None),
+        )
+    ).all()
+    pool = sorted(q.id for q in get_questions().values() if q.task)
+    return drill.card_states((r[0], r[1], r[2]) for r in rows), pool
+
+
+@router.get("/drill/summary")
+def drill_summary(
+    user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
+) -> dict:
+    states, pool = _drill_state(user, db)
+    return drill.summary(states, pool, _utcnow())
+
+
+@router.post("/drill/start", status_code=status.HTTP_201_CREATED)
+def start_drill(
+    user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
+) -> dict:
+    """Questions that are due for review (misses first), topped up with ones you have not seen yet."""
+    existing = db.scalar(
+        select(Attempt).where(
+            Attempt.user_id == user.id,
+            Attempt.label == DRILL_LABEL,
+            Attempt.status.in_([AttemptStatus.IN_PROGRESS, AttemptStatus.PAUSED]),
+        )
+    )
+    if existing:
+        if existing.status == AttemptStatus.PAUSED:
+            existing.status = AttemptStatus.IN_PROGRESS
+            existing.resumed_at = _utcnow()
+            db.commit()
+        return _full(existing)
+
+    now = _utcnow()
+    states, pool = _drill_state(user, db)
+    ids = drill.build_drill(states, pool, now, DRILL_SIZE, random.Random(f"{user.id}:{now.timestamp()}"))
+    if not ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nothing is due for review right now and you have seen every question. Come back tomorrow.",
+        )
+    attempt = Attempt(
+        user_id=user.id,
+        mode=AttemptMode.PRACTICE,
+        status=AttemptStatus.IN_PROGRESS,
+        set_number=None,
+        label=DRILL_LABEL,
+        question_ids=ids,
+        time_limit_seconds=None,
+        started_at=now,
+        resumed_at=now,
     )
     db.add(attempt)
     db.commit()
@@ -312,7 +428,7 @@ def list_attempts(
     mode: str | None = Query(None, pattern="^(practice|exam|diagnostic)$"),
     status_filter: str | None = Query(None, alias="status"),
     limit: int = Query(25, ge=1, le=100),
-    user: User = Depends(get_current_user),
+    user: Profile = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[dict]:
     stmt = select(Attempt).where(Attempt.user_id == user.id)
@@ -326,7 +442,7 @@ def list_attempts(
 
 @router.get("/attempts/{attempt_id}")
 def get_attempt(
-    attempt_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    attempt_id: int, user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> dict:
     attempt = _autosubmit_if_expired(_owned(attempt_id, user, db), db)
     return _full(attempt)
@@ -336,7 +452,7 @@ def get_attempt(
 def save_answer(
     attempt_id: int,
     payload: AnswerIn,
-    user: User = Depends(get_current_user),
+    user: Profile = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
     attempt = _autosubmit_if_expired(_owned(attempt_id, user, db), db)
@@ -401,7 +517,7 @@ def save_answer(
 def move_cursor(
     attempt_id: int,
     position: int = Query(ge=0),
-    user: User = Depends(get_current_user),
+    user: Profile = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
     attempt = _owned(attempt_id, user, db)
@@ -412,7 +528,7 @@ def move_cursor(
 
 @router.post("/attempts/{attempt_id}/pause")
 def pause(
-    attempt_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    attempt_id: int, user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> dict:
     attempt = _owned(attempt_id, user, db)
     if attempt.mode == AttemptMode.EXAM:
@@ -436,7 +552,7 @@ def pause(
 
 @router.post("/attempts/{attempt_id}/resume")
 def resume(
-    attempt_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    attempt_id: int, user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> dict:
     attempt = _owned(attempt_id, user, db)
     if attempt.status != AttemptStatus.PAUSED:
@@ -451,7 +567,7 @@ def resume(
 
 @router.post("/attempts/{attempt_id}/submit")
 def submit(
-    attempt_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    attempt_id: int, user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> dict:
     attempt = _owned(attempt_id, user, db)
     if attempt.status == AttemptStatus.SUBMITTED:
@@ -472,7 +588,7 @@ def submit(
 
 @router.delete("/attempts/{attempt_id}", status_code=status.HTTP_204_NO_CONTENT, response_model=None)
 def abandon(
-    attempt_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    attempt_id: int, user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> None:
     attempt = _owned(attempt_id, user, db)
     if attempt.status == AttemptStatus.SUBMITTED:
@@ -491,7 +607,7 @@ def abandon(
 # --------------------------------------------------------------------------
 @router.get("/attempts/{attempt_id}/scorecard")
 def get_scorecard(
-    attempt_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    attempt_id: int, user: Profile = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> dict:
     attempt = _owned(attempt_id, user, db)
     if attempt.status != AttemptStatus.SUBMITTED:
@@ -506,7 +622,7 @@ def get_scorecard(
 def get_review(
     attempt_id: int,
     only_incorrect: bool = Query(False),
-    user: User = Depends(get_current_user),
+    user: Profile = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
     attempt = _owned(attempt_id, user, db)

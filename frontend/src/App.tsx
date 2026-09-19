@@ -6,7 +6,6 @@ import { Spinner } from "./components/ui";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
-import OAuthCallback from "./pages/OAuthCallback";
 import Dashboard from "./pages/Dashboard";
 import PracticeSets from "./pages/PracticeSets";
 import ExamLobby from "./pages/ExamLobby";
@@ -39,7 +38,6 @@ export default function App() {
       <Route path="/" element={loading ? <Spinner /> : user ? <Navigate to="/dashboard" replace /> : <Landing />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Login initialMode="register" />} />
-      <Route path="/oauth/callback" element={<OAuthCallback />} />
 
       {/* The runner is full-bleed: no shell chrome competing with the paper. */}
       <Route path="/attempt/:id" element={<Protected><Runner /></Protected>} />

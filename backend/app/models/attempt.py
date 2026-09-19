@@ -1,6 +1,7 @@
 """Attempt + per-question answer tables shared by Practice and Exam modes."""
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timezone
 from enum import StrEnum
 
@@ -11,9 +12,9 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
 )
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -44,8 +45,8 @@ class Attempt(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE"), index=True
     )
     mode: Mapped[str] = mapped_column(String(16))
     status: Mapped[str] = mapped_column(String(16), default=AttemptStatus.IN_PROGRESS)
@@ -55,7 +56,7 @@ class Attempt(Base):
     label: Mapped[str] = mapped_column(String(120), default="")
 
     # Frozen ordering, so a paused attempt resumes with the identical paper.
-    question_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    question_ids: Mapped[list[str]] = mapped_column(JSONB, default=list)
     cursor: Mapped[int] = mapped_column(Integer, default=0)
 
     # Timing. ``elapsed_seconds`` accumulates only while running, so Pause is
@@ -71,9 +72,9 @@ class Attempt(Base):
     correct_count: Mapped[int | None] = mapped_column(Integer, default=None)
     total_count: Mapped[int | None] = mapped_column(Integer, default=None)
     passed: Mapped[bool | None] = mapped_column(Boolean, default=None)
-    domain_breakdown: Mapped[dict | None] = mapped_column(JSON, default=None)
+    domain_breakdown: Mapped[dict | None] = mapped_column(JSONB, default=None)
 
-    user: Mapped["User"] = relationship(back_populates="attempts")  # noqa: F821
+    user: Mapped["Profile"] = relationship(back_populates="attempts")  # noqa: F821
     answers: Mapped[list["AttemptAnswer"]] = relationship(
         back_populates="attempt",
         cascade="all, delete-orphan",
@@ -114,7 +115,7 @@ class AttemptAnswer(Base):
     question_id: Mapped[str] = mapped_column(String(64), index=True)
     position: Mapped[int] = mapped_column(Integer, default=0)
 
-    selected: Mapped[list[str]] = mapped_column(JSON, default=list)
+    selected: Mapped[list[str]] = mapped_column(JSONB, default=list)
     is_correct: Mapped[bool | None] = mapped_column(Boolean, default=None)
     flagged: Mapped[bool] = mapped_column(Boolean, default=False)
     seconds_spent: Mapped[int] = mapped_column(Integer, default=0)

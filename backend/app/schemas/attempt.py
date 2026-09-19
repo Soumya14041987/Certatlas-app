@@ -15,6 +15,10 @@ class StartExam(BaseModel):
         default=True,
         description="Exam mode is timed and cannot be paused; the client confirms the candidate knows.",
     )
+    quick: bool = Field(
+        default=False,
+        description="A ~28-question scenario mock (4 random scenarios, 56 minutes) instead of the full paper.",
+    )
 
 
 class AnswerIn(BaseModel):

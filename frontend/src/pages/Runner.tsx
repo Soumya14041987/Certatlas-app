@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../lib/api";
 import type { Attempt } from "../lib/types";
 import { Alert, Card, InlineCode, Spinner } from "../components/ui";
+import ScenarioCard from "../components/ScenarioCard";
 import { DIFFICULTY_LABEL, clamp, formatClock, formatDuration } from "../lib/format";
 
 type Selections = Record<string, string[]>;
@@ -330,6 +331,7 @@ export default function Runner() {
             </button>
           </div>
 
+          <ScenarioCard scenario={current.scenario} />
           <h1 className="text-lg font-medium leading-relaxed text-white sm:text-xl">
             <InlineCode text={current.stem} />
           </h1>

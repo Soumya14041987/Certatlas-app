@@ -1,4 +1,10 @@
-"""SQLAlchemy engine / session wiring."""
+"""SQLAlchemy engine / session wiring.
+
+Production points ``CCARF_DATABASE_URL`` at Supabase's Postgres connection
+string; the SQLite fallback below only exists so a checkout with no
+``.env`` still imports and runs the parts of the app (content bank,
+question sampling) that need no database at all.
+"""
 from __future__ import annotations
 
 from collections.abc import Iterator
@@ -44,7 +50,16 @@ def get_db() -> Iterator[Session]:
 
 
 def init_db() -> None:
-    """Create tables. Real deployments should front this with Alembic."""
+    """Create tables — SQLite fallback only.
+
+    Against Postgres, the schema is owned entirely by
+    ``supabase/migrations/*.sql`` (applied with the Supabase CLI or direct
+    ``psql``/``psycopg``), not by this app. Calling ``create_all`` there
+    would risk silently drifting from what the migrations actually define
+    every time the app boots, so it's skipped outright rather than relying
+    on SQLAlchemy's create-if-missing check to make that safe by accident.
+    """
     from app import models  # noqa: F401  (registers mappers)
 
-    Base.metadata.create_all(bind=engine)
+    if _is_sqlite:
+        Base.metadata.create_all(bind=engine)

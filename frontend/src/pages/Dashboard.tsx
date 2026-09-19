@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth";
-import type { Analytics, AttemptSummary } from "../lib/types";
+import type { Analytics, AttemptSummary, DrillSummary } from "../lib/types";
 import { Alert, Card, DomainBars, EmptyState, SectionHeading, Spinner, Stat, TrendChart } from "../components/ui";
 import { TONE_TEXT, formatDate, formatDuration, scoreTone } from "../lib/format";
 
@@ -22,8 +22,10 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [startingFocus, setStartingFocus] = useState(false);
+  const [drill, setDrill] = useState<DrillSummary | null>(null);
 
   useEffect(() => {
+    api.drillSummary().then(setDrill).catch(() => setDrill(null));
     Promise.all([api.analytics(), api.attempts({ limit: 40 })])
       .then(([overview, attempts]) => {
         setAnalytics(overview);
@@ -50,6 +52,28 @@ export default function Dashboard() {
       setError(err instanceof Error ? err.message : "Could not start a set");
     } finally {
       setStarting(false);
+    }
+  }
+
+  async function startDrill() {
+    setStartingFocus(true);
+    try {
+      const attempt = await api.startDrill();
+      navigate(`/attempt/${attempt.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start the drill");
+      setStartingFocus(false);
+    }
+  }
+
+  async function startWeakArea() {
+    setStartingFocus(true);
+    try {
+      const attempt = await api.startWeakArea();
+      navigate(`/attempt/${attempt.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start the weak-area drill");
+      setStartingFocus(false);
     }
   }
 
@@ -122,6 +146,41 @@ export default function Dashboard() {
           </div>
         </Card>
       )}
+
+      {drill && (
+        <Card className="border-mint-400/25 bg-mint-500/[0.05] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-semibold text-white">Spaced-repetition drill</div>
+              <div className="mt-0.5 text-xs text-ink-400">
+                Missed questions come back until you get them right three times running; correct ones return at growing intervals.
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                <span className="chip-neutral">{drill.seen}/{drill.total} seen</span>
+                <span className="chip-mint">{drill.mastered} mastered</span>
+                <span className={drill.due > 0 ? "chip-amber" : "chip-neutral"}>{drill.due} due today</span>
+              </div>
+            </div>
+            <button type="button" className="btn-primary btn-sm" onClick={startDrill} disabled={startingFocus}>
+              {startingFocus ? "Starting…" : "Start today's drill"}
+            </button>
+          </div>
+        </Card>
+      )}
+
+      <Card className="border-mint-400/25 bg-mint-500/[0.05] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="text-sm font-semibold text-white">Weak-area drill · exam score report, 19 Sep 2026</div>
+            <div className="mt-0.5 text-xs text-ink-400">
+              Long scenario questions on exactly the objectives you scored 50% or lower on. Reshuffled every run — repeat until each one is automatic.
+            </div>
+          </div>
+          <button type="button" className="btn-primary btn-sm" onClick={startWeakArea} disabled={startingFocus}>
+            {startingFocus ? "Starting…" : "Start weak-area drill"}
+          </button>
+        </div>
+      </Card>
 
       {open.length > 0 && (
         <Card className="border-brand-400/25 bg-brand-500/[0.07] p-5">

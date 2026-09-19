@@ -48,11 +48,14 @@ class Question:
     cheatsheet: str = ""
     sources: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+    scenario: str | None = None
+    task: str = ""
 
     # -- serialisation -----------------------------------------------------
     def public(self) -> dict[str, Any]:
         """The candidate-facing view: no answer key, no explanation."""
         return {
+            "scenario": get_scenarios().get(self.scenario) if self.scenario else None,
             "id": self.id,
             "domain": self.domain,
             "difficulty": self.difficulty,
@@ -68,6 +71,7 @@ class Question:
         return {
             **self.public(),
             "objective": self.objective,
+            "task": self.task,
             "correct": self.correct,
             "explanation": self.explanation,
             "distractor_notes": self.distractor_notes,
@@ -170,7 +174,13 @@ def _load_questions() -> dict[str, Question]:
                 cheatsheet=raw.get("cheatsheet", ""),
                 sources=raw.get("sources", []),
                 tags=raw.get("tags", []),
+                scenario=raw.get("scenario"),
+                task=raw.get("task", ""),
             )
+            if bank[raw["id"]].scenario and bank[raw["id"]].scenario not in get_scenarios():
+                raise ContentError(f"{path.name}:{raw['id']} references unknown scenario '{raw['scenario']}'")
+            if bank[raw["id"]].task and bank[raw["id"]].task not in get_objectives():
+                raise ContentError(f"{path.name}:{raw['id']} references unknown objective '{raw['task']}'")
     return bank
 
 
@@ -251,6 +261,18 @@ def get_heuristics() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
+def get_scenarios() -> dict[str, dict[str, str]]:
+    """Shared scenario cards that several questions can refer to."""
+    return {s["id"]: s for s in _read_json(CONTENT_DIR / "scenarios.json")["scenarios"]}
+
+
+@lru_cache(maxsize=1)
+def get_objectives() -> dict[str, dict[str, str]]:
+    """The exam's testable objectives, as reported on the official score report."""
+    return {o["id"]: o for o in _read_json(CONTENT_DIR / "objectives.json")["objectives"]}
+
+
+@lru_cache(maxsize=1)
 def get_questions() -> dict[str, Question]:
     return _load_questions()
 
@@ -315,7 +337,9 @@ def content_stats() -> dict[str, Any]:
 
 def clear_content_caches() -> None:
     """Drop every cached view of the content bank, e.g. after an admin edit."""
-    for cache in (get_questions, questions_by_domain, get_cheatsheets, get_heuristics):
+    for cache in (
+        get_questions, questions_by_domain, get_cheatsheets, get_heuristics, get_scenarios, get_objectives,
+    ):
         cache.cache_clear()
 
 
