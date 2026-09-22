@@ -1,0 +1,2068 @@
+{
+  "questions": [
+    {
+      "id": "CF-001",
+      "domain": "PTE",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A marketing team needs Claude to write 50 product descriptions that must share the same tone, format, and approximate length. Which TWO approaches BEST ensure consistency across all 50 descriptions?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Write the first description manually and ask Claude to 'write 49 more like this one'"
+        },
+        {
+          "key": "B",
+          "text": "Define tone, format, and word-count constraints in a system prompt that applies to every request"
+        },
+        {
+          "key": "C",
+          "text": "Include 2–3 high-quality examples (few-shot) directly in each prompt"
+        },
+        {
+          "key": "D",
+          "text": "Set temperature to 0 to eliminate variation"
+        },
+        {
+          "key": "E",
+          "text": "Feed summaries of every 10 outputs back into the next prompt as running context"
+        }
+      ],
+      "correct": [
+        "B",
+        "C"
+      ],
+      "explanation": "A system prompt anchors the style globally across all 50 calls. Few-shot examples show the pattern concretely within each call. Together they give Claude both persistent and in-context guidance. 'Write 49 more' provides no stable anchor; temperature is not directly settable by end-users in most Claude interfaces; feeding output summaries back introduces drift rather than correcting it.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-002",
+      "domain": "PTE",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A legal analyst asks Claude to 'analyze this contract.' Claude returns a generic summary instead of a useful legal breakdown. Which prompt change MOST directly fixes this?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add 'think step by step' to the prompt"
+        },
+        {
+          "key": "B",
+          "text": "Specify exact output structure: 'identify governing jurisdiction, key obligations of each party, termination triggers, and top three legal risks'"
+        },
+        {
+          "key": "C",
+          "text": "Increase the response length limit"
+        },
+        {
+          "key": "D",
+          "text": "Break the analysis across multiple separate conversations"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The original prompt is under-specified. Naming the exact sections Claude should produce (jurisdiction, obligations, termination, risk) turns a vague ask into a structured deliverable. 'Think step by step' helps reasoning but doesn't fix the output structure. Length and multi-conversation splits don't address the missing criteria.",
+      "distractor_notes": {
+        "A": "Chain-of-thought improves reasoning depth but doesn't tell Claude what legal dimensions to cover.",
+        "C": "More tokens won't add relevant sections if Claude doesn't know which sections are wanted.",
+        "D": "Splitting conversations fragments context without improving the analytical focus."
+      }
+    },
+    {
+      "id": "CF-003",
+      "domain": "PTE",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "Claude consistently returns safe, corporate-sounding taglines when asked to brainstorm. Which prompt strategy is MOST effective at getting more creative output?",
+      "options": [
+        {
+          "key": "A",
+          "text": "'Be more creative and avoid clichés'"
+        },
+        {
+          "key": "B",
+          "text": "'Generate 20 taglines, then identify and keep the 5 most unexpected ones that a traditional brand would never use'"
+        },
+        {
+          "key": "C",
+          "text": "'Use a playful tone'"
+        },
+        {
+          "key": "D",
+          "text": "'Try a completely different approach'"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Asking for a large set (20) and then filtering for the unexpected forces Claude to explore the long tail of its distribution before selecting. Adjective-only instructions like 'more creative' or 'playful' are interpreted relative to Claude's default and shift the average slightly rather than fundamentally changing the output range.",
+      "distractor_notes": {
+        "A": "'Avoid clichés' is too vague; Claude's interpretation of 'creative' defaults to safe-creative.",
+        "C": "'Playful tone' changes style, not originality of ideas.",
+        "D": "Too vague to drive any specific behavior change."
+      }
+    },
+    {
+      "id": "CF-004",
+      "domain": "PTE",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A developer needs Claude to consistently return valid JSON matching a specific schema and nothing else. Which TWO techniques BEST enforce this?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Append 'return JSON' to the prompt"
+        },
+        {
+          "key": "B",
+          "text": "Provide the exact JSON schema in the prompt with a fully populated example"
+        },
+        {
+          "key": "C",
+          "text": "Enable extended thinking mode"
+        },
+        {
+          "key": "D",
+          "text": "End the prompt with 'Do not include any text outside the JSON object'"
+        },
+        {
+          "key": "E",
+          "text": "Ask Claude to validate its own output before responding"
+        }
+      ],
+      "correct": [
+        "B",
+        "D"
+      ],
+      "explanation": "An example filled with real values anchors the exact structure. Explicitly forbidding extra text prevents Claude from wrapping the JSON in prose or adding explanatory sentences. 'Return JSON' is too ambiguous to prevent formatting variations. Extended thinking changes reasoning but not output format. Self-validation is unreliable because Claude can confirm incorrect output.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-005",
+      "domain": "PTE",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "A researcher wants Claude to identify hidden assumptions in a 30-page policy document. Which prompt is MOST effective?",
+      "options": [
+        {
+          "key": "A",
+          "text": "'What are the hidden assumptions in this document?'"
+        },
+        {
+          "key": "B",
+          "text": "'List every fact stated in the document'"
+        },
+        {
+          "key": "C",
+          "text": "'For each major claim presented without supporting evidence, state the unstated assumption the claim relies on'"
+        },
+        {
+          "key": "D",
+          "text": "'Summarize the document and then critique it'"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Option C decomposes the task into concrete, verifiable sub-steps: locate unsupported claims, then trace their implicit assumptions. This is more precise than 'hidden assumptions' (too vague) or 'summarize then critique' (unstructured). Listing facts produces raw data without the analytical layer.",
+      "distractor_notes": {
+        "A": "'Hidden' is ambiguous—Claude may identify surface-level omissions rather than logical presuppositions.",
+        "B": "Listing facts bypasses the analytical step of inferring assumptions.",
+        "D": "Summarize-then-critique produces general feedback, not a systematic assumption audit."
+      }
+    },
+    {
+      "id": "CF-006",
+      "domain": "PTE",
+      "difficulty": "foundational",
+      "type": "single",
+      "stem": "A user iterates on a creative writing prompt eight times. The output drifts far from the original vision after several rounds. The MOST likely cause is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude penalises users who iterate too many times"
+        },
+        {
+          "key": "B",
+          "text": "Each 'refine this' instruction shifts Claude away from the last output, compounding small deviations with every iteration"
+        },
+        {
+          "key": "C",
+          "text": "Creative tasks have a fixed token budget that depletes over iterations"
+        },
+        {
+          "key": "D",
+          "text": "The context window is too small to remember the original instructions"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Iterative drift: each refinement step treats the previous output as the new baseline. Small deviations compound, pulling the result progressively away from the original intent. The fix is to periodically re-anchor by restating the original vision explicitly rather than always referencing the last output.",
+      "distractor_notes": {
+        "A": "Claude has no iteration penalty.",
+        "C": "There is no creative token budget; this is a misconception.",
+        "D": "Context window limits are about total text length, not creative memory; this is not the cause here."
+      }
+    },
+    {
+      "id": "CF-007",
+      "domain": "PTE",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "Which prompt structure BEST achieves both deep analysis and a concise final output?",
+      "options": [
+        {
+          "key": "A",
+          "text": "'Analyze X and be concise'"
+        },
+        {
+          "key": "B",
+          "text": "'Analyze X thoroughly in your reasoning. Then, in a separate SUMMARY section, write exactly three sentences capturing the most important findings.'"
+        },
+        {
+          "key": "C",
+          "text": "'Give me a brief analysis of X'"
+        },
+        {
+          "key": "D",
+          "text": "'Analyze X. Keep it short.'"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Explicitly separating the unconstrained reasoning phase from the constrained summary section lets Claude think fully while producing tight final output. 'Analyze and be concise' forces a trade-off where conciseness wins over depth. 'Brief' and 'short' are relative terms that Claude interprets inconsistently.",
+      "distractor_notes": {
+        "A": "Asking for both depth and brevity simultaneously without structure creates a trade-off Claude resolves inconsistently.",
+        "C": "'Brief' is ambiguous; 50 words and 500 words both qualify.",
+        "D": "'Short' overrides depth; the analysis phase is compressed along with the output."
+      }
+    },
+    {
+      "id": "CF-008",
+      "domain": "PTE",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A team needs Claude to adapt its tone for two audiences—a technical engineering team and C-suite executives—without rewriting prompts from scratch each time. Which TWO solutions BEST achieve this?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Create separate system prompts for each audience, applied when the Claude session is initialised"
+        },
+        {
+          "key": "B",
+          "text": "Ask Claude to produce two versions in every response"
+        },
+        {
+          "key": "C",
+          "text": "Build a prompt template with an {AUDIENCE} variable filled at runtime"
+        },
+        {
+          "key": "D",
+          "text": "Rely on Claude to infer the audience from message wording"
+        },
+        {
+          "key": "E",
+          "text": "Add 'be technical' or 'be executive-friendly' as a manual note in each message"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Separate system prompts persist the audience context for the lifetime of a session. Parameterised templates enable reuse without prompt duplication. Always-two-versions wastes tokens. Audience inference from wording is unreliable. Manual per-message notes require discipline and are easily forgotten.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-009",
+      "domain": "PTE",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "When using chain-of-thought (CoT) prompting, the PRIMARY risk the user must still guard against is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Responses become so long they exceed the context window"
+        },
+        {
+          "key": "B",
+          "text": "Claude may construct a coherent, plausible-sounding reasoning chain that leads to an incorrect conclusion"
+        },
+        {
+          "key": "C",
+          "text": "CoT only works on mathematical problems, not analytical tasks"
+        },
+        {
+          "key": "D",
+          "text": "The model will ignore the CoT instruction and answer directly"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Chain-of-thought improves accuracy on average but is not a correctness guarantee. Claude can hallucinate well-structured reasoning paths that arrive at wrong answers. External verification of the conclusion remains necessary, especially for high-stakes tasks.",
+      "distractor_notes": {
+        "A": "Response length is manageable and is not the primary correctness risk.",
+        "C": "CoT is broadly applicable across analytical, coding, and writing tasks—not limited to maths.",
+        "D": "Claude generally follows CoT instructions when provided."
+      }
+    },
+    {
+      "id": "CF-010",
+      "domain": "PTE",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A manager gets different priority orderings each time they ask Claude to rank a 30-item task backlog. The BEST fix is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Run the same prompt three times and use majority voting"
+        },
+        {
+          "key": "B",
+          "text": "Provide explicit prioritisation criteria: 'rank by business impact first, then urgency, then implementation effort'"
+        },
+        {
+          "key": "C",
+          "text": "Ask Claude to use a numbered list format"
+        },
+        {
+          "key": "D",
+          "text": "Reduce the backlog to 10 items per prompt"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Without explicit criteria Claude infers priorities from context signals, which vary across runs. Providing a named, ordered rubric anchors every run to the same logic. Format doesn't change ranking logic; majority voting across three vague runs compounds the inconsistency; smaller batches don't fix missing criteria.",
+      "distractor_notes": {
+        "A": "Voting across three inconsistent runs averages noise, it doesn't produce accuracy.",
+        "C": "Numbered list is a formatting instruction; it has no effect on ranking logic.",
+        "D": "Batch size affects volume per call, not the ranking criteria."
+      }
+    },
+    {
+      "id": "CF-011",
+      "domain": "OEV",
+      "difficulty": "foundational",
+      "type": "single",
+      "stem": "Claude writes a research brief containing a specific statistic you don't recognise. The BEST first action is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Accept it if the surrounding reasoning seems sound"
+        },
+        {
+          "key": "B",
+          "text": "Ask Claude to confirm whether the statistic is accurate"
+        },
+        {
+          "key": "C",
+          "text": "Verify the statistic against a primary source or authoritative database"
+        },
+        {
+          "key": "D",
+          "text": "Ask Claude to cite its source for the statistic"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Claude can confidently re-state hallucinated statistics when asked to confirm them—the confirmation provides no new verification signal. Primary source verification (government data, peer-reviewed papers, reputable industry databases) is the only reliable check.",
+      "distractor_notes": {
+        "A": "Plausible surrounding reasoning is not evidence that a specific figure is correct.",
+        "B": "Claude may re-confirm the hallucination with equal confidence.",
+        "D": "Claude will provide a citation, but the citation itself may be hallucinated."
+      }
+    },
+    {
+      "id": "CF-012",
+      "domain": "OEV",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A team uses Claude to draft internal HR policies. Which TWO checks are MOST critical before any policy is published?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Verify all cited legal requirements against current, jurisdiction-specific employment law"
+        },
+        {
+          "key": "B",
+          "text": "Run the draft through a spelling and grammar checker"
+        },
+        {
+          "key": "C",
+          "text": "Have a qualified HR or legal professional review for compliance gaps"
+        },
+        {
+          "key": "D",
+          "text": "Ask Claude to rewrite in simpler language"
+        },
+        {
+          "key": "E",
+          "text": "Confirm formatting follows the corporate template"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "HR policies carry legal liability. Legal citations must be verified against current jurisdiction-specific law; Claude's training data may be outdated or jurisdiction-mismatched. Expert human review identifies compliance gaps and contextual nuances Claude cannot reliably self-check.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-013",
+      "domain": "OEV",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "Claude generates a summary of a 60-page report. How do you MOST efficiently verify it captured the key points without re-reading the full report?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Ask Claude 'Is this summary accurate?'"
+        },
+        {
+          "key": "B",
+          "text": "Compare the summary against the report's executive summary and conclusion sections"
+        },
+        {
+          "key": "C",
+          "text": "Have Claude generate a second summary and compare the two"
+        },
+        {
+          "key": "D",
+          "text": "Check that the summary length is roughly proportional to the original document length"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Executive summaries and conclusions are the highest-density sections of a report. Spot-checking the Claude summary against these two sections is a targeted verification that doesn't require re-reading everything.",
+      "distractor_notes": {
+        "A": "Claude may confirm its summary is accurate even when it omitted or distorted key points.",
+        "C": "A second summary from the same model will exhibit similar omissions and distortions.",
+        "D": "Proportionality is a format check, not a content accuracy check."
+      }
+    },
+    {
+      "id": "CF-014",
+      "domain": "OEV",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A Claude-generated financial model contains a formula error in a commonly used calculation. The MOST likely root cause is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Financial modelling is entirely outside Claude's capability"
+        },
+        {
+          "key": "B",
+          "text": "The prompt was too long for the model to process correctly"
+        },
+        {
+          "key": "C",
+          "text": "Claude reproduced a commonly-seen but incorrect formula variant present in its training data"
+        },
+        {
+          "key": "D",
+          "text": "Claude deliberately introduces errors to test the user"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Common formula errors (e.g., CAGR with wrong exponent, IRR sign conventions) appear frequently in the corpus Claude was trained on. Claude may reproduce the prevalent-but-wrong variant with full confidence. This is a known hallucination pattern for quantitative tasks.",
+      "distractor_notes": {
+        "A": "Claude can help with financial modelling; specific formula errors don't indicate a total capability gap.",
+        "B": "Prompt length affects context but is not typically the cause of formula errors.",
+        "D": "Claude has no adversarial intent; errors are emergent from training data, not deliberate."
+      }
+    },
+    {
+      "id": "CF-015",
+      "domain": "OEV",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "When auditing Claude outputs for potential bias, you should PRIMARILY look for:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Grammatical constructions that suggest non-native English"
+        },
+        {
+          "key": "B",
+          "text": "Systematic skewing of perspectives, representation, or recommendations that correlates with sensitive attributes such as gender, race, or geography"
+        },
+        {
+          "key": "C",
+          "text": "Use of passive voice, which can obscure accountability"
+        },
+        {
+          "key": "D",
+          "text": "Response lengths that differ across topic types"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "AI bias manifests as systematic—not random—patterns: consistently favouring or disfavouring certain groups, viewpoints, or outcomes correlated with protected attributes. Grammar style, passive voice, and length variation are not indicators of discriminatory bias.",
+      "distractor_notes": {
+        "A": "Grammar style is unrelated to content bias.",
+        "C": "Passive voice is a style choice; it does not indicate bias.",
+        "D": "Length differences may reflect topic complexity, not bias."
+      }
+    },
+    {
+      "id": "CF-016",
+      "domain": "OEV",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A developer uses Claude to generate unit tests for a codebase. Which TWO evaluation approaches BEST confirm the tests are actually useful?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Confirm the tests run without syntax errors"
+        },
+        {
+          "key": "B",
+          "text": "Introduce a known bug into the production code and verify the tests catch it"
+        },
+        {
+          "key": "C",
+          "text": "Count the number of assertions per test file"
+        },
+        {
+          "key": "D",
+          "text": "Verify that statement coverage is above 80%"
+        },
+        {
+          "key": "E",
+          "text": "Ensure tests explicitly cover edge cases identified in each function's documentation"
+        }
+      ],
+      "correct": [
+        "B",
+        "E"
+      ],
+      "explanation": "Mutation testing (intentionally breaking the code) is the only way to prove tests can fail on bad code. Covering documented edge cases addresses the highest-probability failure points. Syntax passing and coverage percentages measure structural completeness, not test effectiveness.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-017",
+      "domain": "OEV",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "Claude produces two statements in the same response that directly contradict each other. The BEST response is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Use the first statement, as it reflects Claude's initial reasoning before drift"
+        },
+        {
+          "key": "B",
+          "text": "Use the second statement, as it represents Claude's final considered position"
+        },
+        {
+          "key": "C",
+          "text": "Flag both statements as unreliable and seek external verification before using either"
+        },
+        {
+          "key": "D",
+          "text": "Interpret whichever statement is more cautiously worded"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Internal contradiction is a direct hallucination signal. Neither statement is more reliable; the contradiction reveals that Claude was uncertain or inconsistent on this point. External verification is mandatory before using contradicted information in any decision.",
+      "distractor_notes": {
+        "A": "First-statement bias has no logical basis for reliability.",
+        "B": "Second-statement bias also has no logical basis; Claude doesn't reliably revise toward correctness.",
+        "D": "Caution in phrasing does not correlate with factual accuracy."
+      }
+    },
+    {
+      "id": "CF-018",
+      "domain": "OEV",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A manager discovers Claude has been providing answers based on information that is more than 18 months out of date. The MOST durable solution is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Add 'use only current information' to the system prompt"
+        },
+        {
+          "key": "B",
+          "text": "Provide the relevant current data directly in the prompt context for each query"
+        },
+        {
+          "key": "C",
+          "text": "Restrict Claude to topics that don't require current information"
+        },
+        {
+          "key": "D",
+          "text": "Upgrade to the most recent model version"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Claude's training cutoff is fixed. Instructions to 'use current data' cannot override it—Claude simply doesn't have the data. Providing the information in-context is the only reliable mechanism to ensure current data is used. Model version upgrades extend the cutoff but still have a cutoff.",
+      "distractor_notes": {
+        "A": "This instruction is ignored in practice because the data literally isn't in the model.",
+        "C": "This workaround eliminates the utility of Claude for most business use cases.",
+        "D": "A newer model has a more recent cutoff but still has a cutoff; it doesn't solve the fundamental issue."
+      }
+    },
+    {
+      "id": "CF-019",
+      "domain": "OEV",
+      "difficulty": "foundational",
+      "type": "single",
+      "stem": "Two Claude-generated competitor analyses produced on different days show significantly different market share figures for the same company. The MOST appropriate action is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Use the more recent analysis, as it reflects a later training snapshot"
+        },
+        {
+          "key": "B",
+          "text": "Average the two figures as a conservative estimate"
+        },
+        {
+          "key": "C",
+          "text": "Discard both and source market share figures from authoritative industry reports"
+        },
+        {
+          "key": "D",
+          "text": "Ask Claude to reconcile the two analyses into a single figure"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Specific market share figures are factual claims where Claude is prone to hallucination—generating plausible but unverifiable numbers. Two different answers reveal the figures are not grounded in reliable data. Industry reports (Gartner, IDC, Bloomberg, regulatory filings) are the authoritative source.",
+      "distractor_notes": {
+        "A": "Claude's outputs on the same topic don't reliably improve with time within the same model version.",
+        "B": "Averaging hallucinated numbers produces a hallucinated average.",
+        "D": "Claude's reconciliation will produce a third number with no more basis in fact than the first two."
+      }
+    },
+    {
+      "id": "CF-020",
+      "domain": "OEV",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "Which scenario MOST clearly requires human expert review before any action is taken on Claude's output?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude drafts a meeting scheduling email"
+        },
+        {
+          "key": "B",
+          "text": "Claude recommends discontinuing a patient's medication based on described symptoms"
+        },
+        {
+          "key": "C",
+          "text": "Claude summarises three news articles for a morning briefing"
+        },
+        {
+          "key": "D",
+          "text": "Claude recommends which of five books to add to a reading list"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Medication decisions carry direct patient safety consequences. This is an unambiguous case where expert human review (a qualified clinician) is mandatory before any action. The other scenarios have low stakes and are easily corrected.",
+      "distractor_notes": {
+        "A": "A scheduling email has minimal risk and is easily corrected.",
+        "C": "News summaries have low stakes; errors are caught on reading.",
+        "D": "A reading list recommendation has no safety implications."
+      }
+    },
+    {
+      "id": "CF-021",
+      "domain": "PMS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A customer support team needs to answer 10,000 simple FAQ questions per day with accurate but brief responses. Which model choice is MOST appropriate?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude Opus for maximum accuracy on every query"
+        },
+        {
+          "key": "B",
+          "text": "Claude Sonnet for balanced capability and cost"
+        },
+        {
+          "key": "C",
+          "text": "Claude Haiku for high throughput at the lowest per-query cost"
+        },
+        {
+          "key": "D",
+          "text": "Rotate between all three models to distribute load"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Simple, repetitive FAQ queries are Haiku's ideal use case—it delivers fast, low-latency responses at a fraction of the cost of Sonnet or Opus. For structured, well-defined questions, Haiku's capability is sufficient; Opus would add 10–20× cost with no meaningful quality improvement.",
+      "distractor_notes": {
+        "A": "Opus is designed for complex reasoning; its capability advantage is irrelevant for simple FAQs.",
+        "B": "Sonnet is a reasonable default but is more expensive than necessary for this workload.",
+        "D": "Rotation adds complexity without benefit; model choice should match task complexity."
+      }
+    },
+    {
+      "id": "CF-022",
+      "domain": "PMS",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A legal firm needs to analyse 200-page contracts using Claude. Which TWO factors MOST drive the model selection decision?",
+      "options": [
+        {
+          "key": "A",
+          "text": "The model's context window must accommodate the full document without truncation"
+        },
+        {
+          "key": "B",
+          "text": "The model's cost per token must be the absolute lowest available"
+        },
+        {
+          "key": "C",
+          "text": "The model's reasoning capability for nuanced contractual interpretation"
+        },
+        {
+          "key": "D",
+          "text": "Whether the model supports streaming responses"
+        },
+        {
+          "key": "E",
+          "text": "The model's average response latency"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "A 200-page contract requires a large context window to avoid truncation that would cause missed clauses. Legal analysis requires strong reasoning for nuanced interpretation of obligations, exceptions, and risk. Cost, streaming, and latency are secondary to correctness for high-stakes legal work.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-023",
+      "domain": "PMS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A startup is prototyping an AI feature with unclear requirements and limited budget. Which is the BEST initial model choice?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude Opus to maximise quality and avoid false-negative capability assessments"
+        },
+        {
+          "key": "B",
+          "text": "Claude Haiku to minimise prototype costs"
+        },
+        {
+          "key": "C",
+          "text": "Claude Sonnet to balance capability and cost while requirements stabilise"
+        },
+        {
+          "key": "D",
+          "text": "Use all three in parallel to produce comparative outputs"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Sonnet is the right prototype model: capable enough to evaluate whether the feature is viable without Opus's cost, and able to surface real limitations unlike Haiku, which might give false negatives on feasibility. Once requirements stabilise, you can optimise model choice.",
+      "distractor_notes": {
+        "A": "Starting with Opus risks sunk cost in a feature that may be redesigned; it's premature optimisation.",
+        "B": "Haiku's capability gaps may lead you to conclude a viable feature is infeasible.",
+        "D": "Running all three costs 3× without a structured evaluation framework to interpret the difference."
+      }
+    },
+    {
+      "id": "CF-024",
+      "domain": "PMS",
+      "difficulty": "foundational",
+      "type": "single",
+      "stem": "Users of a Claude-powered chat assistant report that it 'forgets' context from earlier in long conversations. The ROOT CAUSE is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude is designed to reset its memory after 30 minutes of inactivity"
+        },
+        {
+          "key": "B",
+          "text": "The application is not including the full conversation history in each API request"
+        },
+        {
+          "key": "C",
+          "text": "Claude's underlying model degrades in quality during long sessions"
+        },
+        {
+          "key": "D",
+          "text": "Long conversations violate the API terms of service"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Claude is stateless: each API call is independent and only 'knows' what is in that call's messages array. Conversation memory exists only if the application explicitly passes prior messages with every request. The symptom likely reflects when conversation history grows too large to fit within the context budget.",
+      "distractor_notes": {
+        "A": "Claude has no time-based memory reset; this is a misconception.",
+        "C": "Model performance does not degrade within a session; quality is consistent per API call.",
+        "D": "Long conversations are within normal API use; there is no length-based ToS restriction."
+      }
+    },
+    {
+      "id": "CF-025",
+      "domain": "PMS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "When should you upgrade from Claude Sonnet to Claude Opus?",
+      "options": [
+        {
+          "key": "A",
+          "text": "When you need faster response times"
+        },
+        {
+          "key": "B",
+          "text": "When the task requires nuanced reasoning that Sonnet consistently fails at, even after prompt optimisation"
+        },
+        {
+          "key": "C",
+          "text": "When your organisation's budget increases"
+        },
+        {
+          "key": "D",
+          "text": "When you need responses longer than 4,000 words"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Upgrade to Opus when Sonnet's reasoning ceiling demonstrably limits the task, not for speed (Opus is typically slower), length (both models support long outputs), or budget reasons alone. Always try prompt engineering first; model upgrades are an escalation of last resort.",
+      "distractor_notes": {
+        "A": "Opus is typically slower than Sonnet; upgrading for speed is counterproductive.",
+        "C": "Budget change alone is not a reason to upgrade; capability requirements should drive the decision.",
+        "D": "Both models support long outputs; length is not a differentiating factor."
+      }
+    },
+    {
+      "id": "CF-026",
+      "domain": "PMS",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "A developer calls the Claude API directly from client-side JavaScript in a web browser. What is the MOST critical security risk?",
+      "options": [
+        {
+          "key": "A",
+          "text": "API responses may be too slow for smooth browser rendering"
+        },
+        {
+          "key": "B",
+          "text": "The API key is embedded in client-side code where anyone can extract and misuse it"
+        },
+        {
+          "key": "C",
+          "text": "Claude may return content that triggers browser security policies"
+        },
+        {
+          "key": "D",
+          "text": "Browser memory limits will truncate long API responses"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Any secret embedded in client-side code is effectively public—browser DevTools expose it trivially. An exposed API key allows anyone to consume the developer's API quota or access data. All API calls must route through a backend server that holds the key securely.",
+      "distractor_notes": {
+        "A": "Latency is a UX concern, not a security risk.",
+        "C": "Content Security Policy issues are manageable configuration problems, not critical security vulnerabilities.",
+        "D": "Memory limits can cause handling issues but are not a security risk."
+      }
+    },
+    {
+      "id": "CF-027",
+      "domain": "PMS",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "An organisation wants to use Claude to process documents containing patients' protected health information (PHI). The FIRST step before any technical implementation is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Test whether Claude can understand medical terminology accurately"
+        },
+        {
+          "key": "B",
+          "text": "Verify that Anthropic's API terms of service and applicable data processing agreements cover PHI processing under your jurisdiction's compliance framework"
+        },
+        {
+          "key": "C",
+          "text": "Run a pilot with synthetic (de-identified) data to assess output quality"
+        },
+        {
+          "key": "D",
+          "text": "Confirm the model's context window can hold complete patient records"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "PHI processing is regulated (HIPAA in the US, GDPR in Europe, and equivalents elsewhere). The compliance and contractual framework must be verified before a single line of implementation code is written—capability evaluation is secondary to legal authorisation.",
+      "distractor_notes": {
+        "A": "Capability testing is important but not the first step when legal obligations are at stake.",
+        "C": "Synthetic data pilots are a useful second step, not the first.",
+        "D": "Context window assessment is a technical constraint that comes after compliance is confirmed."
+      }
+    },
+    {
+      "id": "CF-028",
+      "domain": "PMS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "What is Claude's 'extended thinking' mode BEST used for?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Retrieving real-time information from the internet"
+        },
+        {
+          "key": "B",
+          "text": "Processing large files from cloud storage"
+        },
+        {
+          "key": "C",
+          "text": "Complex reasoning tasks where exploring multiple angles before answering significantly improves answer quality"
+        },
+        {
+          "key": "D",
+          "text": "Generating images alongside text responses"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Extended thinking allocates additional reasoning steps before producing a response, which meaningfully improves performance on complex, multi-step reasoning tasks (difficult maths, nuanced analysis, strategic decisions). It has no effect on internet access, file retrieval, or image generation.",
+      "distractor_notes": {
+        "A": "Extended thinking is about reasoning depth, not internet access—Claude has no built-in internet access.",
+        "B": "Extended thinking is a reasoning mode; file processing is a context/integration concern.",
+        "D": "Claude does not generate images in its standard API."
+      }
+    },
+    {
+      "id": "CF-029",
+      "domain": "WIS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A content team's Claude-assisted blog drafts consistently require three or more revision rounds before publication. The MOST effective process change is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Switch to a more capable model"
+        },
+        {
+          "key": "B",
+          "text": "Create a structured brief template capturing target audience, key messages, tone, word count, and CTA before any drafting begins"
+        },
+        {
+          "key": "C",
+          "text": "Have Claude produce three parallel draft variants and choose the best"
+        },
+        {
+          "key": "D",
+          "text": "Send the final draft to Claude for self-critique before publication"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Multiple revision rounds signal under-specified initial prompts. A structured brief front-loads the information Claude needs to produce an on-target draft the first time. Model upgrades and parallel variants don't fix missing input context. Self-critique is a final polish step, not a substitute for a well-specified brief.",
+      "distractor_notes": {
+        "A": "Model capability is not the bottleneck when the input specification is missing.",
+        "C": "Three parallel variants multiply tokens without addressing the specification gap.",
+        "D": "Self-critique can catch errors but can't infer unstated audience and objective information."
+      }
+    },
+    {
+      "id": "CF-030",
+      "domain": "WIS",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A company integrates Claude into its customer complaint resolution workflow. Which TWO risks MUST be addressed in the solution design?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude may resolve complaints so efficiently that it reduces upsell opportunities"
+        },
+        {
+          "key": "B",
+          "text": "Claude may generate responses that commit to policy exceptions or refunds beyond its authorised scope"
+        },
+        {
+          "key": "C",
+          "text": "Customers with emotionally charged or complex complaints may receive responses that lack appropriate empathy or judgment"
+        },
+        {
+          "key": "D",
+          "text": "Response time may exceed internal SLA targets"
+        },
+        {
+          "key": "E",
+          "text": "Claude may use inconsistent tone across different complaint categories"
+        }
+      ],
+      "correct": [
+        "B",
+        "C"
+      ],
+      "explanation": "Unauthorised commitments (refunds, policy exceptions) create legal and financial liability—the design must constrain Claude to within-scope responses and route anything requiring authorisation to a human. Emotionally complex complaints require human judgment and empathy that Claude may not reliably provide, making escalation paths essential.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-031",
+      "domain": "WIS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A product manager asks Claude to prioritise a 200-item feature backlog, but the ranking doesn't reflect company strategy. The BEST fix is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Manually re-rank Claude's output"
+        },
+        {
+          "key": "B",
+          "text": "Provide Claude with the company's strategic goals, current OKRs, and a scoring rubric as part of the prioritisation prompt"
+        },
+        {
+          "key": "C",
+          "text": "Use a more capable model"
+        },
+        {
+          "key": "D",
+          "text": "Limit each prompt to 20 items and combine the ranked sub-lists"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Claude can only align with strategy it knows about. Without explicit strategic context, it infers priority from generic signals. Providing OKRs and a rubric grounds the prioritisation in the company's actual goals. Manual re-ranking treats the symptom; model upgrades and batching don't add strategic context.",
+      "distractor_notes": {
+        "A": "Manual re-ranking addresses this instance but not future runs.",
+        "C": "A more capable model cannot infer strategic priorities it hasn't been given.",
+        "D": "Batch prioritisation produces ranked sub-lists that are hard to merge without cross-batch context."
+      }
+    },
+    {
+      "id": "CF-032",
+      "domain": "WIS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A team using Claude to generate weekly reports finds the format is inconsistent across three months of outputs. The MOST durable fix is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Manually reformat each report after generation"
+        },
+        {
+          "key": "B",
+          "text": "Include a filled report template as a concrete example in the system prompt"
+        },
+        {
+          "key": "C",
+          "text": "Add 'use the same format as last week' to each prompt"
+        },
+        {
+          "key": "D",
+          "text": "Use a more capable model"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "A concrete template in the system prompt enforces format on every run without depending on conversation history. 'Same as last week' requires reliably passing prior output in context, which is inconsistently done and allows drift to compound. Manual reformatting doesn't fix the root cause.",
+      "distractor_notes": {
+        "A": "Manual reformatting is a recurring cost that doesn't fix the underlying prompt gap.",
+        "C": "This depends on reliably including prior output in context, which is inconsistently done.",
+        "D": "Format consistency is a prompt design problem, not a model capability problem."
+      }
+    },
+    {
+      "id": "CF-033",
+      "domain": "WIS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A company wants Claude to help employees research competitors. The MOST important design consideration is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Whether Claude can access competitor websites in real time"
+        },
+        {
+          "key": "B",
+          "text": "Defining explicit constraints on what actions Claude can suggest, specifically excluding suggestions to obtain confidential competitor information"
+        },
+        {
+          "key": "C",
+          "text": "Making Claude's responses sound confident to build employee trust"
+        },
+        {
+          "key": "D",
+          "text": "Ensuring responses exceed 500 words to appear thorough"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Competitive intelligence has ethical and legal boundaries: trade secret laws, computer fraud statutes, and professional ethics. The system design must explicitly constrain Claude from suggesting actions that could constitute economic espionage or IP theft, even in response to user pressure.",
+      "distractor_notes": {
+        "A": "Real-time access is a capability consideration, not the primary design constraint.",
+        "C": "Authoritative tone without guardrails could lead employees to act on inappropriate suggestions.",
+        "D": "Response length is irrelevant to this design constraint."
+      }
+    },
+    {
+      "id": "CF-034",
+      "domain": "WIS",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A sales team integrates Claude to help draft customer proposals. Which TWO implementation requirements are MOST critical?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude must have access to the current product catalogue and pricing in its context"
+        },
+        {
+          "key": "B",
+          "text": "Claude must be able to send proposals directly to customers once drafted"
+        },
+        {
+          "key": "C",
+          "text": "Every proposal draft must be reviewed and approved by a human before it is sent"
+        },
+        {
+          "key": "D",
+          "text": "Claude must automatically negotiate pricing based on signals in the customer conversation"
+        },
+        {
+          "key": "E",
+          "text": "Proposal drafts must be stored in a version-controlled document system"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Accurate product and pricing data in context prevents incorrect commitments in proposals. Human review before sending protects against hallucinated terms, unauthorised pricing, or strategic errors in customer-facing documents. Autonomous sending and automated negotiation bypass essential human oversight.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-035",
+      "domain": "WIS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A workflow requires Claude to use current live stock prices. What is the CORRECT architectural approach?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Ask Claude to estimate prices based on historical patterns in its training data"
+        },
+        {
+          "key": "B",
+          "text": "Retrieve the prices via a real-time financial data API, then inject them into the Claude prompt"
+        },
+        {
+          "key": "C",
+          "text": "Use the most recently trained Claude model version for the latest price data"
+        },
+        {
+          "key": "D",
+          "text": "Instruct Claude to caveat its answers as potentially outdated"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Claude has a training cutoff and no real-time internet access by default. The only reliable way to use current data is to fetch it externally and provide it in the prompt. No model version or instruction can overcome the training cutoff for real-time factual data.",
+      "distractor_notes": {
+        "A": "Price estimation from historical patterns is speculation, not current data.",
+        "C": "A newer model cutoff still has a cutoff; no version provides real-time prices.",
+        "D": "Adding caveats acknowledges the limitation but does not solve it."
+      }
+    },
+    {
+      "id": "CF-036",
+      "domain": "WIS",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "A team's Claude-powered sentiment analysis tool shows a significant accuracy drop after six months, with no intentional changes made. The MOST likely cause is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "The underlying model version was automatically updated"
+        },
+        {
+          "key": "B",
+          "text": "Customer language, topics, and sentiment patterns have shifted while the system prompt and examples remain static"
+        },
+        {
+          "key": "C",
+          "text": "API rate limits are being hit more frequently, causing incomplete responses"
+        },
+        {
+          "key": "D",
+          "text": "The feedback database has grown too large for the context window"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Distribution shift: the real-world input distribution has moved away from the examples and heuristics baked into the static system prompt. This is the most common cause of silent AI system performance degradation over time. The fix is to refresh the prompt and examples to reflect current customer language patterns.",
+      "distractor_notes": {
+        "A": "Model updates are controlled, not automatic, and are announced by Anthropic.",
+        "C": "Rate limiting causes errors or truncation, not subtle accuracy decline.",
+        "D": "Context window limits cause errors, not gradual accuracy decline."
+      }
+    },
+    {
+      "id": "CF-037",
+      "domain": "WIS",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "An executive asks: 'Can Claude replace our entire market research team?' The MOST accurate and professionally responsible response is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "'Yes—Claude can perform every function a market research team provides.'"
+        },
+        {
+          "key": "B",
+          "text": "'No—Claude cannot meaningfully assist with market research at all.'"
+        },
+        {
+          "key": "C",
+          "text": "'Claude can accelerate specific tasks such as survey synthesis, competitive scanning, and report drafting, but it cannot replace the strategic judgement, primary research design, and stakeholder relationships that skilled human researchers provide.'"
+        },
+        {
+          "key": "D",
+          "text": "'It depends entirely on whether you use Claude Opus instead of Sonnet.'"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Accurately communicating Claude's value and limitations means being specific about what it can and cannot do—neither overselling (which leads to poor implementations) nor underselling (which prevents valuable adoption). Option C names concrete capabilities and concrete human-essential functions.",
+      "distractor_notes": {
+        "A": "Overselling leads to ill-scoped deployments and eventual trust loss.",
+        "B": "Underselling ignores genuine productivity gains Claude provides in research workflows.",
+        "D": "Model tier is a minor variable; it does not change the fundamental answer."
+      }
+    },
+    {
+      "id": "CF-038",
+      "domain": "CKM",
+      "difficulty": "foundational",
+      "type": "single",
+      "stem": "A Claude Project has a 60-page product manual as a knowledge source. An employee asks about a product feature not covered in the manual. Claude MOST LIKELY will:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Refuse to answer because the feature is not in the knowledge source"
+        },
+        {
+          "key": "B",
+          "text": "Answer from its general training knowledge, with potentially lower accuracy than for documented features"
+        },
+        {
+          "key": "C",
+          "text": "Automatically search the internet for documentation on the missing feature"
+        },
+        {
+          "key": "D",
+          "text": "Prompt the employee to upload additional documentation before responding"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Knowledge sources provide additional context but do not restrict Claude's responses unless the system prompt explicitly instructs it to only answer from provided documents. For undocumented features, Claude falls back on its training data, which may be generic or reflect an older product version.",
+      "distractor_notes": {
+        "A": "Claude does not refuse by default when a topic isn't in the knowledge source.",
+        "C": "Claude has no built-in internet access; it cannot search for external documentation.",
+        "D": "Claude does not prompt for document uploads autonomously."
+      }
+    },
+    {
+      "id": "CF-039",
+      "domain": "CKM",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A system prompt reads: 'You are a customer support agent for TechCorp. Help users with TechCorp product questions only.' A user asks Claude to write a Python script unrelated to TechCorp products. Claude SHOULD:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Write the Python script as requested"
+        },
+        {
+          "key": "B",
+          "text": "Politely decline and redirect to TechCorp product support topics"
+        },
+        {
+          "key": "C",
+          "text": "Write the Python script but add TechCorp product recommendations at the end"
+        },
+        {
+          "key": "D",
+          "text": "Ask the user to rephrase their question"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The system prompt defines the assistant's scope. A well-configured deployment should redirect out-of-scope requests—this maintains the use case focus and avoids liability for outputs unrelated to the intended service.",
+      "distractor_notes": {
+        "A": "Fulfilling the request violates the explicitly stated system prompt scope.",
+        "C": "Partially fulfilling the request still violates scope and adds noise.",
+        "D": "A rephrasing request misleads the user into thinking the task is possible within scope."
+      }
+    },
+    {
+      "id": "CF-040",
+      "domain": "CKM",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A customer-facing Claude deployment's system prompt should include which TWO of the following?",
+      "options": [
+        {
+          "key": "A",
+          "text": "A clear definition of the assistant's role and which topics it covers"
+        },
+        {
+          "key": "B",
+          "text": "The company's detailed internal salary bands and compensation structure"
+        },
+        {
+          "key": "C",
+          "text": "Explicit guidance on what to do when a user asks about something outside the assistant's scope"
+        },
+        {
+          "key": "D",
+          "text": "The personal email addresses and phone numbers of all support staff"
+        },
+        {
+          "key": "E",
+          "text": "A comprehensive list of all active security vulnerabilities in the company's products"
+        }
+      ],
+      "correct": [
+        "A",
+        "C"
+      ],
+      "explanation": "Role definition prevents scope creep and sets user expectations. Explicit out-of-scope handling ensures graceful escalation paths. B, D, and E are confidential information that must never appear in a customer-facing system prompt—they would be visible to all users.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-041",
+      "domain": "CKM",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "When should a Claude Project's knowledge source documents be updated?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Only when users report receiving incorrect information"
+        },
+        {
+          "key": "B",
+          "text": "On a cadence aligned with how frequently the underlying information changes"
+        },
+        {
+          "key": "C",
+          "text": "Knowledge sources should never be modified once set, to ensure consistent behaviour"
+        },
+        {
+          "key": "D",
+          "text": "Every time a new Claude model version is released"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Knowledge sources become stale as the world changes. Update frequency should be proportional to information volatility: daily for pricing, monthly for policies, quarterly for product specs. Reactive updates (only when errors are reported) mean errors reach users first.",
+      "distractor_notes": {
+        "A": "Waiting for error reports means users are already receiving incorrect information.",
+        "C": "Static knowledge sources guarantee staleness for any time-sensitive information.",
+        "D": "Model version release is irrelevant to the currency of knowledge source content."
+      }
+    },
+    {
+      "id": "CF-042",
+      "domain": "CKM",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "A system prompt is 2,500 words long and covers dozens of edge cases. What is the PRIMARY risk of this approach?",
+      "options": [
+        {
+          "key": "A",
+          "text": "System prompts over 2,000 words violate Anthropic's terms of service"
+        },
+        {
+          "key": "B",
+          "text": "Very long system prompts can cause instructions in the middle to receive less attention than those near the beginning and end, leading to inconsistent compliance"
+        },
+        {
+          "key": "C",
+          "text": "Other users can read the system prompt through the API"
+        },
+        {
+          "key": "D",
+          "text": "Long system prompts incur exponentially higher costs"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The 'lost in the middle' effect is well-documented: LLMs attend less reliably to content in the middle of long contexts. A 2,500-word system prompt may have critical instructions buried mid-prompt that are partially ignored. Concise, well-prioritised system prompts are more reliable.",
+      "distractor_notes": {
+        "A": "There is no word limit in Anthropic's ToS for system prompts.",
+        "C": "System prompts are not exposed to other API users; they are per-request context.",
+        "D": "Costs scale linearly with tokens, not exponentially."
+      }
+    },
+    {
+      "id": "CF-043",
+      "domain": "CKM",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "An organisation uses a Google Drive connector in a Claude Project. A policy document in Drive is updated on Monday. When will Claude use the updated version?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Immediately—the connector syncs changes in real time"
+        },
+        {
+          "key": "B",
+          "text": "After the next scheduled sync, based on the connector's configured refresh interval"
+        },
+        {
+          "key": "C",
+          "text": "Never—the document must always be manually re-uploaded"
+        },
+        {
+          "key": "D",
+          "text": "After exactly 24 hours"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Knowledge connectors have configured sync frequencies that vary by implementation and organisation settings. Real-time sync is not guaranteed. Teams with time-sensitive updates must understand their connector's refresh cadence and either trigger manual refreshes or configure faster sync intervals.",
+      "distractor_notes": {
+        "A": "Real-time sync is not a standard guarantee; actual behaviour depends on configuration.",
+        "C": "Automatic sync is supported; manual-only upload describes the absence of a connector, not its limitation.",
+        "D": "The 24-hour figure is arbitrary; the actual interval depends on connector configuration."
+      }
+    },
+    {
+      "id": "CF-044",
+      "domain": "CKM",
+      "difficulty": "foundational",
+      "type": "single",
+      "stem": "A developer deploys a Claude-powered customer tool without configuring a system prompt. The PRIMARY risk is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "The API rejects requests that lack a system prompt"
+        },
+        {
+          "key": "B",
+          "text": "Claude responds to any user request without scope, tone, or safety guardrails appropriate for the specific deployment context"
+        },
+        {
+          "key": "C",
+          "text": "Response quality will be lower than with a system prompt"
+        },
+        {
+          "key": "D",
+          "text": "The deployment costs more than one with a system prompt"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Without a system prompt, Claude operates in its default mode: helpful to any request, in a generic tone, with no deployment-specific constraints. Customer-facing tools without guardrails may respond to off-topic or sensitive requests in ways that are inappropriate for the context, creating brand, legal, or safety risks.",
+      "distractor_notes": {
+        "A": "The API accepts requests without a system prompt; it is optional.",
+        "C": "Quality may be comparable for general tasks; the risk is scope and safety, not raw quality.",
+        "D": "Cost is based on input/output tokens, not system prompt presence."
+      }
+    },
+    {
+      "id": "CF-045",
+      "domain": "GRI",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "An employee wants to use Claude to help draft a formal performance review that rates a colleague negatively. The MOST important consideration before doing so is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Whether Claude can produce convincingly critical professional language"
+        },
+        {
+          "key": "B",
+          "text": "Whether the organisation's HR policy permits AI assistance in formal evaluations and whether such assistance must be disclosed"
+        },
+        {
+          "key": "C",
+          "text": "Whether Claude has access to the colleague's work history"
+        },
+        {
+          "key": "D",
+          "text": "Whether performance reviews fall within Claude's general capability range"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "AI assistance in formal HR evaluations raises fairness, accountability, and policy questions. Many organisations require disclosure; some prohibit AI in consequential evaluations. Policy compliance is the first check—before capability or disclosure questions become relevant.",
+      "distractor_notes": {
+        "A": "Claude's stylistic capability is not the primary risk.",
+        "C": "Claude has no knowledge of the colleague; that's a different issue entirely.",
+        "D": "Capability is secondary to whether the use case is policy-compliant."
+      }
+    },
+    {
+      "id": "CF-046",
+      "domain": "GRI",
+      "difficulty": "applied",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A company classifies certain documents as 'Confidential.' An employee wants to paste one into Claude to get help drafting a summary. Which TWO actions are MOST appropriate?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Verify whether the organisation's Claude deployment agreement covers processing of Confidential-classified data"
+        },
+        {
+          "key": "B",
+          "text": "Review Anthropic's data handling terms to understand how input data is used"
+        },
+        {
+          "key": "C",
+          "text": "Assume cloud AI tools are safe for all data classifications since they are widely adopted"
+        },
+        {
+          "key": "D",
+          "text": "Strip the document title and author before pasting to partially anonymise it"
+        },
+        {
+          "key": "E",
+          "text": "Get explicit approval from the data governance team before processing classified data"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "Confidential data classification creates obligations. The employee must verify both what their organisation's agreement permits (A) and how Anthropic handles input data technically (B) before proceeding. Cloud tool popularity is not a substitute for compliance verification. Title/author stripping is insufficient de-identification.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-047",
+      "domain": "GRI",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A healthcare organisation builds a patient-facing Claude tool to help patients understand their diagnoses. The MOST important design constraint is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude should always direct patients to consult a qualified healthcare professional for medical decisions"
+        },
+        {
+          "key": "B",
+          "text": "Claude should be able to prescribe or recommend specific medications"
+        },
+        {
+          "key": "C",
+          "text": "Claude should access live clinical databases to ensure medical accuracy"
+        },
+        {
+          "key": "D",
+          "text": "Claude should use technical medical terminology to appear authoritative"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "Patient-facing medical tools must never position themselves as substitutes for professional medical advice. Directing patients to seek qualified care is a non-negotiable safety guardrail. Medication prescription is legally prohibited for AI tools; live database access and technical jargon are secondary concerns.",
+      "distractor_notes": {
+        "B": "Prescribing medications requires a licensed clinician; this is legally prohibited for an AI tool.",
+        "C": "Live database access is a capability enhancement, not the most important design constraint.",
+        "D": "Technical jargon hinders patient comprehension; plain language is the correct approach."
+      }
+    },
+    {
+      "id": "CF-048",
+      "domain": "GRI",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "An employee uses Claude to write 80% of a report, then submits it as entirely their own work in an organisation that requires AI assistance disclosure. This is BEST described as:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Acceptable—Claude is a writing tool, and all professionals use tools"
+        },
+        {
+          "key": "B",
+          "text": "A minor procedural technicality that rarely has consequences"
+        },
+        {
+          "key": "C",
+          "text": "A violation of the disclosure policy and a potential integrity issue"
+        },
+        {
+          "key": "D",
+          "text": "Fine, since AI tools are widely available and use is implied"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "When an organisation mandates AI disclosure, submitting AI-assisted work without disclosure is a policy violation, regardless of the degree of AI contribution. In regulated or professional contexts, it may also constitute misrepresentation. Disclosure obligations exist precisely because the extent of AI help is not 'implied' by availability.",
+      "distractor_notes": {
+        "A": "AI assistance is treated differently from other tools by many policies; they are not equivalent.",
+        "B": "Policy violations can have material career and reputational consequences.",
+        "D": "Availability does not create implicit disclosure; explicit policy does."
+      }
+    },
+    {
+      "id": "CF-049",
+      "domain": "GRI",
+      "difficulty": "foundational",
+      "type": "single",
+      "stem": "Which use case is CLEARLY inappropriate for Claude regardless of framing or context?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Drafting a persuasive essay taking a specific position for a debate class"
+        },
+        {
+          "key": "B",
+          "text": "Writing a fictional thriller that includes criminal activity by characters"
+        },
+        {
+          "key": "C",
+          "text": "Generating content specifically designed to trick people into sharing their bank account credentials"
+        },
+        {
+          "key": "D",
+          "text": "Summarising controversial news articles for a balanced briefing"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Content designed to deceive people into providing financial credentials is phishing—harmful by design and with no legitimate purpose regardless of framing. Persuasion for debate, fiction involving crime, and summaries of controversial topics are all legitimate uses with clear educational or informational value.",
+      "distractor_notes": {
+        "A": "Persuasive writing is a core educational skill; the debate context is legitimate.",
+        "B": "Fiction involving crime has a long literary tradition and is clearly legitimate.",
+        "D": "Summarising controversial content for balanced briefings is a legitimate journalistic and educational use."
+      }
+    },
+    {
+      "id": "CF-050",
+      "domain": "GRI",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "An organisation's AI governance policy requires 'human in the loop' for all consequential decisions. Claude is used to rank job applicants. Which implementation is MOST compliant with this policy?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Claude ranks applicants and the top 20% are automatically advanced to the next round"
+        },
+        {
+          "key": "B",
+          "text": "Claude produces a ranked list with reasoning for each ranking, which a human hiring manager reviews before making any advancement decision"
+        },
+        {
+          "key": "C",
+          "text": "Claude ranks applicants but flags those it is uncertain about for human review; the rest advance automatically"
+        },
+        {
+          "key": "D",
+          "text": "Claude is used only to schedule interviews, not to rank applicants"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "'Human in the loop' for consequential decisions means humans make the final decision—not just review edge cases flagged by the AI. Option B correctly positions Claude as a decision-support tool while keeping the human as the decision-maker. Options A and C automate the consequential decision for at least some applicants.",
+      "distractor_notes": {
+        "A": "Automatic advancement removes humans from the consequential decision entirely.",
+        "C": "Flagging only uncertain cases still automates the decision for 'certain' cases, violating the policy.",
+        "D": "This avoids the issue rather than implementing compliant use; it reduces Claude's utility unnecessarily."
+      }
+    },
+    {
+      "id": "CF-051",
+      "domain": "GRI",
+      "difficulty": "architect",
+      "type": "single",
+      "stem": "Under GDPR, when an organisation uses Claude via Anthropic's API to process personal data of EU residents, who is the data controller?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Anthropic, as the provider of the AI system"
+        },
+        {
+          "key": "B",
+          "text": "The organisation that determines the purposes and means of the data processing"
+        },
+        {
+          "key": "C",
+          "text": "The EU residents whose data is processed"
+        },
+        {
+          "key": "D",
+          "text": "The European Data Protection Board"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Under GDPR, the data controller is the party that determines the purposes and means of processing—the deploying organisation that decided to use Claude for a specific business purpose. Anthropic is typically a data processor (acting on the controller's instructions). This distinction carries significant legal obligations.",
+      "distractor_notes": {
+        "A": "Anthropic acts as a processor (following instructions), not a controller (determining purposes).",
+        "C": "Data subjects are the people whose data is processed; they are neither controller nor processor.",
+        "D": "The EDPB is a regulatory body, not a party to the processing relationship."
+      }
+    },
+    {
+      "id": "CF-052",
+      "domain": "GRI",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "An organisation's acceptable use policy for Claude specifies 'professional work tasks only.' An employee uses Claude during work hours to write a personal complaint letter to a utility company. This is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Acceptable if the complaint is about a utility service used at the employee's work location"
+        },
+        {
+          "key": "B",
+          "text": "A policy violation, since 'professional work tasks' excludes personal correspondence regardless of other context"
+        },
+        {
+          "key": "C",
+          "text": "Fine since 'professional' is open to interpretation and the policy is vague"
+        },
+        {
+          "key": "D",
+          "text": "Only a problem if the employee uses a company device rather than a personal device"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Acceptable use policies set boundaries that apply as written. 'Professional work tasks' is a well-understood category that excludes personal correspondence. Context (work location, work hours, device type) does not change whether an activity falls within the policy scope.",
+      "distractor_notes": {
+        "A": "The utility's location is irrelevant; the letter is personal correspondence.",
+        "C": "'Professional work tasks' is a commonly understood term with clear boundaries; this is not vague policy.",
+        "D": "The policy governs the Claude deployment; accessing it through work systems subjects the use to work policy."
+      }
+    },
+    {
+      "id": "CF-053",
+      "domain": "TRO",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "Claude consistently produces responses that are too long, even when the prompt includes 'be brief.' The MOST effective fix is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Switch to a faster model tier"
+        },
+        {
+          "key": "B",
+          "text": "Specify a concrete numeric constraint: 'respond in no more than 100 words' or 'in exactly three bullet points'"
+        },
+        {
+          "key": "C",
+          "text": "Add a follow-up message in each conversation asking Claude to shorten its previous response"
+        },
+        {
+          "key": "D",
+          "text": "Programmatically truncate responses to the required length after generation"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "'Brief' is relative—Claude interprets it against its current context. A numeric constraint (word count, sentence count, bullet count) is unambiguous and applies immediately. Truncation post-generation cuts content but doesn't improve generation quality. Follow-up messages add latency and cost without fixing the underlying prompt.",
+      "distractor_notes": {
+        "A": "Model tier affects capability and cost, not verbosity in response to vague length instructions.",
+        "C": "Follow-up messages double the API round trips without addressing the root prompt.",
+        "D": "Truncation discards Claude's conclusion or summary, often the most important part."
+      }
+    },
+    {
+      "id": "CF-054",
+      "domain": "TRO",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A prompt that worked perfectly during development produces poor results in production. The MOST likely cause is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "The model was silently updated between development and production environments"
+        },
+        {
+          "key": "B",
+          "text": "Production inputs are more diverse, longer, or structured differently than the narrow set used during development"
+        },
+        {
+          "key": "C",
+          "text": "Production API calls have higher latency, which degrades output quality"
+        },
+        {
+          "key": "D",
+          "text": "Claude performs differently under concurrent load"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "The test-to-production gap in AI systems is most commonly caused by distribution shift: development prompts were tuned on a narrow, representative-seeming sample that doesn't capture the full diversity of production inputs. This is the canonical cause of production regressions in AI deployments.",
+      "distractor_notes": {
+        "A": "Model updates are announced and versioned; silent updates between environments do not happen.",
+        "C": "Latency is a performance metric; it does not change output quality in Claude's API.",
+        "D": "Claude's outputs are not affected by concurrency; each request is independent."
+      }
+    },
+    {
+      "id": "CF-055",
+      "domain": "TRO",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A Claude-powered customer tool has shown noticeably worse outputs over six months. No intentional changes were made. Which TWO diagnostic steps should come FIRST?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Check the system prompt and knowledge sources for any unintentional modifications"
+        },
+        {
+          "key": "B",
+          "text": "Immediately upgrade to the newest model version"
+        },
+        {
+          "key": "C",
+          "text": "Analyse whether the distribution of user inputs has shifted significantly"
+        },
+        {
+          "key": "D",
+          "text": "Increase the max output token limit"
+        },
+        {
+          "key": "E",
+          "text": "Run the original development test cases to establish a quantitative performance baseline"
+        }
+      ],
+      "correct": [
+        "A",
+        "E"
+      ],
+      "explanation": "Running the original test cases establishes whether performance objectively declined and by how much. Checking the system prompt and knowledge sources identifies the most common root cause of silent regressions (accidental edits, stale knowledge). These two steps confirm the problem and find the most likely cause before any remediation.",
+      "distractor_notes": {}
+    },
+    {
+      "id": "CF-056",
+      "domain": "TRO",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "Claude occasionally refuses to perform a legitimate task that it completes correctly 80% of the time. The BEST approach to improve this consistency is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Accept the 20% refusal rate as an inherent limitation of the model"
+        },
+        {
+          "key": "B",
+          "text": "Build an automatic retry loop that re-submits refused requests until they succeed"
+        },
+        {
+          "key": "C",
+          "text": "Re-examine the prompt for phrasing that could be interpreted as policy-violating, and add explicit context about the legitimate purpose"
+        },
+        {
+          "key": "D",
+          "text": "Switch to a model that refuses less frequently"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Inconsistent refusals on legitimate tasks typically signal ambiguous prompt phrasing that Claude sometimes interprets as a policy concern. Adding clear context about the legitimate use case (professional context, purpose, scope) significantly reduces refusal rates without model switching. Retry loops waste tokens and don't fix the root cause.",
+      "distractor_notes": {
+        "A": "A 20% refusal rate on a legitimate task is not acceptable; it indicates a fixable prompt issue.",
+        "B": "Retry loops consume resources and may train users to expect occasional failures rather than fixing the prompt.",
+        "D": "A different model may have the same issue with the same ambiguous phrasing."
+      }
+    },
+    {
+      "id": "CF-057",
+      "domain": "TRO",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "After adding a knowledge source to a Claude Project, responses become less focused and include excessive hedging and caveats. The MOST likely cause is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "The knowledge source contains internal contradictions or conflicting information that makes Claude uncertain"
+        },
+        {
+          "key": "B",
+          "text": "The knowledge source file is too large"
+        },
+        {
+          "key": "C",
+          "text": "Adding any knowledge source always reduces response focus"
+        },
+        {
+          "key": "D",
+          "text": "Claude detected that the knowledge source lacks an official author attribution"
+        }
+      ],
+      "correct": [
+        "A"
+      ],
+      "explanation": "When a knowledge source contains conflicting statements (e.g., two policy versions, inconsistent data), Claude genuinely cannot resolve the conflict and hedges its responses to reflect that uncertainty. Auditing the knowledge source for internal consistency and removing contradictions is the appropriate fix.",
+      "distractor_notes": {
+        "B": "File size affects context usage but does not directly cause hedging behaviour.",
+        "C": "Well-structured knowledge sources typically improve focus and confidence, not reduce it.",
+        "D": "Claude does not assess attribution quality as a signal for response confidence."
+      }
+    },
+    {
+      "id": "CF-058",
+      "domain": "TRO",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A manager wants to evaluate whether Claude is suitable for their team's use case before committing to a full rollout. The BEST evaluation approach is:",
+      "options": [
+        {
+          "key": "A",
+          "text": "Run a 90-day pilot with the full team before deciding"
+        },
+        {
+          "key": "B",
+          "text": "Review Anthropic's published capability documentation and case studies"
+        },
+        {
+          "key": "C",
+          "text": "Define 5–10 representative real tasks, run them against Claude, and evaluate output quality against clear pre-defined success criteria"
+        },
+        {
+          "key": "D",
+          "text": "Ask Claude directly whether it can handle the use case"
+        }
+      ],
+      "correct": [
+        "C"
+      ],
+      "explanation": "Representative task evaluation with pre-defined success criteria is the most reliable and efficient signal. Full pilots add significant organisational overhead before viability is confirmed. Marketing materials describe general capabilities, not fit for a specific use case. Claude's self-assessment of its own fitness is unreliable.",
+      "distractor_notes": {
+        "A": "A 90-day pilot is expensive and slow; task evaluation confirms viability first.",
+        "B": "Published materials describe general capabilities, not fit for a specific organisation's specific tasks.",
+        "D": "Claude may overestimate its fitness for a task it doesn't have strong grounding for."
+      }
+    },
+    {
+      "id": "CF-059",
+      "domain": "TRO",
+      "difficulty": "applied",
+      "type": "single",
+      "stem": "A Claude-powered tool generates technically accurate but tonally 'robotic' responses that users find unhelpful. The ROOT CAUSE is most likely:",
+      "options": [
+        {
+          "key": "A",
+          "text": "The model version being used is too old to support natural communication"
+        },
+        {
+          "key": "B",
+          "text": "The system prompt focuses entirely on accuracy constraints without providing tone or communication style guidance"
+        },
+        {
+          "key": "C",
+          "text": "Users are not engaging with Claude in a way that elicits natural responses"
+        },
+        {
+          "key": "D",
+          "text": "Claude is fundamentally incapable of natural-sounding communication"
+        }
+      ],
+      "correct": [
+        "B"
+      ],
+      "explanation": "Over-constrained system prompts produce technically correct but toneless output. When Claude is given only format, length, and compliance instructions with no communication style guidance, it optimises for the constraints alone. Adding explicit tone guidance (conversational, empathetic, uses examples) typically resolves this without changing the model.",
+      "distractor_notes": {
+        "A": "Model version is not the cause; models of all ages communicate naturally with appropriate prompting.",
+        "C": "Users experience robotic output regardless of how they phrase their inputs; the prompt is the variable.",
+        "D": "Claude is capable of highly natural communication when system prompts include appropriate tone guidance."
+      }
+    },
+    {
+      "id": "CF-060",
+      "domain": "TRO",
+      "difficulty": "architect",
+      "type": "multi",
+      "select_count": 2,
+      "stem": "A team wants to reduce token costs on their Claude integration. Which TWO changes will have the LARGEST impact?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Switch from Claude Opus to Claude Haiku for tasks where Haiku's capability is sufficient"
+        },
+        {
+          "key": "B",
+          "text": "Compress the system prompt by removing redundant or contradictory instructions"
+        },
+        {
+          "key": "C",
+          "text": "Set a lower max_tokens limit on responses"
+        },
+        {
+          "key": "D",
+          "text": "Reduce the total number of API calls per day"
+        },
+        {
+          "key": "E",
+          "text": "Enable streaming responses instead of waiting for complete responses"
+        }
+      ],
+      "correct": [
+        "A",
+        "B"
+      ],
+      "explanation": "Model tier is the single largest cost lever: Haiku can be 10–20× cheaper than Opus per token for the same task. System prompt compression reduces input tokens on every API call since the system prompt is sent with each request. Max token limits cap output tokens but often just truncate useful content. Streaming doesn't affect token count—it only changes delivery pattern.",
+      "distractor_notes": {}
+    }
+  ]
+}
